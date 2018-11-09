@@ -1,0 +1,15 @@
+# InfluxDB timeseries database --
+# This 'service' makes sure the open ports in the corresponding 'pod' are accessible.
+# usage: kubectl create -f src-timeseries.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: vogels-svc-timeseries
+spec:
+  type: LoadBalancer
+  selector:
+    name: vogels-pod-timeseries
+  ports:
+  - name: http
+    port: 8086
+    protocol: TCP
