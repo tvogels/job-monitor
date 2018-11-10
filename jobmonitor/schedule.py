@@ -24,8 +24,8 @@ def main():
     # Connect to MongoDB
     # This database is central in communicating the task to the worker
     # We will store the task in the database and send just the job id to a worker for execution.
-    mongo = getattr(MongoClient(host=os.getenv('MONGO_HOST'), port=int(
-        os.getenv('MONGO_PORT'))), os.getenv('MONGO_DB'))
+    mongo = getattr(MongoClient(host=os.getenv('JOBMONITOR_METADATA_HOST'), port=int(
+        os.getenv('JOBMONITOR_METADATA_PORT'))), os.getenv('JOBMONITOR_METADATA_DB'))
 
     # Load the YAML document specifying how the
     specification = yaml.load(open(args.specification, 'r'))

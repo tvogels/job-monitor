@@ -2,6 +2,7 @@
 
 import datetime
 import os
+import re
 import shutil
 import socket
 import sys
@@ -57,7 +58,7 @@ def main():
 
     # Create an output directory
     output_dir = os.path.join(job['project'], job['experiment'], job['job'] + '_' + str(job['_id'])[-6:])
-    output_dir_abs = os.path.join(os.getenv('RESULTS_DIR'), output_dir)
+    output_dir_abs = os.path.join(os.getenv('JOBMONITOR_RESULTS_DIR'), output_dir)
     os.makedirs(output_dir_abs, exist_ok=True)
     code_dir = os.path.join(output_dir_abs, 'code')
 
@@ -77,15 +78,22 @@ def main():
     if 'path' in clone_info:
         if os.path.isdir(code_dir):
             shutil.rmtree(code_dir)
-        clone_from = clone_info['path'].replace('$DATA', os.getenv('DATA'))
+
+        # fill in any environment variables used in the path
+        clone_from = re.sub(
+            r"""\$([\w_]+)""",
+            lambda match: os.getenv(match.group(1)),
+            clone_info['path']
+        )
+
         shutil.copytree(clone_from, code_dir)
     else:
         raise ValueError('Current, only the "path" clone approach is supported')
 
     # Create a telegraf client
     telegraf = TelegrafClient(
-        host=os.getenv('TELEGRAF_HOST'),
-        port=int(os.getenv('TELEGRAF_PORT')),
+        host=os.getenv('JOBMONITOR_TELEGRAF_HOST'),
+        port=int(os.getenv('JOBMONITOR_TELEGRAF_PORT')),
         tags={ # global tags for this experiment
             'host': job['host'],
             'user': job['user'],
@@ -104,6 +112,7 @@ def main():
     orig_stdout = sys.stdout
     logfile_path = os.path.join(output_dir_abs, 'output')
     logfile = open(logfile_path, 'w')
+    print("Starting. Output redirected to {}".format(logfile_path))
     sys.stdout = logfile
     sys.stderr = logfile
 
