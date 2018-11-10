@@ -17,7 +17,7 @@ spec:
       volumeMounts:
       - mountPath: /var/lib/influxdb
         name: db-data
-        subPath: vogels/mlo-timeseries
+        subPath: vogels/databases/timeseries-influxdb
   volumes:
   - name: db-data
     persistentVolumeClaim:

@@ -51,7 +51,7 @@ Deploying on the container cluster:
 ```bash
 # (1) replace 'vogels' in pod-timeseries.yaml by your username
 # (2) replace 'vogels' in svc-timeseries.yaml by your username
-kubectl create -f timeseries/
+kubectl create -f databases/timeseries/
 ```
 
 The command launces a pod that runs the database and a service that lets you connect to this database form outside the container cluster (in the EPFL network). To figure out the IP and port of the server:
@@ -89,7 +89,7 @@ Telegraf is most often used to collect system utilization metrics (like CPU/mem/
 ```bash
 # (1)
 apt-get update && apt-get install -y telegraf
-# (2) Copy ./timeseries/telegraf.conf to /etc/telegraf/telegraf.conf and replace two occurences of http://{{ influxdb_host }}:{{ influxdb_port }}
+# (2) Copy ./databases/timeseries/telegraf.conf to /etc/telegraf/telegraf.conf and replace two occurences of http://{{ influxdb_host }}:{{ influxdb_port }}
 # (3)
 sudo service telegraf start
 ```
