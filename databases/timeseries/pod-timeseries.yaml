@@ -4,9 +4,9 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: vogels-pod-timeseries
+  name: vogels-timeseries
   labels:
-    name: vogels-pod-timeseries
+    name: vogels-timeseries
 spec:
   containers:
     - name: influxdb

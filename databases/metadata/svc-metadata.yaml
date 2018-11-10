@@ -1,15 +1,15 @@
-# InfluxDB timeseries database --
+# InfluxDB job-metadata database --
 # This 'service' makes sure the open ports in the corresponding 'pod' are accessible.
-# usage: kubectl create -f svc-timeseries.yaml
+# usage: kubectl create -f svc-metadata.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: vogels-timeseries
+  name: vogels-metadata
 spec:
   type: LoadBalancer
   selector:
-    name: vogels-timeseries
+    name: vogels-metadata
   ports:
   - name: http
-    port: 8086
+    port: 27017
     protocol: TCP
