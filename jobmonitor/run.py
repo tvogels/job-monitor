@@ -95,7 +95,7 @@ def main():
         host=os.getenv('JOBMONITOR_TELEGRAF_HOST'),
         port=int(os.getenv('JOBMONITOR_TELEGRAF_PORT')),
         tags={ # global tags for this experiment
-            'host': job['host'],
+            'host': socket.gethostname(),
             'user': job['user'],
             'job_id': str(job['_id'])[-6:],
             'project': job['project'],
