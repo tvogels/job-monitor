@@ -6,10 +6,10 @@ kind: Service
 metadata:
   name: vogels-metadata
 spec:
-  type: LoadBalancer
-  selector:
-    name: vogels-metadata
+  type: NodePort
   ports:
   - name: http
     port: 27017
     protocol: TCP
+  selector:
+    name: vogels-metadata

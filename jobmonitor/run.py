@@ -97,7 +97,7 @@ def main():
         tags={ # global tags for this experiment
             'host': socket.gethostname(),
             'user': job['user'],
-            'job_id': str(job['_id'])[-6:],
+            'job_id': str(job['_id']),
             'project': job['project'],
             'experiment': job['experiment'],
             'job': job['job']

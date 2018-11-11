@@ -6,10 +6,10 @@ kind: Service
 metadata:
   name: vogels-timeseries
 spec:
-  type: LoadBalancer
-  selector:
-    name: vogels-timeseries
+  type: NodePort
   ports:
   - name: http
     port: 8086
     protocol: TCP
+  selector:
+    name: vogels-timeseries

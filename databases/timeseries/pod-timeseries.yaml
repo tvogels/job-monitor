@@ -10,15 +10,15 @@ metadata:
 spec:
   containers:
     - name: influxdb
-      image: influxdb
+      image: influxdb:1.7
       ports:
       - containerPort: 8086
-        name: http
+        name: api
       volumeMounts:
       - mountPath: /var/lib/influxdb
-        name: db-data
+        name: mlo-scratch
         subPath: vogels/databases/timeseries-influxdb
   volumes:
-  - name: db-data
+  - name: mlo-scratch
     persistentVolumeClaim:
       claimName: mlo-scratch
