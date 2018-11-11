@@ -2,15 +2,6 @@
 FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
 LABEL maintainer "Thijs Vogels <thijs.vogels@epfl.ch>"
 
-# Required environment variables:
-# Telegraf
-ENV JOBMONITOR_TELEGRAF_HOST='localhost' \
-    JOBMONITOR_TELEGRAF_PORT='8092'
-# MongoDB
-ENV JOBMONITOR_METADATA_HOST='' \
-    JOBMONITOR_METADATA_PORT='27017' \
-    JOBMONITOR_METADATA_DB='jobmonitor'
-
 # Install lots of apt packages
 RUN apt-get update && apt-get install -y \
     cmake \
@@ -43,6 +34,29 @@ RUN pip3 install --upgrade \
     seaborn \
     tensorflow-gpu \
     torchvision
+
+# Install telegraf
+COPY telegraf_1.8.3-1_amd64.deb install.deb
+RUN dpkg -i install.deb \
+ && rm install.deb
+
+# Required environment variables:
+# Telegraf
+ENV JOBMONITOR_TELEGRAF_HOST='localhost' \
+    JOBMONITOR_TELEGRAF_PORT='8092'
+# MongoDB
+ENV JOBMONITOR_METADATA_HOST='' \
+    JOBMONITOR_METADATA_PORT='27017' \
+    JOBMONITOR_METADATA_DB='jobmonitor'
+# InfluxDB
+ENV JOBMONITOR_TIMESERIES_HOST='' \
+    JOBMONITOR_TIMESERIES_PORT='8086' \
+    JOBMONITOR_TIMESERIES_DB='jobmonitor'
+
+# Add an entrypoint script that will start the telegraf service
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod 777 /entrypoint.sh
+ENTRYPOINT [ "/entrypoint.sh" ]
 
 # Jupyter and TensorFlow
 EXPOSE 8888 6006

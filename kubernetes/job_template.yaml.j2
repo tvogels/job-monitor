@@ -7,14 +7,14 @@ spec:
     spec:
       restartPolicy: Never
       containers:
-        - name:  worker
+        - name:  worker-{{ id }}
           image: ic-registry.epfl.ch/mlo/jobmonitor_worker
           imagePullPolicy: Always
           env:
             - {name: DATA,                     value: /scratch}
             - {name: JOBMONITOR_RESULTS_DIR,   value: /scratch/results}
             - {name: JOBMONITOR_METADATA_HOST, value: {{ user }}-metadata}
-            - {name: JOBMONITOR_TIMESERIES_HOST, value: {{ user }}-timeseries}
+            - {name: JOBMONITOR_TELEGRAF_HOST, value: telegraf-{{ id }}}
           volumeMounts:
             - mountPath: /scratch
               name: mlo-scratch
@@ -24,7 +24,15 @@ spec:
             limits:
               nvidia.com/gpu: {{ resources.gpus }}
           {% endif %}
-          command: ["/entrypoint.sh", "jobrun", "{{ id }}"]
+          command: ["jobrun", "{{ id }}"]
+
+        - name: telegraf-{{ id }}
+          image: ic-registry.epfl.ch/mlo/jobmonitor_telegraf
+          env:
+            - name: INFLUXDB_HOST
+              value: {{ user }}-timeseries
+          ports:
+            - containerPort: 8092
 
       volumes:
         - name: mlo-scratch
