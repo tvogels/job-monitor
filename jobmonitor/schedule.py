@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import datetime
 import os
 import subprocess
 import tempfile
@@ -44,6 +45,7 @@ def main():
             'job': job_spec['name'],
             'config': job_spec['config'],
             'initialization': specification['initialization'],
+            'scheduled_date': datetime.datetime.utcnow(),
             'status': 'scheduled',
         }
 
