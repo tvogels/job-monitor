@@ -7,6 +7,7 @@ import tempfile
 from argparse import ArgumentParser
 
 import jinja2
+from jsonschema import validate
 import yaml
 from pymongo import MongoClient
 
@@ -30,10 +31,14 @@ def main():
 
     # Load the YAML document specifying how the
     specification = yaml.load(open(args.specification, 'r'))
+    validate(specification, SPECIFICATION_SCHEMA)
 
-    # Load a template for the kubernetes job definition file
-    with open(specification['kubernetes']['job_template'], 'r') as fp:
-        job_template = jinja2.Template(fp.read())
+    if 'kubernetes' in specification:
+        # Load a template for the kubernetes job definition file
+        with open(specification['kubernetes']['job_template'], 'r') as fp:
+            job_template = jinja2.Template(fp.read())
+    else:
+        args.manual_scheduling = True
 
     # Create tasks and job descriptions
     job_ids = {}
@@ -48,6 +53,8 @@ def main():
             'scheduled_date': datetime.datetime.utcnow(),
             'status': 'scheduled',
         }
+        if 'annotations' in job_spec:
+            job_content['annotations'] = job_spec['annotations']
 
         # Insert into the DB
         insert_result = mongo.job.insert_one(job_content)
@@ -72,14 +79,63 @@ def main():
 
 
     # Pretty-print the created job ids
+    print('Created {} jobs entries in the database:'.format(len(job_ids)))
     max_len = max(len(x) for x in job_ids) + 1
     for job_name, job_id in job_ids.items():
         job_name = job_name + "".join([" "] * (max_len - len(job_name)))
-        print(f"{job_name}: {job_id}")
+        print("{}: {}".format(job_name, job_id))
 
-    if not args.manual_scheduling:
-        print('{} jobs scheduled on the container cluster'.format(len(job_ids)))
+    if args.manual_scheduling:
+        print('Run the jobs on a worker with `jobrun $jobid`.')
+    else:
+        print('Jobs have been scheduled on the container cluster.')
 
+
+SPECIFICATION_SCHEMA = yaml.load("""
+type: object
+required: [user, project, experiment, jobs, initialization]
+additionalProperties: false
+properties:
+  user: { type: string }
+  project: { type: string }
+  experiment: { type: string }
+  jobs:
+    type: array
+    items:
+      type: object
+      required: [name, config]
+      additionalProperties: false
+      properties:
+        name: { type: string }
+        config: { type: object }
+        annotations:
+          type: object
+          properties:
+            description: { type: string }
+  initialization:
+    type: object
+    required: [clone, script]
+    additionalProperties: false
+    properties:
+      clone:
+        type: object
+        required: [path]
+        additionalProperties: false
+        properties:
+          path: { type: string }
+      script: { type: string }
+  kubernetes:
+    type: object
+    required: [job_template]
+    additionalProperties: false
+    properties:
+      job_template: { type: string }
+      resources:
+        type: object
+        additionalProperties: false
+        properties:
+          gpu: { type: integer }
+""")
 
 if __name__ == '__main__':
     main()

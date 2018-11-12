@@ -15,6 +15,7 @@ setup(name='jobmonitor',
         'jinja2',
         'gitpython',
         'influxdb',
+        'jsonschema',
     ],
     entry_points = {
         'console_scripts': [
