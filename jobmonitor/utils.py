@@ -17,7 +17,3 @@ class IntervalTimer(threading.Thread):
         while not self.stopped.wait(self.interval):
             self.func()
         self.func()
-
-
-if __name__ == '__main__':
-    main()

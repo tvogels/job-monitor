@@ -175,3 +175,6 @@ def main():
         print(error_message)
         mongo.job.update(this_job, { '$set': { 'status': 'failed', 'end_time': datetime.datetime.utcnow(), 'exception': repr(e) } })
         sys.exit()
+
+if __name__ == '__main__':
+    main()
