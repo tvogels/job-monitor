@@ -1,11 +1,21 @@
 apiVersion: batch/v1
 kind: Job
+
 metadata:
   name: {{ user }}-{{ id_short }}
+  labels:
+    app: jobmonitor
+
 spec:
   template:
     spec:
       restartPolicy: Never
+
+      volumes:
+        - name: mlo-scratch
+          persistentVolumeClaim:
+            claimName: mlo-scratch
+
       containers:
         - name:  worker
           image: ic-registry.epfl.ch/mlo/jobmonitor_worker
@@ -25,8 +35,3 @@ spec:
               nvidia.com/gpu: {{ resources.gpus }}
           {% endif %}
           command: ["/entrypoint.sh", "jobrun", "{{ id }}"]
-
-      volumes:
-        - name: mlo-scratch
-          persistentVolumeClaim:
-            claimName: mlo-scratch
