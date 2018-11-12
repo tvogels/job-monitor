@@ -7,12 +7,6 @@ python3 setup.py sdist bdist_wheel
 cp dist/jobmonitor*.whl docker/worker
 popd
 
-# Download telegraf
-TELEGRAF=telegraf_1.8.3-1_amd64.deb
-if [ ! -f $TELEGRAF ]; then
-    wget https://dl.influxdata.com/telegraf/releases/$TELEGRAF
-fi
-
 # Download the torch executable
 TORCH=torch-0.4.1-cp35-cp35m-manylinux1_x86_64.whl
 if [ ! -f $TORCH ]; then

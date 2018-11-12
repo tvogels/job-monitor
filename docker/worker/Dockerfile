@@ -23,22 +23,28 @@ RUN apt-get update && apt-get install -y \
 RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && locale-gen
 
 # Python packages
-COPY *.whl install/
 RUN pip3 install --upgrade \
-    install/*.whl \
     jupyter \
     matplotlib \
     numpy \
     pandas \
     scipy \
     seaborn \
-    tensorflow-gpu \
-    torchvision
+    tensorflow-gpu
 
 # Install telegraf
-COPY telegraf_1.8.3-1_amd64.deb install.deb
-RUN dpkg -i install.deb \
- && rm install.deb
+RUN wget https://dl.influxdata.com/telegraf/releases/telegraf_1.8.3-1_amd64.deb -O telegraf.deb \
+ && dpkg -i telegraf.deb \
+ && rm telegraf.deb
+COPY telegraf.conf /etc/telegraf/telegraf.conf
+
+# Install torch
+COPY torch-0.4.1-cp35-cp35m-manylinux1_x86_64.whl install/
+RUN pip3 install --upgrade install/torch*.whl torchvision
+
+# Install the job monitor python library
+COPY jobmonitor-0.1-py3-none-any.whl install/
+RUN pip3 install --upgrade install/jobmonitor*.whl
 
 # Required environment variables:
 # Telegraf
