@@ -17,6 +17,8 @@ from bson.objectid import ObjectId
 from pymongo import MongoClient
 from telegraf.client import TelegrafClient
 
+from jobmonitor.utils import IntervalTimer
+
 
 """
 This script takes a job_id and it looks in MongoDB for a job with that ID.
@@ -145,8 +147,20 @@ def main():
         with open(os.path.join(output_dir_abs, 'config.yml'), 'w') as fp:
             yaml.dump(script.config, fp, default_flow_style=False)
 
+        # Heartbeat
+        def send_heartbeat():
+            mongo.job.update(
+                this_job,
+                {"$set": {"last_heartbeat_time": datetime.datetime.utcnow()}}
+            )
+        heartbeat_stop, heartbeat_thread = IntervalTimer.create(send_heartbeat, 10)
+        heartbeat_thread.start()
+
         # Run the task
         script.main()
+
+        heartbeat_stop.set()
+        heartbeat_thread.join(2)
 
         # Finished successfully
         sys.stdout = orig_stdout
@@ -161,7 +175,3 @@ def main():
         print(error_message)
         mongo.job.update(this_job, { '$set': { 'status': 'failed', 'end_time': datetime.datetime.utcnow(), 'exception': repr(e) } })
         sys.exit()
-
-
-if __name__ == '__main__':
-    main()
