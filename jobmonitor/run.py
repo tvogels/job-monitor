@@ -112,7 +112,7 @@ def main():
 
     # Rewire stdout and stderr to write to the output file
     orig_stdout = sys.stdout
-    logfile_path = os.path.join(output_dir_abs, 'output')
+    logfile_path = os.path.join(output_dir_abs, 'output.txt')
     logfile = open(logfile_path, 'w')
     print("Starting. Output redirected to {}".format(logfile_path))
     sys.stdout = logfile
@@ -173,7 +173,11 @@ def main():
         sys.stdout = orig_stdout
         print('Job failed. See {}'.format(logfile_path))
         print(error_message)
-        mongo.job.update(this_job, { '$set': { 'status': 'failed', 'end_time': datetime.datetime.utcnow(), 'exception': repr(e) } })
+        if isinstance(e, KeyboardInterrupt):
+            status = 'canceled'
+        else:
+            status='failed'
+        mongo.job.update(this_job, { '$set': { 'status': status, 'end_time': datetime.datetime.utcnow(), 'exception': repr(e) } })
         sys.exit()
 
 if __name__ == '__main__':

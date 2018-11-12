@@ -134,7 +134,7 @@ properties:
         type: object
         additionalProperties: false
         properties:
-          gpu: { type: integer }
+          gpus: { type: integer }
 """)
 
 if __name__ == '__main__':
