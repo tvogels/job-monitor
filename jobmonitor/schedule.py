@@ -48,7 +48,7 @@ def main():
             'project': specification['project'],
             'experiment': specification['experiment'],
             'job': job_spec['name'],
-            'config': job_spec['config'],
+            'config': job_spec.get('config', {}),
             'environment': specification['environment'],
             'scheduled_date': datetime.datetime.utcnow(),
             'status': 'scheduled',
@@ -103,7 +103,7 @@ properties:
     type: array
     items:
       type: object
-      required: [name, config]
+      required: [name]
       additionalProperties: false
       properties:
         name: { type: string }
