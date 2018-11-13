@@ -5,9 +5,22 @@ metadata:
   name: {{ user }}-{{ id_short }}
   labels:
     app: jobmonitor
-
+    user: "{{ user }}"
+    project: "{{ project }}"
+    experiment: "{{ experiment }}"
+    job: "{{ job }}"
+    job_id: "{{ id }}"
 spec:
   template:
+    metadata:
+      labels:
+        app: jobmonitor
+        user: "{{ user }}"
+        project: "{{ project }}"
+        experiment: "{{ experiment }}"
+        job: "{{ job }}"
+        job_id: "{{ id }}"
+
     spec:
       restartPolicy: Never
 
