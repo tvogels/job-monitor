@@ -75,23 +75,6 @@ def main():
         }}
     )
 
-    # Copy the files to run into the output directory
-    clone_info = job['environment']['clone']
-    if 'path' in clone_info:
-        if os.path.isdir(code_dir):
-            shutil.rmtree(code_dir)
-
-        # fill in any environment variables used in the path
-        clone_from = re.sub(
-            r"""\$([\w_]+)""",
-            lambda match: os.getenv(match.group(1)),
-            clone_info['path']
-        )
-
-        shutil.copytree(clone_from, code_dir)
-    else:
-        raise ValueError('Current, only the "path" clone approach is supported')
-
     # Create a telegraf client
     telegraf = TelegrafClient(
         host=os.getenv('JOBMONITOR_TELEGRAF_HOST'),
@@ -106,79 +89,114 @@ def main():
         }
     )
 
-    # Change directory to the right directory
-    os.chdir(code_dir)
-    sys.path.append(code_dir)
-
-    # Rewire stdout and stderr to write to the output file
-    orig_stdout = sys.stdout
-    logfile_path = os.path.join(output_dir_abs, 'output.txt')
-    logfile = open(logfile_path, 'w')
-    print("Starting. Output redirected to {}".format(logfile_path))
-    sys.stdout = logfile
-    sys.stderr = logfile
-
-    print("cwd: {}".format(code_dir))
-
-    try:
-        # Import the script specified in the
-        script = import_module(job['environment']['script'].strip('.py'))
-
-        # Override non-default config parameters
-        for key, value in job.get('config', {}).items():
-            script.config[key] = value
-
-        # Give the script access to all logging facilities
-        def log_info(info_dict):
-            mongo.job.update(
-                this_job,
-                {"$set": info_dict}
-            )
-        script.log_info = log_info
-        script.output_dir = output_dir_abs
-        script.log_metric = telegraf.metric
-
-        # Store the effective config used in the database
+    # Start sending regular heartbeat updates to the db
+    def send_heartbeat():
         mongo.job.update(
             this_job,
-            {"$set": {"config": script.config}}
+            {"$set": {"last_heartbeat_time": datetime.datetime.utcnow()}}
         )
-        # and in the output directory, just to be sure
-        with open(os.path.join(output_dir_abs, 'config.yml'), 'w') as fp:
-            yaml.dump(script.config, fp, default_flow_style=False)
+    heartbeat_stop, heartbeat_thread = IntervalTimer.create(send_heartbeat, 10)
+    heartbeat_thread.start()
 
-        # Heartbeat
-        def send_heartbeat():
+    try:
+        # Copy the files to run into the output directory
+        clone_info = job['environment']['clone']
+        if 'path' in clone_info:
+            # fill in any environment variables used in the path
+            clone_from = re.sub(
+                r"""\$([\w_]+)""",
+                lambda match: os.getenv(match.group(1)),
+                clone_info['path']
+            )
+            clone_directory(clone_from, code_dir)
+        else:
+            raise ValueError('Current, only the "path" clone approach is supported')
+
+        # Change directory to the right directory
+        os.chdir(code_dir)
+        sys.path.append(code_dir)
+
+        # Rewire stdout and stderr to write to the output file
+        orig_stdout = sys.stdout
+        logfile_path = os.path.join(output_dir_abs, 'output.txt')
+        logfile = open(logfile_path, 'w')
+        print("Starting. Output redirected to {}".format(logfile_path))
+        sys.stdout = logfile
+        sys.stderr = logfile
+
+        print("cwd: {}".format(code_dir))
+
+        try:
+            # Import the script specified in the
+            script = import_module(job['environment']['script'].strip('.py'))
+
+            # Override non-default config parameters
+            for key, value in job.get('config', {}).items():
+                script.config[key] = value
+
+            # Give the script access to all logging facilities
+            def log_info(info_dict):
+                mongo.job.update(
+                    this_job,
+                    {"$set": info_dict}
+                )
+            script.log_info = log_info
+            script.output_dir = output_dir_abs
+            script.log_metric = telegraf.metric
+
+            # Store the effective config used in the database
             mongo.job.update(
                 this_job,
-                {"$set": {"last_heartbeat_time": datetime.datetime.utcnow()}}
+                {"$set": {"config": script.config}}
             )
-        heartbeat_stop, heartbeat_thread = IntervalTimer.create(send_heartbeat, 10)
-        heartbeat_thread.start()
+            # and in the output directory, just to be sure
+            with open(os.path.join(output_dir_abs, 'config.yml'), 'w') as fp:
+                yaml.dump(script.config, fp, default_flow_style=False)
 
-        # Run the task
-        script.main()
+            # Run the task
+            script.main()
 
+            # Finished successfully
+            sys.stdout = orig_stdout
+            print('Job finished successfully')
+            mongo.job.update(this_job, { '$set': { 'status': 'finished', 'end_time': datetime.datetime.utcnow() } })
+
+        except Exception as e:
+            error_message = traceback.format_exc()
+            print(error_message)
+            sys.stdout = orig_stdout
+            print('Job failed. See {}'.format(logfile_path))
+            print(error_message)
+            if isinstance(e, KeyboardInterrupt):
+                status = 'canceled'
+            else:
+                status='failed'
+            mongo.job.update(this_job, { '$set': { 'status': status, 'end_time': datetime.datetime.utcnow(), 'exception': repr(e) } })
+
+    finally:
+        # Stop the heartbeat thread
         heartbeat_stop.set()
-        heartbeat_thread.join(2)
+        heartbeat_thread.join(timeout=1)
 
-        # Finished successfully
-        sys.stdout = orig_stdout
-        print('Job finished successfully')
-        mongo.job.update(this_job, { '$set': { 'status': 'finished', 'end_time': datetime.datetime.utcnow() } })
 
-    except Exception as e:
-        error_message = traceback.format_exc()
-        print(error_message)
-        sys.stdout = orig_stdout
-        print('Job failed. See {}'.format(logfile_path))
-        print(error_message)
-        if isinstance(e, KeyboardInterrupt):
-            status = 'canceled'
+def clone_directory(from_directory, to_directory, overwrite=True):
+    if os.path.isdir(to_directory):
+        if overwrite:
+            shutil.rmtree(to_directory)
         else:
-            status='failed'
-        mongo.job.update(this_job, { '$set': { 'status': status, 'end_time': datetime.datetime.utcnow(), 'exception': repr(e) } })
-        sys.exit()
+            raise RuntimeError('Cannot clone to an existing directory.')
+
+    # detect .jobignore file to skip certain patterns
+    ignore_file = os.path.join(from_directory, '.jobignore')
+    if os.path.isfile(ignore_file):
+        with open(ignore_file, 'r') as fp:
+            ignore_patterns = [p.strip() for p in fp.readlines()]
+            ignore_patterns = shutil.ignore_patterns(*ignore_patterns)
+    else:
+        ignore_patterns = None
+
+    shutil.copytree(from_directory, to_directory, ignore=ignore_patterns)
+
 
 if __name__ == '__main__':
     main()
