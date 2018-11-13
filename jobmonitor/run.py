@@ -27,7 +27,7 @@ It expects something fo the format:
 {
 	"_id" : ObjectId("5be59ae368999dde8ed9545d"),
 	"config" : { "n_layers" : 5 },
-	"initialization" : {
+	"environment" : {
 		"clone" : { "path" : "/mlo-container-scratch/vogels/dev/blabla" },
 		"script" : "train.py"
 	},
@@ -41,9 +41,9 @@ It expects something fo the format:
 It will
 - create an output directory
 - clone the code in there,
-- import the specified {initialization.script}
+- import the specified {environment.script}
 - override config with job-specific values (in this case n_layers->5)
-- run main() from the {initialization.script}
+- run main() from the {environment.script}
 """
 
 def main():
@@ -76,7 +76,7 @@ def main():
     )
 
     # Copy the files to run into the output directory
-    clone_info = job['initialization']['clone']
+    clone_info = job['environment']['clone']
     if 'path' in clone_info:
         if os.path.isdir(code_dir):
             shutil.rmtree(code_dir)
@@ -122,7 +122,7 @@ def main():
 
     try:
         # Import the script specified in the
-        script = import_module(job['initialization']['script'].strip('.py'))
+        script = import_module(job['environment']['script'].strip('.py'))
 
         # Override non-default config parameters
         for key, value in job.get('config', {}).items():

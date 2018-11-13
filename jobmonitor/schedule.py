@@ -49,7 +49,7 @@ def main():
             'experiment': specification['experiment'],
             'job': job_spec['name'],
             'config': job_spec['config'],
-            'initialization': specification['initialization'],
+            'environment': specification['environment'],
             'scheduled_date': datetime.datetime.utcnow(),
             'status': 'scheduled',
         }
@@ -93,7 +93,7 @@ def main():
 
 SPECIFICATION_SCHEMA = yaml.load("""
 type: object
-required: [user, project, experiment, jobs, initialization]
+required: [user, project, experiment, jobs, environment]
 additionalProperties: false
 properties:
   user: { type: string }
@@ -112,7 +112,7 @@ properties:
           type: object
           properties:
             description: { type: string }
-  initialization:
+  environment:
     type: object
     required: [clone, script]
     additionalProperties: false
