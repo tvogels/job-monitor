@@ -126,52 +126,51 @@ def main():
 
         print("cwd: {}".format(code_dir))
 
-        try:
-            # Import the script specified in the
-            script = import_module(job['environment']['script'].strip('.py'))
+        # Import the script specified in the
+        script = import_module(job['environment']['script'].strip('.py'))
 
-            # Override non-default config parameters
-            for key, value in job.get('config', {}).items():
-                script.config[key] = value
+        # Override non-default config parameters
+        for key, value in job.get('config', {}).items():
+            script.config[key] = value
 
-            # Give the script access to all logging facilities
-            def log_info(info_dict):
-                mongo.job.update(
-                    this_job,
-                    {"$set": info_dict}
-                )
-            script.log_info = log_info
-            script.output_dir = output_dir_abs
-            script.log_metric = telegraf.metric
-
-            # Store the effective config used in the database
+        # Give the script access to all logging facilities
+        def log_info(info_dict):
             mongo.job.update(
                 this_job,
-                {"$set": {"config": script.config}}
+                {"$set": info_dict}
             )
-            # and in the output directory, just to be sure
-            with open(os.path.join(output_dir_abs, 'config.yml'), 'w') as fp:
-                yaml.dump(script.config, fp, default_flow_style=False)
+        script.log_info = log_info
+        script.output_dir = output_dir_abs
+        script.log_metric = telegraf.metric
 
-            # Run the task
-            script.main()
+        # Store the effective config used in the database
+        mongo.job.update(
+            this_job,
+            {"$set": {"config": script.config}}
+        )
+        # and in the output directory, just to be sure
+        with open(os.path.join(output_dir_abs, 'config.yml'), 'w') as fp:
+            yaml.dump(script.config, fp, default_flow_style=False)
 
-            # Finished successfully
-            sys.stdout = orig_stdout
-            print('Job finished successfully')
-            mongo.job.update(this_job, { '$set': { 'status': 'finished', 'end_time': datetime.datetime.utcnow() } })
+        # Run the task
+        script.main()
 
-        except Exception as e:
-            error_message = traceback.format_exc()
-            print(error_message)
-            sys.stdout = orig_stdout
-            print('Job failed. See {}'.format(logfile_path))
-            print(error_message)
-            if isinstance(e, KeyboardInterrupt):
-                status = 'canceled'
-            else:
-                status='failed'
-            mongo.job.update(this_job, { '$set': { 'status': status, 'end_time': datetime.datetime.utcnow(), 'exception': repr(e) } })
+        # Finished successfully
+        sys.stdout = orig_stdout
+        print('Job finished successfully')
+        mongo.job.update(this_job, { '$set': { 'status': 'finished', 'end_time': datetime.datetime.utcnow() } })
+
+    except Exception as e:
+        error_message = traceback.format_exc()
+        print(error_message)
+        sys.stdout = orig_stdout
+        print('Job failed. See {}'.format(logfile_path))
+        print(error_message)
+        if isinstance(e, KeyboardInterrupt):
+            status = 'canceled'
+        else:
+            status='failed'
+        mongo.job.update(this_job, {'$set': { 'status': status, 'end_time': datetime.datetime.utcnow(), 'exception': repr(e) } })
 
     finally:
         # Stop the heartbeat thread
