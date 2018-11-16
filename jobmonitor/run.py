@@ -14,9 +14,9 @@ from time import sleep
 
 import yaml
 from bson.objectid import ObjectId
-from pymongo import MongoClient
 from telegraf.client import TelegrafClient
 
+from jobmonitor.connections import mongo
 from jobmonitor.utils import IntervalTimer
 
 
@@ -47,9 +47,6 @@ It will
 """
 
 def main():
-    mongo = getattr(MongoClient(host=os.getenv('JOBMONITOR_METADATA_HOST'), port=int(os.getenv('JOBMONITOR_METADATA_PORT'))), os.getenv('JOBMONITOR_METADATA_DB'))
-    telegraf = TelegrafClient(host=os.getenv('JOBMONITOR_TELEGRAF_HOST'), port=os.getenv('JOBMONITOR_TELEGRAF_PORT'))
-
     parser = ArgumentParser()
     parser.add_argument('job_id')
     args = parser.parse_args()
@@ -69,7 +66,7 @@ def main():
         this_job,
         {'$set': {
             'host': socket.gethostname(),
-            'status': 'running',
+            'status': 'RUNNING',
             'start_time': datetime.datetime.utcnow(),
             'output_dir': output_dir,
         }}
@@ -158,7 +155,7 @@ def main():
         # Finished successfully
         sys.stdout = orig_stdout
         print('Job finished successfully')
-        mongo.job.update(this_job, { '$set': { 'status': 'finished', 'end_time': datetime.datetime.utcnow() } })
+        mongo.job.update(this_job, { '$set': { 'status': 'FINISHED', 'end_time': datetime.datetime.utcnow() } })
 
     except Exception as e:
         error_message = traceback.format_exc()
@@ -167,9 +164,9 @@ def main():
         print('Job failed. See {}'.format(logfile_path))
         print(error_message)
         if isinstance(e, KeyboardInterrupt):
-            status = 'canceled'
+            status = 'CANCELED'
         else:
-            status='failed'
+            status='FAILED'
         mongo.job.update(this_job, {'$set': { 'status': status, 'end_time': datetime.datetime.utcnow(), 'exception': repr(e) } })
 
     finally:

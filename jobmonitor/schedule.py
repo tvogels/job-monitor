@@ -9,7 +9,7 @@ from argparse import ArgumentParser
 import jinja2
 from jsonschema import validate
 import yaml
-from pymongo import MongoClient
+from jobmonitor.connections import mongo
 
 
 """
@@ -22,12 +22,6 @@ def main():
     parser.add_argument('specification', help='File describing the jobs to be scheduled in the YAML format')
     parser.add_argument('-m', '--manual-scheduling', default=False, action='store_true', help='If set, we will just create the jobs, but not start them on a worker.')
     args = parser.parse_args()
-
-    # Connect to MongoDB
-    # This database is central in communicating the task to the worker
-    # We will store the task in the database and send just the job id to a worker for execution.
-    mongo = getattr(MongoClient(host=os.getenv('JOBMONITOR_METADATA_HOST'), port=int(
-        os.getenv('JOBMONITOR_METADATA_PORT'))), os.getenv('JOBMONITOR_METADATA_DB'))
 
     # Load the YAML document specifying how the
     specification = yaml.load(open(args.specification, 'r'))
@@ -50,8 +44,8 @@ def main():
             'job': job_spec['name'],
             'config': job_spec.get('config', {}),
             'environment': specification['environment'],
-            'scheduled_date': datetime.datetime.utcnow(),
-            'status': 'scheduled',
+            'status': 'SCHEDULED',
+            'schedule_time': datetime.datetime.utcnow(),
         }
         if 'annotations' in job_spec:
             job_content['annotations'] = job_spec['annotations']
