@@ -6,9 +6,10 @@ from argparse import ArgumentParser
 
 from jobmonitor.api import job_by_id, delete_job_by_id
 from jobmonitor.kill import kill_job_in_kubernetes
+from jobmonitor.connections import influx
 
 """
-Kill a job if it is running on kubernetes
+Delete all traces of a previously scheduled job (kubernetes, mongodb, influxdb, filesystem)
 """
 
 def main():
@@ -21,6 +22,9 @@ def main():
         kill_result = kill_job_in_kubernetes(job_id)
         if kill_result:
             print('- Killed job {} in Kubernetes'.format(kill_result))
+
+        influx.query("DELETE WHERE job_id='{}'".format(job_id))
+        print('- Deleted all traces of this job id in InfluxDB')
 
         job = job_by_id(job_id)
         if job:
