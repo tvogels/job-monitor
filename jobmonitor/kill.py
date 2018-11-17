@@ -4,6 +4,9 @@ import os
 from argparse import ArgumentParser
 
 import kubernetes
+from bson.objectid import ObjectId
+
+from jobmonitor.connections import mongo
 
 KUBERNETES_NAMESPACE = os.getenv('JOBMONITOR_KUBERNETES_NAMESPACE', default='mlo')
 
@@ -30,10 +33,14 @@ def kill_job_in_kubernetes(job_id):
     job_results = client.list_namespaced_job(KUBERNETES_NAMESPACE, label_selector="job_id="+job_id)
     if not job_results.items:
         return False
+
     job = job_results.items[0]
     name = job.metadata.name
     body = kubernetes.client.V1DeleteOptions()
     client.delete_namespaced_job(name, namespace=KUBERNETES_NAMESPACE, body=body)
+
+    # Set status to CANCELED in MongoDB if the job is still RUNNING
+    mongo.job.update({ '_id': ObjectId(job_id), 'status': 'RUNNING' }, { 'status': 'CANCELED' })
     return name
 
 
