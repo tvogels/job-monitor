@@ -40,7 +40,7 @@ def kill_job_in_kubernetes(job_id):
     client.delete_namespaced_job(name, namespace=KUBERNETES_NAMESPACE, body=body)
 
     # Set status to CANCELED in MongoDB if the job is still RUNNING
-    mongo.job.update({ '_id': ObjectId(job_id), 'status': 'RUNNING' }, { 'status': 'CANCELED' })
+    mongo.job.update({ '_id': ObjectId(job_id), 'status': 'RUNNING' }, { '$set': { 'status': 'CANCELED' } })
     return name
 
 
