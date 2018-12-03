@@ -3,6 +3,8 @@ import os
 from pymongo import MongoClient
 from influxdb import InfluxDBClient
 
+__all__ = ['mongo', 'influx']
+
 mongo_client = MongoClient(
     host=os.getenv('JOBMONITOR_METADATA_HOST'),
     port=int(os.getenv('JOBMONITOR_METADATA_PORT'))
