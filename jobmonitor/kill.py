@@ -21,9 +21,9 @@ def main():
 
     for job_id in args.job_ids:
         if kill_job_in_kubernetes(job_id):
-            print('Killed job', job_id)
+            print('Killed job {}'.format(job_id))
         else:
-            print('Job', job_id, 'was not running')
+            print('Job {} was not running'.format(job_id))
 
 
 def kill_job_in_kubernetes(job_id):

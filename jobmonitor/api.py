@@ -60,7 +60,7 @@ def register_job(project, experiment, job, config_overrides, runtime_environment
 def kubernetes_delete_job(kubernetes_job_name):
     kubernetes.config.load_kube_config()
     client = kubernetes.client.BatchV1Api()
-    body = kubernetes.client.V1DeleteOptions()
+    body = kubernetes.client.V1DeleteOptions(propagation_policy='Foreground')
     return client.delete_namespaced_job(kubernetes_job_name, namespace=KUBERNETES_NAMESPACE, body=body)
 
 
