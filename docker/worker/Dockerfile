@@ -17,6 +17,8 @@ RUN apt-get update && apt-get install -y \
     vim \
     wget \
     zsh \
+    libssl-dev \
+    libffi-dev \
  && rm -rf /var/lib/apt/lists/*
 
 # Set the locale to en_US

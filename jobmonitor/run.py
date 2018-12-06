@@ -16,7 +16,7 @@ import yaml
 from bson.objectid import ObjectId
 from telegraf.client import TelegrafClient
 
-from jobmonitor.connections import mongo
+from jobmonitor.api import job_by_id, update_job
 from jobmonitor.utils import IntervalTimer
 
 
@@ -50,10 +50,9 @@ def main():
     parser = ArgumentParser()
     parser.add_argument('job_id')
     args = parser.parse_args()
-    this_job = {'_id': ObjectId(args.job_id)}
 
     # Retrieve the job description
-    job = mongo.job.find_one({'_id': ObjectId(args.job_id)})
+    job = job_by_id(args.job_id)
 
     # Create an output directory
     output_dir = os.path.join(job['project'], job['experiment'], job['job'] + '_' + str(job['_id'])[-6:])
@@ -62,15 +61,12 @@ def main():
     code_dir = os.path.join(output_dir_abs, 'code')
 
     # Set job to 'started' in MongoDB
-    mongo.job.update(
-        this_job,
-        {'$set': {
-            'host': socket.gethostname(),
-            'status': 'RUNNING',
-            'start_time': datetime.datetime.utcnow(),
-            'output_dir': output_dir,
-        }}
-    )
+    update_job(args.job_id, {
+        'host': socket.gethostname(),
+        'status': 'RUNNING',
+        'start_time': datetime.datetime.utcnow(),
+        'output_dir': output_dir,
+    })
 
     # Create a telegraf client
     telegraf = TelegrafClient(
@@ -87,12 +83,10 @@ def main():
     )
 
     # Start sending regular heartbeat updates to the db
-    def send_heartbeat():
-        mongo.job.update(
-            this_job,
-            {"$set": {"last_heartbeat_time": datetime.datetime.utcnow()}}
-        )
-    heartbeat_stop, heartbeat_thread = IntervalTimer.create(send_heartbeat, 10)
+    heartbeat_stop, heartbeat_thread = IntervalTimer.create(
+        lambda: update_job(args.job_id, { 'last_heartbeat_time': datetime.datetime.utcnow() }),
+        10
+    )
     heartbeat_thread.start()
 
     try:
@@ -132,19 +126,15 @@ def main():
 
         # Give the script access to all logging facilities
         def log_info(info_dict):
-            mongo.job.update(
-                this_job,
-                {"$set": info_dict}
-            )
+            update_job(args.job_id, info_dict)
+
         script.log_info = log_info
         script.output_dir = output_dir_abs
         script.log_metric = telegraf.metric
 
         # Store the effective config used in the database
-        mongo.job.update(
-            this_job,
-            {"$set": {"config": script.config}}
-        )
+        update_job(args.job_id, { 'config': script.config })
+
         # and in the output directory, just to be sure
         with open(os.path.join(output_dir_abs, 'config.yml'), 'w') as fp:
             yaml.dump(script.config, fp, default_flow_style=False)
@@ -155,7 +145,10 @@ def main():
         # Finished successfully
         sys.stdout = orig_stdout
         print('Job finished successfully')
-        mongo.job.update(this_job, { '$set': { 'status': 'FINISHED', 'end_time': datetime.datetime.utcnow() } })
+        update_job(args.job_id, {
+            'status': 'FINISHED',
+            'end_time': datetime.datetime.utcnow()
+        })
 
     except Exception as e:
         error_message = traceback.format_exc()
@@ -167,7 +160,11 @@ def main():
             status = 'CANCELED'
         else:
             status='FAILED'
-        mongo.job.update(this_job, {'$set': { 'status': status, 'end_time': datetime.datetime.utcnow(), 'exception': repr(e) } })
+        update_job(args.job_id, {
+            'status': status,
+            'end_time': datetime.datetime.utcnow(),
+            'exception': repr(e),
+        })
 
     finally:
         # Stop the heartbeat thread

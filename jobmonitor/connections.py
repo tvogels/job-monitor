@@ -3,7 +3,11 @@ import os
 from pymongo import MongoClient
 from influxdb import InfluxDBClient
 
-__all__ = ['mongo', 'influx']
+
+KUBERNETES_NAMESPACE = os.getenv('JOBMONITOR_KUBERNETES_NAMESPACE', default='mlo')
+
+
+__all__ = ['mongo', 'influx', 'KUBERNETES_NAMESPACE']
 
 mongo_client = MongoClient(
     host=os.getenv('JOBMONITOR_METADATA_HOST'),
