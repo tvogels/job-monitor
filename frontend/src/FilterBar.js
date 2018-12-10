@@ -1,5 +1,5 @@
+import { ButtonGroup, FormGroup, NumericInput } from '@blueprintjs/core';
 import React from 'react';
-import { FormGroup, NumericInput, ButtonGroup } from '@blueprintjs/core';
 import { NavLink } from "react-router-dom";
 
 const FilterBar = ({ filter, setFilter, limit, setLimit, statusFilter, setStatusFilter, style }) => (

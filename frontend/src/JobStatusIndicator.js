@@ -1,5 +1,5 @@
-import React from 'react';
 import { Icon, Intent, Tooltip } from "@blueprintjs/core";
+import React from 'react';
 
 const JobStatusIndicator = ({ status, exception }) => {
     let icon;

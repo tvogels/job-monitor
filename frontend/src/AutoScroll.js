@@ -1,7 +1,7 @@
+import createReactClass from 'create-react-class';
+import PropTypes from 'prop-types';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import createReactClass from 'create-react-class'
-import PropTypes from 'prop-types';
 
 export default function AutoScroll (options) {
   var property = options.property

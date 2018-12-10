@@ -1,15 +1,15 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import App from './App';
-import * as serviceWorker from './serviceWorker';
-import ApolloClient from 'apollo-boost';
-import { ApolloProvider } from "react-apollo";
-import {defaults, resolvers} from './resolvers';
-
-import 'normalize.css/normalize.css';
 import "@blueprintjs/core/lib/css/blueprint.css";
 import "@blueprintjs/icons/lib/css/blueprint-icons.css";
+import ApolloClient from 'apollo-boost';
+import 'normalize.css/normalize.css';
+import React from 'react';
+import { ApolloProvider } from "react-apollo";
+import ReactDOM from 'react-dom';
+import App from './App';
 import './index.css';
+import { defaults, resolvers } from './resolvers';
+import * as serviceWorker from './serviceWorker';
+
 
 const client = new ApolloClient({
     uri: "http://localhost:4000/graphql",

@@ -1,9 +1,9 @@
-import React from 'react';
-import gql from 'graphql-tag';
-import { Query } from 'react-apollo';
-import { HideUnderscores } from './utils';
 import { TextArea } from '@blueprintjs/core';
+import gql from 'graphql-tag';
+import React from 'react';
+import { Query } from 'react-apollo';
 import AutoScroll from './AutoScroll';
+import { HideUnderscores } from './utils';
 
 const JOB_LOGS = gql`
   query Job($id: ID!) {

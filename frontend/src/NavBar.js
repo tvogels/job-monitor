@@ -1,7 +1,7 @@
+import { Checkbox, Icon, ProgressBar, Tooltip } from '@blueprintjs/core';
 import React from 'react';
-import { Checkbox, ProgressBar, Icon, Tooltip } from '@blueprintjs/core';
 import JobStatusIndicator from './JobStatusIndicator';
-import { copyToClipboard, HideUnderscores } from './utils'
+import { copyToClipboard, HideUnderscores } from './utils';
 
 export class NavBarGroup extends React.PureComponent {
     render() {

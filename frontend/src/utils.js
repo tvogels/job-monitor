@@ -1,6 +1,6 @@
+import { Spinner as BlueprintSpinner } from '@blueprintjs/core';
 import React from 'react';
 import styled from 'styled-components';
-import { Spinner as BlueprintSpinner } from '@blueprintjs/core';
 
 export function copyToClipboard(str) {
     const el = document.createElement('textarea');

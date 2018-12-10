@@ -1,11 +1,11 @@
-import React from 'react';
+import { Icon } from "@blueprintjs/core";
+import { scaleOrdinal } from "d3-scale";
+import { schemeCategory10, schemeSpectral } from "d3-scale-chromatic";
 import gql from 'graphql-tag';
+import React from 'react';
 import { Query } from 'react-apollo';
 import styled from 'styled-components';
 import { HideUnderscores, Spinner } from './utils';
-import { schemeCategory10, schemeSpectral } from "d3-scale-chromatic";
-import { scaleOrdinal } from "d3-scale";
-import { Icon } from "@blueprintjs/core";
 
 const CONFIG_QUERY = gql`
   query Job($ids: [ID]) {

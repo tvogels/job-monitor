@@ -1,15 +1,15 @@
-import React, { Component, useState } from 'react';
 import gql from 'graphql-tag';
+import React, { Component, useState } from 'react';
 import { Query } from 'react-apollo';
+import { BrowserRouter as Router, Redirect, Route } from 'react-router-dom';
+import styled from 'styled-components';
 import { groupBy } from 'underscore';
-import { NavBarGroup, NavBarLine } from './NavBar';
+import ConfigPage from './ConfigPage';
 import FilterBar from './FilterBar';
 import LogsPage from './LogsPage';
-import ConfigPage from './ConfigPage';
-import { BrowserRouter as Router, Route, Redirect } from 'react-router-dom';
-import styled from 'styled-components';
+import { NavBarGroup, NavBarLine } from './NavBar';
+import TimeseriesPage from './TimeseriesPage';
 import { Spinner } from './utils';
-
 
 const GET_JOBS = gql`
   query Job($nameFilter: String!, $limit: Int!, $status: Status) {
@@ -110,6 +110,7 @@ const App = ({ selectedJobs, toggleHandler }) => {
                   )} />
                   <Route exact path="/logs" component={(props) => <LogsPage {...props} jobs={data.jobs.filter(j => selectedJobs.includes(j.id))} />} />
                   <Route exact path="/config" component={(props) => <ConfigPage {...props} jobIds={selectedJobs} />} />
+                  <Route exact path="/timeseries" component={(props) => <TimeseriesPage {...props} jobIds={selectedJobs} />} />
                 </Main>
               </div>
             );
