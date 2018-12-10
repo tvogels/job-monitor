@@ -60,7 +60,7 @@ def main():
     os.makedirs(output_dir_abs, exist_ok=True)
     code_dir = os.path.join(output_dir_abs, 'code')
 
-    # Set job to 'started' in MongoDB
+    # Set job to 'RUNNING' in MongoDB
     update_job(args.job_id, {
         'host': socket.gethostname(),
         'status': 'RUNNING',
