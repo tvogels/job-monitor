@@ -115,7 +115,7 @@ const ConfigTableRow = ({ field, children }) => {
     );
 };
 
-class ConfigTable extends React.Component {
+class ConfigTable extends React.PureComponent {
     render() {
         const { jobs } = this.props;
         const fields = new Set();
