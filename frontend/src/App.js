@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import gql from 'graphql-tag';
 import { Query } from 'react-apollo';
 import { groupBy } from 'underscore';
@@ -32,22 +32,17 @@ const Main = styled.div`
   overflow: auto;
 `;
 
-class App extends Component {
+class AppWithSelectedJobs extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      filter: '',
-      limit: 25,
-      statusFilter: '',
       selectedJobs: [],
     };
     this.selectJob = this.selectJob.bind(this);
     this.unselectJob = this.unselectJob.bind(this);
     this.toggleJob = this.toggleJob.bind(this);
     this.isSelected = this.isSelected.bind(this);
-    this.setFilter = this.setFilter.bind(this);
-    this.setLimit = this.setLimit.bind(this);
-    this.setStatusFilter = this.setStatusFilter.bind(this);
+    this.toggleHandler = this.toggleHandler.bind(this);
     this.toggleHandlers = new Map();
   }
   toggleJob(jobId) {
@@ -66,15 +61,6 @@ class App extends Component {
   isSelected(jobId) {
     return this.state.selectedJobs.includes(jobId);
   }
-  setFilter(filter) {
-    this.setState({ filter })
-  }
-  setLimit(limit) {
-    this.setState({ limit })
-  }
-  setStatusFilter(status) {
-    this.setState({ status })
-  }
   toggleHandler(jobId) {
     if (!this.toggleHandlers.has(jobId)) {
       this.toggleHandlers.set(jobId, this.toggleJob.bind(this, jobId));
@@ -82,56 +68,60 @@ class App extends Component {
     return this.toggleHandlers.get(jobId);
   }
   render() {
-    return (
-      <Router>
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-          <FilterBar
-            filter={this.state.filter}
-            limit={this.state.limit}
-            statusFilter={this.state.statusFilter}
-            setFilter={this.setFilter}
-            setLimit={this.setLimit}
-            setStatusFilter={this.setStatusFilter}
-            style={{ padding: '1em', paddingBottom: '0em', flexShrink: 0, flexGrow: 0, backgroundColor: 'rgba(0,0,0,0.2)' }}
-          />
-          <Query
-            query={GET_JOBS}
-            variables={{ nameFilter: '.*' + this.state.filter + '.*', limit: this.state.limit, status: this.state.statusFilter === '' ? undefined : this.state.statusFilter }}
-            pollInterval={10000}
-          >
-            {({ loading, error, data }) => {
-              if (loading) return <Main><Spinner /></Main>;
-              if (error) return <Main><p>Error :( {error}</p></Main>;
-              return (
-                <div style={{ flexGrow: 1, flexShrink: 1, display: 'flex' }}>
-                  <div className="navbar" style={{ padding: '1em', paddingTop: 0, paddingRight: '1.2em', overflow: 'auto', backgroundColor: 'rgba(0,0,0,0.1)', minWidth: '25em', flexShrink: 0 }}>
-                    {jobsByExperiment(data.jobs).map(([experiment, jobs]) => (
-                      <NavBarGroup experiment={experiment} key={experiment}>
-                        {jobs.map(job => (
-                          <NavBarLine key={job.id} {...job} isSelected={this.isSelected(job.id)} toggle={this.toggleHandler(job.id)} />
-                        ))}
-                      </NavBarGroup>
-                    ))}
-                  </div>
-                  <Main>
-                    <Route exact path="/" render={() => (
-                      <Redirect to="/config" />
-                    )} />
-                    <Route exact path="/logs" component={(props) => <LogsPage {...props} jobs={data.jobs.filter(j => this.state.selectedJobs.includes(j.id))} />} />
-                    <Route exact path="/config" component={(props) => <ConfigPage {...props} jobIds={this.state.selectedJobs} />} />
-                  </Main>
-                </div>
-              );
-            }}
-          </Query>
-        </div>
-      </Router>
-    );
+    return <App selectedJobs={this.state.selectedJobs} toggleHandler={this.toggleHandler} />
   }
+};
+
+const App = ({ selectedJobs, toggleHandler }) => {
+  const [filter, setFilter] = useState('');
+  const [limit, setLimit] = useState(25);
+  const [statusFilter, setStatusFilter] = useState('');
+  return (
+    <Router>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+        <FilterBar
+          filter={filter} setFilter={setFilter}
+          limit={limit} setLimit={setLimit}
+          statusFilter={statusFilter} setStatusFilter={setStatusFilter}
+          style={{ padding: '1em', paddingBottom: '0em', flexShrink: 0, flexGrow: 0, backgroundColor: 'rgba(0,0,0,0.2)' }}
+        />
+        <Query
+          query={GET_JOBS}
+          variables={{ nameFilter: '.*' + filter + '.*', limit: limit, status: statusFilter === '' ? undefined : statusFilter }}
+          pollInterval={10000}
+        >
+          {({ loading, error, data }) => {
+            if (loading) return <Main><Spinner /></Main>;
+            if (error) return <Main><p>Error :( {error}</p></Main>;
+            return (
+              <div style={{ flexGrow: 1, flexShrink: 1, display: 'flex' }}>
+                <div className="navbar" style={{ padding: '1em', paddingTop: 0, paddingRight: '1.2em', overflow: 'auto', backgroundColor: 'rgba(0,0,0,0.1)', minWidth: '25em', flexShrink: 0 }}>
+                  {jobsByExperiment(data.jobs).map(([experiment, jobs]) => (
+                    <NavBarGroup experiment={experiment} key={experiment}>
+                      {jobs.map(job => (
+                        <NavBarLine key={job.id} {...job} isSelected={selectedJobs.includes(job.id)} toggle={toggleHandler(job.id)} />
+                      ))}
+                    </NavBarGroup>
+                  ))}
+                </div>
+                <Main>
+                  <Route exact path="/" render={() => (
+                    <Redirect to="/config" />
+                  )} />
+                  <Route exact path="/logs" component={(props) => <LogsPage {...props} jobs={data.jobs.filter(j => selectedJobs.includes(j.id))} />} />
+                  <Route exact path="/config" component={(props) => <ConfigPage {...props} jobIds={selectedJobs} />} />
+                </Main>
+              </div>
+            );
+          }}
+        </Query>
+      </div>
+    </Router>
+  );
 };
 
 function jobsByExperiment(jobs) {
   return Object.entries(groupBy(jobs, job => job.experiment));
 }
 
-export default App;
+export default AppWithSelectedJobs;
