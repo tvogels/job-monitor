@@ -1,0 +1,54 @@
+import React from 'react';
+import ReactDOM from 'react-dom';
+import createReactClass from 'create-react-class'
+import PropTypes from 'prop-types';
+
+export default function AutoScroll (options) {
+  var property = options.property
+
+  return function (Component) {
+    var displayName = Component.displayName || Component.name || 'Component'
+
+    var propTypes = {}
+    propTypes[property] = PropTypes.any
+
+    var AutoScrollComponent = createReactClass({
+      componentDidMount: function componentDidMount () {
+        var node = this._node
+        node.scrollTop = node.scrollHeight
+        this._shouldScroll = false
+      },
+
+      componentDidUpdate: function componentDidUpdate (prevProps) {
+        if (this._shouldScroll) {
+          var node = this._node
+          node.scrollTop = node.scrollHeight
+          this._shouldScroll = false
+        }
+      },
+
+      componentWillUpdate: function componentWillUpdate (nextProps) {
+        if (this.props[property] !== nextProps[property]) {
+          var node = this._node
+          this._shouldScroll = node.scrollTop + node.offsetHeight === node.scrollHeight
+        }
+      },
+
+      displayName: 'AutoScroll(' + displayName + ')',
+
+      propTypes: propTypes,
+
+      render: function render () {
+        var props = Object.assign({ ref: this._setComponent }, this.props)
+        return React.createElement(Component, props)
+      },
+
+      _setComponent: function _setComponent (component) {
+        this._component = component
+        this._node = ReactDOM.findDOMNode(component)
+      }
+    })
+
+    return AutoScrollComponent
+  }
+}
