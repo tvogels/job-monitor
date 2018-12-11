@@ -9,7 +9,6 @@ import FilterBar from './FilterBar';
 import LogsPage from './LogsPage';
 import { NavBarGroup, NavBarLine } from './NavBar';
 import TimeseriesPage from './TimeseriesPage';
-import { Spinner } from './utils';
 
 const GET_JOBS = gql`
   query Job($nameFilter: String!, $limit: Int!, $status: Status) {
@@ -91,7 +90,6 @@ const App = ({ selectedJobs, toggleHandler }) => {
           pollInterval={10000}
         >
           {({ loading, error, data }) => {
-            if (loading) return <Main><Spinner /></Main>;
             if (error) return <Main><p>Error :( {error}</p></Main>;
             return (
               <div style={{ flexGrow: 1, flexShrink: 1, display: 'flex' }}>
@@ -108,9 +106,9 @@ const App = ({ selectedJobs, toggleHandler }) => {
                   <Route exact path="/" render={() => (
                     <Redirect to="/config" />
                   )} />
-                  <Route exact path="/logs" component={(props) => <LogsPage {...props} jobs={data.jobs.filter(j => selectedJobs.includes(j.id))} />} />
-                  <Route exact path="/config" component={(props) => <ConfigPage {...props} jobIds={selectedJobs} />} />
-                  <Route exact path="/timeseries" component={(props) => <TimeseriesPage {...props} jobIds={selectedJobs} />} />
+                  <Route exact path="/logs" render={(props) => <LogsPage {...props} jobs={data.jobs.filter(j => selectedJobs.includes(j.id))} />} />
+                  <Route exact path="/config" render={(props) => <ConfigPage {...props} jobIds={selectedJobs} />} />
+                  <Route exact path="/timeseries" render={(props) => <TimeseriesPage {...props} jobIds={selectedJobs} />} />
                 </Main>
               </div>
             );
