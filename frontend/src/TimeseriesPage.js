@@ -327,135 +327,141 @@ const FacetChartController = ({ jobIds }) => {
 };
 
 
-const FacetChart = ({ curves, hue='jobId', row, col, pattern, xValue='epoch', yValue='value', xmin, xmax, ymin, ymax, lineOpacity=0.6 }) => (
-  <ParentSize style={{flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-    {parent => {
-      if (curves.length === 0) {
-        return <div>Requires at least one curve.</div>;
+const FacetChart = ({ curves, hue='jobId', row, col, pattern, xValue='epoch', yValue='value', xmin, xmax, ymin, ymax, lineOpacity=0.6 }) => {
+  if (curves.length === 0) {
+    return null;
+  }
+  const rowDomain = Array.from(new Set(curves.map(e => e.properties[row]))).sort();
+  const colDomain = Array.from(new Set(curves.map(e => e.properties[col]))).sort();
+  const ncols = colDomain.length;
+  const nrows = rowDomain.length;
+
+  const x = (d) => d[xValue];
+  const y = (d) => d[yValue];
+  const xExtent = extent(curves.map(e => e.values).flat(), x);
+  const yExtent = extent(curves.map(e => e.values).flat(), y);
+  const xDomain = [xmin || xExtent[0], xmax || xExtent[1]];
+  const yDomain = [ymin || yExtent[0], ymax || yExtent[1]];
+  const hueDomain = Array.from(new Set(curves.map(e => e.properties[hue]))).sort();
+  const patternDomain = Array.from(new Set(curves.map(e => e.properties[pattern]))).sort();
+  const hueScale = hue ? scaleOrdinal(schemeCategory10).domain(hueDomain) : null;
+  const patternScale = pattern ? scaleOrdinal([null, [5, 5], [2, 2], [8, 4]]).domain(patternDomain) : null;
+
+  return (
+    <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', flexDirection: 'row' }}>
+        <div style={{marginRight: '1em'}}>{hue.replace(/[-_]/g, ' ')}:</div>
+        <LegendOrdinal
+          scale={hueScale}
+          domain={hueDomain}
+          direction="row"
+          style={{display: 'flex', flexWrap: 'wrap'}}
+          labelMargin="0 20px 0 0"
+        />
+      </div>
+      { pattern ?
+        <div style={{ display: 'flex', flexDirection: 'row', paddingTop: '.5em' }}>
+          <div style={{marginRight: '1em'}}>{pattern.replace(/[-_]/g, ' ')}:</div>
+          {patternDomain.map(pattern => (
+            <div key={pattern} style={{ marginRight: '1.5em' }}>
+              <svg width={20} height={9}><line x1="0" y1="5" x2="15" y2="5" stroke="rgb(221, 226, 229)" strokeWidth={2} strokeDasharray={patternScale(pattern)} /></svg> {pattern}
+            </div>
+          ))}
+        </div>
+        : null
       }
+      <ParentSize style={{flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+          {parent => {
+            const margin = { left: 60, right: 40, top: col != null ? 40 : 15, bottom: 60, row: 30, col: 30 };
 
-      const rowDomain = Array.from(new Set(curves.map(e => e.properties[row]))).sort();
-      const colDomain = Array.from(new Set(curves.map(e => e.properties[col]))).sort();
-      const ncols = colDomain.length;
-      const nrows = rowDomain.length;
+            const cellHeight = Math.round((parent.height - margin.top - margin.bottom + margin.row) / nrows - margin.row);
+            const cellWidth = Math.round((parent.width - margin.left - margin.right + margin.col) / ncols - margin.col);
+            let height = parent.height;
+            let width = parent.width;
 
-      const margin = { left: 60, right: 40, top: 60, bottom: 60, row: 30, col: 30 };
-      // const cellHeight = Math.min(300, Math.round((parent.height - margin.top - margin.bottom + margin.row) / nrows - margin.row));
-      // let height = cellHeight * nrows + margin.top + margin.bottom + margin.row * (nrows - 1);
-      // const idealWidth = 1.61803398875 * cellHeight;
-      // let cellWidth;
-      // let width;
-      // if ((idealWidth * ncols + margin.col * (ncols - 1) + margin.left + margin.right) < parent.width) {
-      //   cellWidth = idealWidth;
-      //   width = idealWidth * ncols + margin.col * (ncols - 1) + margin.left + margin.right;
-      // } else {
-      //   width = parent.width;
-      //   cellWidth = Math.round((parent.width - margin.left - margin.right + margin.col) / ncols - margin.col);
-      // }
+            const xScale = scaleLinear().domain(xDomain).rangeRound([0, cellWidth]);
+            const yScale = scaleLinear().domain(yDomain).rangeRound([cellHeight, 0]).nice();
 
-      const cellHeight = Math.round((parent.height - margin.top - margin.bottom + margin.row) / nrows - margin.row);
-      const cellWidth = Math.round((parent.width - margin.left - margin.right + margin.col) / ncols - margin.col);
-      let height = parent.height;
-      let width = parent.width;
+            const numTicksRows = Math.max(2, cellHeight / 50);
+            const numTicksColumns = Math.max(2, cellWidth / 50);
 
-      const x = (d) => d[xValue];
-      const y = (d) => d[yValue];
-      const xExtent = extent(curves.map(e => e.values).flat(), x);
-      const yExtent = extent(curves.map(e => e.values).flat(), y);
-      const xDomain = [xmin || xExtent[0], xmax || xExtent[1]];
-      const yDomain = [ymin || yExtent[0], ymax || yExtent[1]];
-      const xScale = scaleLinear().domain(xDomain).rangeRound([0, cellWidth]);
-      const yScale = scaleLinear().domain(yDomain).rangeRound([cellHeight, 0]).nice();
-      const hueDomain = Array.from(new Set(curves.map(e => e.properties[hue]))).sort();
-      const hueScale = hue ? scaleOrdinal(schemeCategory10).domain(hueDomain) : null;
-      const patternScale = pattern ? scaleOrdinal([null, [5, 5], [2, 2], [8, 4]]).domain(curves.map(e => e.properties[pattern])) : null;
-
-      const numTicksRows = Math.max(2, cellHeight / 50);
-      const numTicksColumns = Math.max(2, cellWidth / 50);
-      return (
-        <div style={{ flexGrow: 1, position: 'relative' }}>
-          <LegendOrdinal
-            style={{ position: 'absolute', top: 5, left: 5, right: 5, color: 'rgb(221, 226, 229)', display: 'flex', flexDirection: 'row' }}
-            scale={hueScale}
-            domain={hueDomain}
-            direction="row"
-            labelMargin="0 20px 0 0"
-          />
-          <svg height={height} width={width}>
-            {/* <rect x={0} y={0} width={width} height={height} fill="#fff" rx={2} /> */}
-            { colDomain.map((colValue, colIdx) => (
-              <AxisBottom
-                key={colIdx}
-                scale={xScale}
-                numTicks={numTicksColumns}
-                top={height - margin.bottom + 5}
-                left={margin.left + colIdx * (cellWidth + margin.col)}
-                label="Epochs"
-                hideZero
-                stroke="rgb(221, 226, 229)"
-                tickStroke="rgb(221, 226, 229)"
-                labelProps={{ textAnchor: 'middle', fontFamily: fontFamily, fontSize: 10, fill: 'rgb(221, 226, 229)' }}
-                tickLabelProps={(val, i) => ({ dy: '0.25em', textAnchor: 'middle', fontFamily: fontFamily, fontSize: 10, fill: 'rgb(221, 226, 229)' })}
-              />
-            ))}
-            { rowDomain.map((rowValue, rowIdx) => (
-              <AxisLeft
-                key={rowIdx}
-                scale={yScale}
-                numTicks={numTicksRows}
-                top={margin.top + rowIdx * (margin.row + cellHeight)}
-                left={margin.left - 5}
-                // label={measurement.replace(/[_-]/g, ' ').replace('|', ' / ')}
-                stroke="rgb(221, 226, 229)"
-                tickStroke="rgb(221, 226, 229)"
-                labelProps={{ textAnchor: 'middle', fontFamily: fontFamily, fontSize: 10, fill: 'rgb(221, 226, 229)' }}
-                tickLabelProps={(val, i) => ({ dx: '-0.25em', dy: '0.25em', textAnchor: 'end', fontFamily: fontFamily, fontSize: 10, fill: 'rgb(221, 226, 229)' })}
-              />
-            ))}
-            { col != null ? colDomain.map((colValue, colIdx) => (
-              <Text fill="rgb(221, 226, 229)" fontFamily={fontFamily} key={colIdx} textAnchor="middle" y={margin.top - 15} x={margin.left + cellWidth / 2 + colIdx * (cellWidth + margin.col)}>{`${colValue}`.replace(/[-_]/g, ' ')}</Text>
-            )) : null}
-            { row != null ? rowDomain.map((rowValue, rowIdx) => (
-              <Text fill="rgb(221, 226, 229)" fontFamily={fontFamily} key={rowIdx} textAnchor="middle" angle={90} x={width - margin.right + 15} y={margin.top + cellHeight / 2 + rowIdx * (cellHeight + margin.row)}>{`${rowValue}`.replace(/[-_]/g, ' ')}</Text>
-            )) : null}
-            { rowDomain.map((rowValue, rowIdx) => (
-              <Group key={rowIdx} top={margin.top + rowIdx * (margin.row + cellHeight)}>
+            return (
+              <svg height={height} width={width}>
+                {/* <rect x={0} y={0} width={width} height={height} fill="#fff" rx={2} /> */}
                 { colDomain.map((colValue, colIdx) => (
-                  <Group key={colIdx} left={margin.left + colIdx * (margin.col + cellWidth)}>
-                    <rect fill="rgb(62, 78, 91)" width={cellWidth} height={cellHeight} />
-                    <Grid
-                      xScale={xScale}
-                      yScale={yScale}
-                      stroke="rgb(50, 63, 76"
-                      numTicksRows={numTicksRows}
-                      numTicksColumns={numTicksColumns}
-                      width={cellWidth}
-                      height={cellHeight}
-                    />
-                    {curves.filter(e => e.properties[row] === rowValue && e.properties[col] === colValue).map(entry => (
-                      <LinePath
-                        key={entry.entryId}
-                        data={entry.values}
-                        defined={(d) => (y(d) >= yDomain[0] && y(d) <= yDomain[1] && x(d) >= xDomain[0] && x(d) <= xDomain[1])}
-                        x={d => xScale(x(d))} y={d => yScale(y(d))}
-                        stroke={hue ? hueScale(entry.properties[hue]): '#000'}
-                        strokeDasharray={pattern ? patternScale(entry.properties[pattern]) : null}
-                        opacity={lineOpacity}
-                        strokeWidth={2}
-                        curve={curveBasis}
-                      />
+                  <AxisBottom
+                    key={colIdx}
+                    scale={xScale}
+                    numTicks={numTicksColumns}
+                    top={height - margin.bottom + 5}
+                    left={margin.left + colIdx * (cellWidth + margin.col)}
+                    label="Epochs"
+                    hideZero
+                    stroke="rgb(221, 226, 229)"
+                    tickStroke="rgb(221, 226, 229)"
+                    labelProps={{ textAnchor: 'middle', fontFamily: fontFamily, fontSize: 10, fill: 'rgb(221, 226, 229)' }}
+                    tickLabelProps={(val, i) => ({ dy: '0.25em', textAnchor: 'middle', fontFamily: fontFamily, fontSize: 10, fill: 'rgb(221, 226, 229)' })}
+                  />
+                ))}
+                { rowDomain.map((rowValue, rowIdx) => (
+                  <AxisLeft
+                    key={rowIdx}
+                    scale={yScale}
+                    numTicks={numTicksRows}
+                    top={margin.top + rowIdx * (margin.row + cellHeight)}
+                    left={margin.left - 5}
+                    // label={measurement.replace(/[_-]/g, ' ').replace('|', ' / ')}
+                    stroke="rgb(221, 226, 229)"
+                    tickStroke="rgb(221, 226, 229)"
+                    labelProps={{ textAnchor: 'middle', fontFamily: fontFamily, fontSize: 10, fill: 'rgb(221, 226, 229)' }}
+                    tickLabelProps={(val, i) => ({ dx: '-0.25em', dy: '0.25em', textAnchor: 'end', fontFamily: fontFamily, fontSize: 10, fill: 'rgb(221, 226, 229)' })}
+                  />
+                ))}
+                { col != null ? colDomain.map((colValue, colIdx) => (
+                  <Text fill="rgb(221, 226, 229)" fontFamily={fontFamily} key={colIdx} textAnchor="middle" y={margin.top - 15} x={margin.left + cellWidth / 2 + colIdx * (cellWidth + margin.col)}>{`${colValue}`.replace(/[-_]/g, ' ')}</Text>
+                )) : null}
+                { row != null ? rowDomain.map((rowValue, rowIdx) => (
+                  <Text fill="rgb(221, 226, 229)" fontFamily={fontFamily} key={rowIdx} textAnchor="middle" angle={90} x={width - margin.right + 15} y={margin.top + cellHeight / 2 + rowIdx * (cellHeight + margin.row)}>{`${rowValue}`.replace(/[-_]/g, ' ')}</Text>
+                )) : null}
+                { rowDomain.map((rowValue, rowIdx) => (
+                  <Group key={rowIdx} top={margin.top + rowIdx * (margin.row + cellHeight)}>
+                    { colDomain.map((colValue, colIdx) => (
+                      <Group key={colIdx} left={margin.left + colIdx * (margin.col + cellWidth)}>
+                        <rect fill="rgb(62, 78, 91)" width={cellWidth} height={cellHeight} />
+                        <Grid
+                          xScale={xScale}
+                          yScale={yScale}
+                          stroke="rgb(50, 63, 76"
+                          numTicksRows={numTicksRows}
+                          numTicksColumns={numTicksColumns}
+                          width={cellWidth}
+                          height={cellHeight}
+                        />
+                        {curves.filter(e => e.properties[row] === rowValue && e.properties[col] === colValue).map(entry => (
+                          <LinePath
+                            key={entry.entryId}
+                            data={entry.values}
+                            defined={(d) => (y(d) >= yDomain[0] && y(d) <= yDomain[1] && x(d) >= xDomain[0] && x(d) <= xDomain[1])}
+                            x={d => xScale(x(d))} y={d => yScale(y(d))}
+                            stroke={hue ? hueScale(entry.properties[hue]): '#000'}
+                            strokeDasharray={pattern ? patternScale(entry.properties[pattern]) : null}
+                            opacity={lineOpacity}
+                            strokeWidth={2}
+                            curve={curveBasis}
+                          />
+                        ))}
+                        <rect fill="none" width={cellWidth} height={cellHeight} onClick={e => console.log(e) } />
+                      </Group>
                     ))}
-                    <rect fill="none" width={cellWidth} height={cellHeight} onClick={e => console.log(e) } />
                   </Group>
                 ))}
-              </Group>
-            ))}
-          </svg>
-        </div>
-      );
-    }}
-  </ParentSize>
-);
+              </svg>
+            );
+          }}
+        </ParentSize>
+    </div>
+  );
+};
 
 const TimeseriesPage = ({ jobIds }) => (
   <div style={{flexGrow: 1, flexShrink: 1, display: 'flex', overflow: 'hidden' }}>
