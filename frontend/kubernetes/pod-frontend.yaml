@@ -1,0 +1,15 @@
+# InfluxDB job-metadata database --
+# This is meant to store training logs and system usage metrics
+# usage: kubectl create -f pod-metadata.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: vogels-frontend
+  labels:
+    name: vogels-frontend
+spec:
+  containers:
+    - name: frontend
+      image: ic-registry.epfl.ch/mlo/vogels_frontend
+      ports:
+      - containerPort: 80
