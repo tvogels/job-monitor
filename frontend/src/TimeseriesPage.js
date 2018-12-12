@@ -3,12 +3,12 @@ import { MultiSelect, Select } from '@blueprintjs/select';
 import { AxisBottom, AxisLeft } from '@vx/axis';
 import { curveBasis } from '@vx/curve';
 import { Grid } from '@vx/grid';
-import { LegendOrdinal } from '@vx/legend';
 import { Group } from '@vx/group';
+import { LegendOrdinal } from '@vx/legend';
 import { ParentSize } from '@vx/responsive';
-import { LinePath } from '@vx/shape';
+import { LinePath, Line } from '@vx/shape';
+import { Point } from '@vx/point';
 import { Text } from '@vx/text';
-import { LinearGradient } from '@vx/gradient';
 import { extent } from 'd3-array';
 import { scaleLinear, scaleOrdinal } from 'd3-scale';
 import { schemeCategory10 } from 'd3-scale-chromatic';
@@ -326,11 +326,20 @@ const FacetChartController = ({ jobIds }) => {
   );
 };
 
+function relativeMousePosition(event) {
+  const rect = event.target.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  return { x, y };
+}
 
 const FacetChart = ({ curves, hue='jobId', row, col, pattern, xValue='epoch', yValue='value', xmin, xmax, ymin, ymax, lineOpacity=0.6 }) => {
   if (curves.length === 0) {
     return null;
   }
+
+  const [crossHair, setCrossHair] = useState(null);
+
   const rowDomain = Array.from(new Set(curves.map(e => e.properties[row]))).sort();
   const colDomain = Array.from(new Set(curves.map(e => e.properties[col]))).sort();
   const ncols = colDomain.length;
@@ -347,9 +356,11 @@ const FacetChart = ({ curves, hue='jobId', row, col, pattern, xValue='epoch', yV
   const hueScale = hue ? scaleOrdinal(schemeCategory10).domain(hueDomain) : null;
   const patternScale = pattern ? scaleOrdinal([null, [5, 5], [2, 2], [8, 4]]).domain(patternDomain) : null;
 
+  const margin = { left: 60, right: 40, top: col != null ? 40 : 15, bottom: 60, row: 30, col: 30 };
+
   return (
     <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', flexDirection: 'row' }}>
+      <div style={{ display: 'flex', flexDirection: 'row', backgroundColor: 'rgb(62, 78, 91)', marginLeft: margin.left, marginRight: margin.right, padding: '.3em .8em' }}>
         <div style={{marginRight: '1em'}}>{hue.replace(/[-_]/g, ' ')}:</div>
         <LegendOrdinal
           scale={hueScale}
@@ -372,18 +383,23 @@ const FacetChart = ({ curves, hue='jobId', row, col, pattern, xValue='epoch', yV
       }
       <ParentSize style={{flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
           {parent => {
-            const margin = { left: 60, right: 40, top: col != null ? 40 : 15, bottom: 60, row: 30, col: 30 };
-
-            const cellHeight = Math.round((parent.height - margin.top - margin.bottom + margin.row) / nrows - margin.row);
-            const cellWidth = Math.round((parent.width - margin.left - margin.right + margin.col) / ncols - margin.col);
-            let height = parent.height;
-            let width = parent.width;
+            const cellHeight = Math.max(0, Math.round((parent.height - margin.top - margin.bottom + margin.row) / nrows - margin.row));
+            const cellWidth = Math.max(0, Math.round((parent.width - margin.left - margin.right + margin.col) / ncols - margin.col));
+            let height = Math.max(parent.height, margin.top + margin.bottom);
+            let width = Math.max(parent.width, margin.top + margin.bottom);
 
             const xScale = scaleLinear().domain(xDomain).rangeRound([0, cellWidth]);
             const yScale = scaleLinear().domain(yDomain).rangeRound([cellHeight, 0]).nice();
 
             const numTicksRows = Math.max(2, cellHeight / 50);
             const numTicksColumns = Math.max(2, cellWidth / 50);
+
+            const handleClick = (event) => {
+              const { x, y } = relativeMousePosition(event);
+              const xs = xScale.invert(x);
+              const ys = yScale.invert(y);
+              setCrossHair({ x: xs, y: ys });
+            };
 
             return (
               <svg height={height} width={width}>
@@ -437,6 +453,8 @@ const FacetChart = ({ curves, hue='jobId', row, col, pattern, xValue='epoch', yV
                           width={cellWidth}
                           height={cellHeight}
                         />
+                        { crossHair ? <Line stroke="rgba(221, 226, 229, 0.5)" strokeDasharray={[3, 3]} from={new Point({ x: 0, y: yScale(crossHair.y) })} to={new Point({ x: cellWidth, y: yScale(crossHair.y) })} /> : null}
+                        { crossHair ? <Line stroke="rgba(221, 226, 229, 0.5)" strokeDasharray={[3, 3]} from={new Point({ x: xScale(crossHair.x), y: 0 })} to={new Point({ x: xScale(crossHair.x), y: cellHeight })} /> : null}
                         {curves.filter(e => e.properties[row] === rowValue && e.properties[col] === colValue).map(entry => (
                           <LinePath
                             key={entry.entryId}
@@ -450,7 +468,7 @@ const FacetChart = ({ curves, hue='jobId', row, col, pattern, xValue='epoch', yV
                             curve={curveBasis}
                           />
                         ))}
-                        <rect fill="none" width={cellWidth} height={cellHeight} onClick={e => console.log(e) } />
+                        <rect fill="rgba(0, 0, 0, 0)" width={cellWidth} height={cellHeight} onClick={handleClick} />
                       </Group>
                     ))}
                   </Group>

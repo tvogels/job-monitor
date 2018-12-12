@@ -45,7 +45,7 @@ export const Spinner = () => (
 
 
 function escapeRegExpChars(text) {
-    return text.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+    return text.replace(/([.*+?^=!:${}()|\\])/g, "\\$1");
 }
 
 export function highlightText(text, query) {

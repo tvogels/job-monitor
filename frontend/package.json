@@ -13,6 +13,7 @@
     "@vx/grid": "^0.0.181",
     "@vx/group": "^0.0.170",
     "@vx/legend": "^0.0.181",
+    "@vx/point": "^0.0.182",
     "@vx/responsive": "^0.0.179",
     "@vx/shape": "^0.0.181",
     "apollo-boost": "^0.1.21",
