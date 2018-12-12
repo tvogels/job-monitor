@@ -23,7 +23,7 @@ const next = {
                 colLabelPrefix={"Learning rate = "}
                 rowLabelPrefix={"Momentum = "}
                 hueLegendName="Decay at epochs"
-                style={{height: '35em'}}
+                style={{height: '35em', width: '80em', margin: '2em', marginLeft: '-15em'}}
             />
         </div>
     )

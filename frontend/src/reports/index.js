@@ -4,7 +4,7 @@ import moment from 'moment';
 import { Link } from "react-router-dom";
 
 export const ReportIndex = () => (
-    <div style={{width: '80em', margin: '0 auto'}} className="bp3-running-text">
+    <div style={{width: '50em', margin: '0 auto'}} className="bp3-running-text">
         <h1>Reports</h1>
         <ul>
             {reports.map(report => (
@@ -22,7 +22,7 @@ export const ReportPage = ({ match }) => {
         return <div>No report found for {match.params.slug}.</div>;
     }
     return (
-        <div style={{width: '80em', margin: '0 auto'}} className="bp3-running-text">
+        <div style={{width: '50em', margin: '0 auto'}} className="bp3-running-text">
             <h1>{report.title}</h1>
             <p>{report.author} – {moment(report.date).format('LL')}</p>
             <hr />
