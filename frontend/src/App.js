@@ -8,7 +8,7 @@ import ConfigPage from './ConfigPage';
 import FilterBar from './FilterBar';
 import LogsPage from './LogsPage';
 import { NavBarGroup, NavBarLine } from './NavBar';
-import TimeseriesPage from './TimeseriesPage';
+import TimeseriesPage, { useFacetChartControllerState } from './TimeseriesPage';
 
 const GET_JOBS = gql`
   query Job($nameFilter: String!, $limit: Int!, $status: Status) {
@@ -75,6 +75,7 @@ const App = ({ selectedJobs, toggleHandler }) => {
   const [filter, setFilter] = useState('');
   const [limit, setLimit] = useState(25);
   const [statusFilter, setStatusFilter] = useState('');
+  const facetChartState = useFacetChartControllerState();
   return (
     <Router>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
@@ -108,7 +109,7 @@ const App = ({ selectedJobs, toggleHandler }) => {
                   )} />
                   <Route exact path="/logs" render={(props) => <LogsPage {...props} jobs={data.jobs.filter(j => selectedJobs.includes(j.id))} />} />
                   <Route exact path="/config" render={(props) => <ConfigPage {...props} jobIds={selectedJobs} />} />
-                  <Route exact path="/timeseries" render={(props) => <TimeseriesPage {...props} jobIds={selectedJobs} />} />
+                  <Route exact path="/timeseries" render={(props) => <TimeseriesPage {...props} jobIds={selectedJobs} facetChartState={facetChartState} />} />
                 </Main>
               </div>
             );
