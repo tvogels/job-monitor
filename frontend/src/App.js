@@ -9,6 +9,7 @@ import FilterBar from './FilterBar';
 import LogsPage from './LogsPage';
 import { NavBarGroup, NavBarLine } from './NavBar';
 import TimeseriesPage, { useFacetChartControllerState } from './TimeseriesPage';
+import { ReportIndex, ReportPage } from './reports';
 
 const GET_JOBS = gql`
   query Job($nameFilter: String!, $limit: Int!, $status: Status) {
@@ -75,6 +76,18 @@ class AppWithSelectedJobs extends Component {
   }
 };
 
+  const NavBar = ({ handleNavbarKeys, jobs, selectedJobs, toggleHandler }) => (
+<div tabIndex={0} onKeyDown={handleNavbarKeys} className="navbar" style={{ padding: '1em', paddingTop: 0, paddingRight: '1.2em', overflow: 'auto', backgroundColor: 'rgba(0,0,0,0.1)', minWidth: '25em', flexShrink: 0 }}>
+    {jobsByExperiment(jobs).map(([experiment, jobs]) => (
+      <NavBarGroup experiment={experiment} key={experiment}>
+        {jobs.map(job => (
+          <NavBarLine key={job.id} {...job} isSelected={selectedJobs.includes(job.id)} toggle={toggleHandler(job.id)} />
+        ))}
+      </NavBarGroup>
+    ))}
+  </div>
+);
+
 const App = ({ selectedJobs, setSelectedJobs, toggleHandler }) => {
   const [filter, setFilter] = useState('');
   const [limit, setLimit] = useState(25);
@@ -108,23 +121,29 @@ const App = ({ selectedJobs, setSelectedJobs, toggleHandler }) => {
             };
             return (
               <div style={{ flexGrow: 1, flexShrink: 1, display: 'flex' }}>
-                <div tabIndex={0} onKeyDown={handleNavbarKeys} className="navbar" style={{ padding: '1em', paddingTop: 0, paddingRight: '1.2em', overflow: 'auto', backgroundColor: 'rgba(0,0,0,0.1)', minWidth: '25em', flexShrink: 0 }}>
-                  {jobsByExperiment(data.jobs).map(([experiment, jobs]) => (
-                    <NavBarGroup experiment={experiment} key={experiment}>
-                      {jobs.map(job => (
-                        <NavBarLine key={job.id} {...job} isSelected={selectedJobs.includes(job.id)} toggle={toggleHandler(job.id)} />
-                      ))}
-                    </NavBarGroup>
-                  ))}
-                </div>
-                <Main>
                   <Route exact path="/" render={() => (
                     <Redirect to="/config" />
                   )} />
-                  <Route exact path="/logs" render={(props) => <LogsPage {...props} jobs={data.jobs.filter(j => selectedJobs.includes(j.id))} />} />
-                  <Route exact path="/config" render={(props) => <ConfigPage {...props} jobIds={selectedJobs} />} />
-                  <Route exact path="/timeseries" render={(props) => <TimeseriesPage {...props} jobIds={selectedJobs} facetChartState={facetChartState} />} />
-                </Main>
+                  <Route exact path="/logs" render={(props) => (
+                    <>
+                      <NavBar handleNavbarKeys={handleNavbarKeys} jobs={data.jobs} selectedJobs={selectedJobs} toggleHandler={toggleHandler} />
+                      <Main><LogsPage {...props} jobs={data.jobs.filter(j => selectedJobs.includes(j.id))} /></Main>
+                    </>
+                  )} />
+                  <Route exact path="/config" render={(props) => (
+                    <>
+                      <NavBar handleNavbarKeys={handleNavbarKeys} jobs={data.jobs} selectedJobs={selectedJobs} toggleHandler={toggleHandler} />
+                      <Main><ConfigPage {...props} jobIds={selectedJobs} />} /></Main>
+                    </>
+                  )} />
+                  <Route exact path="/timeseries" render={(props) => (
+                    <>
+                    <NavBar handleNavbarKeys={handleNavbarKeys} jobs={data.jobs} selectedJobs={selectedJobs} toggleHandler={toggleHandler} />
+                      <Main><TimeseriesPage {...props} jobIds={selectedJobs} facetChartState={facetChartState} />} /></Main>
+                    </>
+                  )} />
+                  <Route exact path="/reports" component={ReportIndex} />
+                  <Route exact path="/reports/:slug" component={ReportPage} />
               </div>
             );
           }}

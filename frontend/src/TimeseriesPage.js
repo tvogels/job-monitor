@@ -1,14 +1,14 @@
 import { Button, ControlGroup, FormGroup, InputGroup, MenuItem, NumericInput } from '@blueprintjs/core';
 import { MultiSelect, Select } from '@blueprintjs/select';
 import { AxisBottom, AxisLeft } from '@vx/axis';
+import { RectClipPath } from '@vx/clip-path';
 import { curveBasis } from '@vx/curve';
 import { Grid } from '@vx/grid';
 import { Group } from '@vx/group';
 import { LegendOrdinal } from '@vx/legend';
-import { RectClipPath } from '@vx/clip-path';
-import { ParentSize } from '@vx/responsive';
-import { LinePath, Line } from '@vx/shape';
 import { Point } from '@vx/point';
+import { ParentSize } from '@vx/responsive';
+import { Line, LinePath } from '@vx/shape';
 import { Text } from '@vx/text';
 import { extent } from 'd3-array';
 import { scaleLinear, scaleOrdinal } from 'd3-scale';
@@ -16,7 +16,7 @@ import { schemeCategory10 } from 'd3-scale-chromatic';
 import gql from 'graphql-tag';
 import React, { useState } from 'react';
 import { Query } from 'react-apollo';
-import { highlightText, copyToClipboard } from './utils';
+import { copyToClipboard, highlightText } from './utils';
 
 const fontFamily = '-apple-system, "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16", sans-serif';
 
@@ -373,8 +373,8 @@ function relativeMousePosition(event) {
   return { x, y };
 }
 
-const FacetChart = (props) => {
-  const { jobIds, measurementQuery, tagQuery, row, col, pattern, hue, xValue = 'epoch', yValue = 'value', xmin, xmax, ymin, ymax, lineOpacity = 0.6, style } = props;
+export const FacetChart = (props) => {
+  const { colLabelPrefix = '', rowLabelPrefix = '', hueLegendName, patternLegendName, jobIds, measurementQuery, tagQuery, row, col, pattern, hue, xValue = 'epoch', yValue = 'value', xmin, xmax, ymin, ymax, lineOpacity = 0.6, style } = props;
   const [crossHair, setCrossHair] = useState(null);
 
   const handleKeys = (event) => {
@@ -417,10 +417,10 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
         const margin = { left: 60, right: 40, top: col != null ? 40 : 15, bottom: 60, row: 30, col: 30 };
 
         return (
-          <div style={style || { flexGrow: 1, display: 'flex', flexDirection: 'column' }} tabIndex={0} onKeyDown={handleKeys}>
+          <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', ...style }} tabIndex={0} onKeyDown={handleKeys}>
             {hue ?
               <div style={{ display: 'flex', flexDirection: 'row', backgroundColor: 'rgb(62, 78, 91)', marginLeft: margin.left, marginRight: margin.right, padding: '.3em .8em' }}>
-                <div style={{ marginRight: '1em' }}>{hue.replace(/[-_]/g, ' ')}:</div>
+                <div style={{ marginRight: '1em' }}>{hueLegendName || hue.replace(/[-_]/g, ' ')}:</div>
                 <LegendOrdinal
                   scale={hueScale}
                   domain={hueDomain}
@@ -433,7 +433,7 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
             }
             {pattern ?
               <div style={{ display: 'flex', flexDirection: 'row', marginTop: '.5em', backgroundColor: 'rgb(62, 78, 91)', marginLeft: margin.left, marginRight: margin.right, padding: '.3em .8em' }}>
-                <div style={{ marginRight: '1em' }}>{pattern.replace(/[-_]/g, ' ')}:</div>
+                <div style={{ marginRight: '1em' }}>{patternLegendName || pattern.replace(/[-_]/g, ' ')}:</div>
                 {patternDomain.map(pattern => (
                   <div key={pattern} style={{ marginRight: '1.5em' }}>
                     <svg width={20} height={9}><line x1="0" y1="5" x2="15" y2="5" stroke="rgb(221, 226, 229)" strokeWidth={2} strokeDasharray={patternScale(pattern)} /></svg> {pattern}
@@ -498,10 +498,10 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
                       />
                     ))}
                     {col != null ? colDomain.map((colValue, colIdx) => (
-                      <Text fill="rgb(221, 226, 229)" fontFamily={fontFamily} key={colIdx} textAnchor="middle" y={margin.top - 15} x={margin.left + cellWidth / 2 + colIdx * (cellWidth + margin.col)}>{`${colValue}`.replace(/[-_]/g, ' ')}</Text>
+                      <Text fill="rgb(221, 226, 229)" fontFamily={fontFamily} key={colIdx} textAnchor="middle" y={margin.top - 15} x={margin.left + cellWidth / 2 + colIdx * (cellWidth + margin.col)}>{`${colLabelPrefix}${colValue}`.replace(/[-_]/g, ' ')}</Text>
                     )) : null}
                     {row != null ? rowDomain.map((rowValue, rowIdx) => (
-                      <Text fill="rgb(221, 226, 229)" fontFamily={fontFamily} key={rowIdx} textAnchor="middle" angle={90} x={width - margin.right + 15} y={margin.top + cellHeight / 2 + rowIdx * (cellHeight + margin.row)}>{`${rowValue}`.replace(/[-_]/g, ' ')}</Text>
+                      <Text fill="rgb(221, 226, 229)" fontFamily={fontFamily} key={rowIdx} textAnchor="middle" angle={90} x={width - margin.right + 15} y={margin.top + cellHeight / 2 + rowIdx * (cellHeight + margin.row)}>{`${rowLabelPrefix}${rowValue}`.replace(/[-_]/g, ' ')}</Text>
                     )) : null}
                     {rowDomain.map((rowValue, rowIdx) => (
                       <Group key={rowIdx} top={margin.top + rowIdx * (margin.row + cellHeight)}>
