@@ -42,6 +42,7 @@ class AppWithSelectedJobs extends Component {
     this.toggleJob = this.toggleJob.bind(this);
     this.isSelected = this.isSelected.bind(this);
     this.toggleHandler = this.toggleHandler.bind(this);
+    this.setSelectedJobs = this.setSelectedJobs.bind(this);
     this.toggleHandlers = new Map();
   }
   toggleJob(jobId) {
@@ -66,12 +67,15 @@ class AppWithSelectedJobs extends Component {
     }
     return this.toggleHandlers.get(jobId);
   }
+  setSelectedJobs(selectedJobs) {
+    this.setState({ selectedJobs });
+  }
   render() {
-    return <App selectedJobs={this.state.selectedJobs} toggleHandler={this.toggleHandler} />
+    return <App selectedJobs={this.state.selectedJobs} toggleHandler={this.toggleHandler} setSelectedJobs={this.setSelectedJobs} />
   }
 };
 
-const App = ({ selectedJobs, toggleHandler }) => {
+const App = ({ selectedJobs, setSelectedJobs, toggleHandler }) => {
   const [filter, setFilter] = useState('');
   const [limit, setLimit] = useState(25);
   const [statusFilter, setStatusFilter] = useState('');
@@ -92,9 +96,19 @@ const App = ({ selectedJobs, toggleHandler }) => {
         >
           {({ loading, error, data }) => {
             if (error) return <Main><p>Error :( {error}</p></Main>;
+            const handleNavbarKeys = (event) => {
+              if (event.key === 'a' && (event.ctrlKey || event.metaKey)) {
+                event.preventDefault();
+                if (event.shiftKey) {
+                  setSelectedJobs([]);
+                } else {
+                  setSelectedJobs(data.jobs.map(j => j.id));
+                }
+              }
+            };
             return (
               <div style={{ flexGrow: 1, flexShrink: 1, display: 'flex' }}>
-                <div className="navbar" style={{ padding: '1em', paddingTop: 0, paddingRight: '1.2em', overflow: 'auto', backgroundColor: 'rgba(0,0,0,0.1)', minWidth: '25em', flexShrink: 0 }}>
+                <div tabIndex={0} onKeyDown={handleNavbarKeys} className="navbar" style={{ padding: '1em', paddingTop: 0, paddingRight: '1.2em', overflow: 'auto', backgroundColor: 'rgba(0,0,0,0.1)', minWidth: '25em', flexShrink: 0 }}>
                   {jobsByExperiment(data.jobs).map(([experiment, jobs]) => (
                     <NavBarGroup experiment={experiment} key={experiment}>
                       {jobs.map(job => (

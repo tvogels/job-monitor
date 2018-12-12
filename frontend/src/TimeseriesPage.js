@@ -5,6 +5,7 @@ import { curveBasis } from '@vx/curve';
 import { Grid } from '@vx/grid';
 import { Group } from '@vx/group';
 import { LegendOrdinal } from '@vx/legend';
+import { RectClipPath } from '@vx/clip-path';
 import { ParentSize } from '@vx/responsive';
 import { LinePath, Line } from '@vx/shape';
 import { Point } from '@vx/point';
@@ -465,6 +466,7 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
 
                 return (
                   <svg height={height} width={width}>
+                    <RectClipPath id="cell-clip-path" x={0} y={0} width={cellWidth} height={cellHeight} />
                     {/* <rect x={0} y={0} width={width} height={height} fill="#fff" rx={2} /> */}
                     {colDomain.map((colValue, colIdx) => (
                       <AxisBottom
@@ -515,13 +517,14 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
                               width={cellWidth}
                               height={cellHeight}
                             />
-                            {crossHair ? <Line stroke="rgba(221, 226, 229, 0.5)" strokeDasharray={[3, 3]} from={new Point({ x: 0, y: yScale(crossHair.y) })} to={new Point({ x: cellWidth, y: yScale(crossHair.y) })} /> : null}
-                            {crossHair ? <Line stroke="rgba(221, 226, 229, 0.5)" strokeDasharray={[3, 3]} from={new Point({ x: xScale(crossHair.x), y: 0 })} to={new Point({ x: xScale(crossHair.x), y: cellHeight })} /> : null}
+                            {crossHair ? <Line clipPath="url(#cell-clip-path)" stroke="rgba(221, 226, 229, 0.5)" strokeDasharray={[3, 3]} from={new Point({ x: 0, y: yScale(crossHair.y) })} to={new Point({ x: cellWidth, y: yScale(crossHair.y) })} /> : null}
+                            {crossHair ? <Line clipPath="url(#cell-clip-path)" stroke="rgba(221, 226, 229, 0.5)" strokeDasharray={[3, 3]} from={new Point({ x: xScale(crossHair.x), y: 0 })} to={new Point({ x: xScale(crossHair.x), y: cellHeight })} /> : null}
                             {curves.filter(e => e.properties[row] === rowValue && e.properties[col] === colValue).map(entry => (
                               <LinePath
                                 key={entry.entryId}
                                 data={entry.values}
-                                defined={(d) => (y(d) >= yDomain[0] && y(d) <= yDomain[1] && x(d) >= xDomain[0] && x(d) <= xDomain[1])}
+                                clipPath="url(#cell-clip-path)"
+                                // defined={(d) => (y(d) >= yDomain[0] && y(d) <= yDomain[1] && x(d) >= xDomain[0] && x(d) <= xDomain[1])}
                                 x={d => xScale(x(d))} y={d => yScale(y(d))}
                                 stroke={hue ? hueScale(entry.properties[hue]) : 'rgb(221, 226, 229)'}
                                 strokeDasharray={pattern ? patternScale(entry.properties[pattern]) : null}
