@@ -133,13 +133,13 @@ const App = ({ selectedJobs, setSelectedJobs, toggleHandler }) => {
                   <Route exact path="/config" render={(props) => (
                     <>
                       <NavBar handleNavbarKeys={handleNavbarKeys} jobs={data.jobs} selectedJobs={selectedJobs} toggleHandler={toggleHandler} />
-                      <Main><ConfigPage {...props} jobIds={selectedJobs} />} /></Main>
+                      <Main><ConfigPage {...props} jobIds={selectedJobs} /></Main>
                     </>
                   )} />
                   <Route exact path="/timeseries" render={(props) => (
                     <>
                     <NavBar handleNavbarKeys={handleNavbarKeys} jobs={data.jobs} selectedJobs={selectedJobs} toggleHandler={toggleHandler} />
-                      <Main><TimeseriesPage {...props} jobIds={selectedJobs} facetChartState={facetChartState} />} /></Main>
+                      <Main><TimeseriesPage {...props} jobIds={selectedJobs} facetChartState={facetChartState} /></Main>
                     </>
                   )} />
                   <Route exact path="/reports" component={ReportIndex} />
