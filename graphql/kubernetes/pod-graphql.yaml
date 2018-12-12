@@ -13,6 +13,10 @@ spec:
       image: ic-registry.epfl.ch/mlo/vogels_graphql
       ports:
       - containerPort: 4000
+      volumeMounts:
+        - mountPath: /scratch
+          name: mlo-scratch
+          subPath: vogels
   volumes:
   - name: mlo-scratch
     persistentVolumeClaim:
