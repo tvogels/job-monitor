@@ -127,7 +127,7 @@ const App = ({ selectedJobs, setSelectedJobs, toggleHandler }) => {
                   <Route exact path="/logs" render={(props) => (
                     <>
                       <NavBar handleNavbarKeys={handleNavbarKeys} jobs={data.jobs} selectedJobs={selectedJobs} toggleHandler={toggleHandler} />
-                      <Main><LogsPage {...props} jobs={data.jobs.filter(j => selectedJobs.includes(j.id))} /></Main>
+                      <Main><LogsPage {...props} jobs={(data.jobs || []).filter(j => selectedJobs.includes(j.id))} /></Main>
                     </>
                   )} />
                   <Route exact path="/config" render={(props) => (
