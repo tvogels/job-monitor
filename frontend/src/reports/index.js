@@ -22,11 +22,13 @@ export const ReportPage = ({ match }) => {
         return <div>No report found for {match.params.slug}.</div>;
     }
     return (
-        <div style={{width: '50em', margin: '0 auto'}} className="bp3-running-text">
+        <div style={{flexGrow: 1, height: '100%'}}>
+        <div style={{width: '50em', margin: '0 auto', marginBottom: '3em'}} className="bp3-running-text">
             <h1>{report.title}</h1>
             <p>{report.author} – {moment(report.date).format('LL')}</p>
             <hr />
             {report.render()}
+        </div>
         </div>
     );
 }

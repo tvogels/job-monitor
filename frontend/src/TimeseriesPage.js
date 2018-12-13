@@ -389,6 +389,8 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
     }
   };
 
+  const clipPathId = `clippath-${Math.floor(Math.random()*1000000)}`
+
   return (
     <Query query={DATA_QUERY} variables={{ ids: jobIds, measurement: measurementQuery.join('|'), tags: tagQuery.join(',') }}>
       {({ loading, error, data }) => {
@@ -466,7 +468,7 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
 
                 return (
                   <svg height={height} width={width}>
-                    <RectClipPath id="cell-clip-path" x={0} y={0} width={cellWidth} height={cellHeight} />
+                    <RectClipPath id={clipPathId} x={0} y={0} width={cellWidth} height={cellHeight} />
                     {/* <rect x={0} y={0} width={width} height={height} fill="#fff" rx={2} /> */}
                     {colDomain.map((colValue, colIdx) => (
                       <AxisBottom
@@ -523,7 +525,7 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
                               <LinePath
                                 key={entry.entryId}
                                 data={entry.values}
-                                clipPath="url(#cell-clip-path)"
+                                clipPath={`url(#${clipPathId})`}
                                 // defined={(d) => (y(d) >= yDomain[0] && y(d) <= yDomain[1] && x(d) >= xDomain[0] && x(d) <= xDomain[1])}
                                 x={d => xScale(x(d))} y={d => yScale(y(d))}
                                 stroke={hue ? hueScale(entry.properties[hue]) : 'rgb(221, 226, 229)'}

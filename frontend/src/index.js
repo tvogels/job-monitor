@@ -1,5 +1,6 @@
 import "@blueprintjs/core/lib/css/blueprint.css";
 import "@blueprintjs/icons/lib/css/blueprint-icons.css";
+import 'katex/dist/katex.min.css';
 import ApolloClient from 'apollo-boost';
 import 'normalize.css/normalize.css';
 import React from 'react';
