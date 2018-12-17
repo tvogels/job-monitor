@@ -33,6 +33,7 @@ export default {
                 ymin={".8"}
                 pattern={""}
                 hue={"gradpred_num_gradients"}
+                hueLegendName="# past grads."
                 row={"gradpred_num_predicted_gradients"}
                 col={"optimizer_learning_rate"}
                 colLabelPrefix="Learning rate = "
@@ -67,6 +68,7 @@ export default {
                 ymax={".0001"}
                 pattern={""}
                 hue={"measurement"}
+                hueLegendName="Measurement"
                 row={"gradpred_num_predicted_gradients"}
                 col={"optimizer_learning_rate"}
                 colLabelPrefix="Learning rate = "
@@ -84,6 +86,7 @@ export default {
                 ymin={".8"}
                 pattern={""}
                 hue={"gradpred_adjust_norm"}
+                hueLegendName="Renormalize gradients"
                 row={"optimizer_learning_rate"}
                 rowLabelPrefix="Learning rate = "
                 col={"split"}
@@ -100,6 +103,7 @@ export default {
                 ymax={"1"}
                 pattern={""}
                 hue={"gradpred_adjust_norm"}
+                hueLegendName="Renormalize gradients"
                 row={"optimizer_learning_rate"}
                 rowLabelPrefix="Learning rate = "
                 col={"split"}
@@ -112,9 +116,10 @@ export default {
                 jobIds={["5c17911187c31771878f6af5","5c17911187c31771878f6af9","5c17911187c31771878f6afd"]}
                 measurementQuery={["mean_pred_weight","std_pred_weight"]}
                 tagQuery={[]}
-                lineOpacity={0.5}
+                lineOpacity={0.2}
                 pattern={""}
                 hue={"measurement"}
+                hueLegendName="Measurement"
                 col={"optimizer_learning_rate"}
                 colLabelPrefix="Learning rate = "
                 style={{height: '30em', width: '80em', marginLeft: '-15em'}}
