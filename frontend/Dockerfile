@@ -1,4 +1,4 @@
-FROM node
+FROM node:8-alpine
 LABEL maintainer "Thijs Vogels <thijs.vogels@epfl.ch>"
 
 RUN yarn global add serve
