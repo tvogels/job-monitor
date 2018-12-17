@@ -10,7 +10,7 @@ metadata:
 spec:
   containers:
     - name: influxdb
-      image: influxdb:1.7
+      image: influxdb:1.7-alpine
       ports:
       - containerPort: 8086
         name: api
