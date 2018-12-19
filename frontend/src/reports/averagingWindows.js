@@ -153,13 +153,13 @@ const AverageViewer = ({ jobId }) => {
                                             style={{
                                                 opacity: 1,
                                                 y: spring(yScale(windows[formatWindow(windowStart, windowSize)].accuracy)),
-                                                x1: spring(epochs[Math.max(0, windowStart - 1)]),
+                                                x1: spring(epochs[Math.max(0, windowStart)]),
                                         }}>
                                         {({ opacity, y, x1 }) => (
                                             <Group>
                                                 <line
                                                     clipPath={`url(#${clipPathId})`}
-                                                    x1={5 + xScale(x1)}
+                                                    x1={windowSize === 1 ? xScale(x1) : 5 + xScale(x1)}
                                                     x2={xScale(epochs[windowStart + windowSize - 1])}
                                                     y1={y}
                                                     y2={y}
