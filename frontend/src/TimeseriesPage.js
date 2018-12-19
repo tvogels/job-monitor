@@ -192,7 +192,7 @@ const FacetChartController = ({ jobIds, state }) => {
   const { measurementQuery, tagQuery, opacity, xmin, xmax, ymin, ymax, gridRows, gridCols, hue, pattern } = state;
   const { removeMeasurement, toggleMeasurement, removeTag, toggleTag, setOpacity, setXmin, setXmax, setYmin, setYmax, setGridRows, setGridCols, setHue, setPattern } = state;
   const stateToClipboard = () => {
-    navigator.clipboard.writeText(JSON.stringify(state.all));
+    copyToClipboard(JSON.stringify(state.all));
   };
   const handleKeyEvent = (event) => {
     if (event.key === 'v' && (event.ctrlKey || event.metaKey)) {
