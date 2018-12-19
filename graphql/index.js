@@ -49,6 +49,8 @@ const typeDefs = gql`
         timeseries(measurement: String, tags: String): [Timeseries]
         "How close to done are we?"
         progress: Float
+        textFile(filename: String!): String
+        jsonFile(filename: String!): Dictionary
     }
 
     enum Status {
@@ -148,6 +150,24 @@ const resolvers = {
                 if (err) reject(err);
                 resolve(value);
             }));
+        },
+        textFile: (job, args, context, info) => {
+            const filename = args['filename'];
+            const filepath = path.join(process.env.JOBMONITOR_RESULTS_DIR, job.outputDirectory, filename);
+            if (!fs.existsSync(filepath)) return null;
+            return new Promise((resolve, reject) => fs.readFile(filepath, 'utf8', (err, value) => {
+                if (err) reject(err);
+                resolve(value);
+            }));
+        },
+        jsonFile: (job, args, context, info) => {
+            const filename = args['filename'];
+            const filepath = path.join(process.env.JOBMONITOR_RESULTS_DIR, job.outputDirectory, filename);
+            if (!fs.existsSync(filepath)) return null;
+            return new Promise((resolve, reject) => fs.readFile(filepath, 'utf8', (err, value) => {
+                if (err) reject(err);
+                resolve(value);
+            })).then(JSON.parse);
         },
         timeseries: (job, args, context, info) => {
             const fromQuery = (args.measurement != null) ? `FROM /${args.measurement}/` : '';
