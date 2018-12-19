@@ -1,14 +1,15 @@
-import { NumericInput, InputGroup, FormGroup } from '@blueprintjs/core';
+import { FormGroup, InputGroup, NumericInput } from '@blueprintjs/core';
 import { AxisBottom, AxisLeft } from '@vx/axis';
-import { Group } from '@vx/group';
-import { Grid } from '@vx/grid';
-import { Text } from '@vx/text';
-import { scaleLinear } from 'd3-scale';
 import { RectClipPath } from '@vx/clip-path';
+import { Grid } from '@vx/grid';
+import { Group } from '@vx/group';
+import { Text } from '@vx/text';
+import { range } from 'd3-array';
+import { scaleLinear } from 'd3-scale';
 import gql from 'graphql-tag';
 import React, { useState } from 'react';
 import { Query } from 'react-apollo';
-import { range } from 'd3-array'
+import Latex from 'react-latex';
 import { Motion, spring } from 'react-motion';
 import { HideUnderscores } from '../utils';
 
@@ -225,12 +226,10 @@ export default {
     'author': 'Thijs Vogels',
     'render': () => (
         <div>
-            <p>From 20 checkpoints spaced 15 epochs apart, we check all average windows to see if we can ever average too much. We also check how this competes against t-averaging.</p>
-            {/* <AverageViewer jobId="5c1a26add066142bb9e25a45" /> */}
+            <p>20 checkpoints are collected from SGD without decay on Cifar10 with ResNet and VGG architectures. These checkpoints are evenly spaced, 15 epochs apart. We consider the quality of models that are uniform average over a window of these checkpoints. The plots below let you interact with the size of the window. We can see that there is indeed such a thing as 'too much averaging'.</p>
+            <p>In the right margin, we can see the final values (at the last epoch) of the T-average of all iterates, the average over the last epoch, and an expontentially weighted average with <Latex>$\alpha=0.998$</Latex>.</p>
             <AverageViewer jobId="5c1a26add066142bb9e25a46" />
-            {/* <AverageViewer jobId="5c1a2803d066142c9ea5a4f8" /> */}
             <AverageViewer jobId="5c1a2803d066142c9ea5a4f9" />
-            {/* <AverageViewer jobId="5c1a2a58d066142d57737f69" /> */}
             <AverageViewer jobId="5c1a2a58d066142d57737f6a" />
         </div>
     )
