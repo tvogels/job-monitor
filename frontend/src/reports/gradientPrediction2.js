@@ -129,6 +129,9 @@ export default {
             <ul>
                 <li>Single set of weights, rather than a prediction per coordinate. Linear least squares?</li>
                 <li>Where could this help? Gradient norm does become small automatically, but learning rate decay is still necessary. We could try to combine this with t-averaging?</li>
+                <li>Try a convex problem: ask Negar</li>
+                <li>Try momentum on top of this</li>
+                <li>Write down noisy second batch updates</li>
             </ul>
         </div>
     )
