@@ -192,7 +192,7 @@ const AverageViewer = ({ jobId }) => {
                                                     stroke="rgb(221, 226, 229)"
                                                     strokeWidth={2}
                                                 />
-                                                <Text x={8} verticalAnchor="middle" fontWeight={200} fontSize={10}>{measurementName[measurement]}</Text>
+                                                <Text x={8} verticalAnchor="middle" fontSize={10}>{measurementName[measurement]}</Text>
                                             </Group>
                                         )}
                                         </Motion>
