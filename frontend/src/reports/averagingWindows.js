@@ -52,8 +52,6 @@ const measurementName = {
     'runavg_accuracy': 'epoch avg'
 }
 
-const fontFamily = '-apple-system, "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16", sans-serif';
-
 const formatWindow = (start, size) => start.toString().padStart(3, '0') + '-' + (start + size).toString().padStart(3, '0');
 
 const AverageViewer = ({ jobId }) => {
@@ -119,10 +117,6 @@ const AverageViewer = ({ jobId }) => {
                                     left={margin.left}
                                     label="Epoch"
                                     hideZero
-                                    stroke="rgb(221, 226, 229)"
-                                    tickStroke="rgb(221, 226, 229)"
-                                    labelProps={{ textAnchor: 'middle', fontFamily: fontFamily, fontSize: 10, fill: 'rgb(221, 226, 229)' }}
-                                    tickLabelProps={(val, i) => ({ dy: '0.25em', textAnchor: 'middle', fontFamily: fontFamily, fontSize: 10, fill: 'rgb(221, 226, 229)' })}
                                 />
                                 <AxisLeft
                                     scale={yScale}
@@ -130,10 +124,6 @@ const AverageViewer = ({ jobId }) => {
                                     top={margin.top}
                                     left={margin.left - 5}
                                     // label={measurement.replace(/[_-]/g, ' ').replace('|', ' / ')}
-                                    stroke="rgb(221, 226, 229)"
-                                    tickStroke="rgb(221, 226, 229)"
-                                    labelProps={{ textAnchor: 'middle', fontFamily: fontFamily, fontSize: 10, fill: 'rgb(221, 226, 229)' }}
-                                    tickLabelProps={(val, i) => ({ dx: '-0.25em', dy: '0.25em', textAnchor: 'end', fontFamily: fontFamily, fontSize: 10, fill: 'rgb(221, 226, 229)' })}
                                 />
                                 <Group left={margin.left} top={margin.top}>
                                     <rect fill="rgb(62, 78, 91)" width={cellWidth} height={cellHeight} />
@@ -142,16 +132,16 @@ const AverageViewer = ({ jobId }) => {
                                         yScale={yScale}
                                         stroke="rgb(50, 63, 76)"
                                         numTicksRows={numTicksRows}
-                                        numTicksColumns={numTicksColumns}
+                                        numTicksColumns={0}
                                         width={cellWidth}
                                         height={cellHeight}
                                     />
                                     {range(epochs.length - windowSize + 1).map(windowStart => (
                                         <Motion
                                             key={windowStart + windowSize}
-                                            defaultStyle={{opacity: 0.0, y: cellHeight, x1: 0.0}}
+                                            defaultStyle={{opacity: 0.0, y: yScale(windows[formatWindow(windowStart, windowSize)].accuracy), x1: epochs[Math.max(0, windowStart)]}}
                                             style={{
-                                                opacity: 1,
+                                                opacity: spring(1.0),
                                                 y: spring(yScale(windows[formatWindow(windowStart, windowSize)].accuracy)),
                                                 x1: spring(epochs[Math.max(0, windowStart)]),
                                         }}>
@@ -163,8 +153,8 @@ const AverageViewer = ({ jobId }) => {
                                                     x2={xScale(epochs[windowStart + windowSize - 1])}
                                                     y1={y}
                                                     y2={y}
-                                                    stroke="rgba(255, 255, 255, 0.3)"
-                                                    opacity={opacity}
+                                                    stroke="white"
+                                                    opacity={0.3*opacity}
                                                     strokeWidth={1}
                                                 />
                                                 <circle
@@ -179,7 +169,7 @@ const AverageViewer = ({ jobId }) => {
                                         )}
                                         </Motion>
                                     ))}
-                                    <Motion defaultStyle={{ y: cellHeight }} style={{y: spring(yScale(topAccuracy))}}>
+                                    <Motion defaultStyle={{ y: yScale(topAccuracy) }} style={{y: spring(yScale(topAccuracy))}}>
                                     {({ opacity, y, x1 }) => (
                                         <line
                                             clipPath={`url(#${clipPathId})`}
@@ -187,21 +177,22 @@ const AverageViewer = ({ jobId }) => {
                                             x2={cellWidth}
                                             y1={y}
                                             y2={y}
-                                            stroke="rgba(255, 0, 0, 0.6)"
-                                            strokeWidth={1}
+                                            stroke="white"
+                                            opacity={0.2}
+                                            strokeDasharray="5 5"
                                     />
                                     )}
                                     </Motion>
                                     {baselines.map(({ measurement, value }) => (
-                                        <Motion key={measurement} defaultStyle={{ y: cellHeight }} style={{y: spring(yScale(value))}}>
-                                        {({ opacity, y, x1 }) => (
-                                            <Group top={y} left={cellWidth}>
+                                        <Motion key={measurement} defaultStyle={{ y: yScale(value), x2: 10 }} style={{y: spring(yScale(value))}}>
+                                        {({ y, x1 }) => (
+                                            <Group top={y} left={cellWidth + 3}>
                                                 <line
                                                     x2={5}
-                                                    stroke="orange"
+                                                    stroke="rgb(221, 226, 229)"
                                                     strokeWidth={2}
                                                 />
-                                                <Text x={8} verticalAnchor="middle" fontFamily={fontFamily} fontWeight={200} fontSize={8} stroke="orange">{measurementName[measurement]}</Text>
+                                                <Text x={8} verticalAnchor="middle" fontWeight={200} fontSize={10}>{measurementName[measurement]}</Text>
                                             </Group>
                                         )}
                                         </Motion>
@@ -231,6 +222,11 @@ export default {
             <AverageViewer jobId="5c1a26add066142bb9e25a46" />
             <AverageViewer jobId="5c1a2803d066142c9ea5a4f9" />
             <AverageViewer jobId="5c1a2a58d066142d57737f6a" />
+            <h2>Denser sampling of models</h2>
+            <p>As an additional check, we can see if it matters if the points are more dense. Here we do the same, but with 30 models that are just 1 epoch apart. Thre is one where the models are the last point of the respective epochs, and one where the models are the mean over their epochs.</p>
+            <p>It seems that, with denser averaging, a high quality can be achieved with less history.</p>
+            <AverageViewer jobId="5c1a8a5722e51a41d37acd5c" />
+            <AverageViewer jobId="5c1a8a5722e51a41d37acd5b" />
         </div>
     )
 };

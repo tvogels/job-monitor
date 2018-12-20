@@ -18,8 +18,6 @@ import React, { useState } from 'react';
 import { Query } from 'react-apollo';
 import { copyToClipboard, highlightText } from './utils';
 
-const fontFamily = '-apple-system, "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "Icons16", sans-serif';
-
 const INDEX_QUERY = gql`
   query Job($ids: [ID]) {
     jobs(ids: $ids) {
@@ -479,10 +477,6 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
                         left={margin.left + colIdx * (cellWidth + margin.col)}
                         label="Epochs"
                         hideZero
-                        stroke="rgb(221, 226, 229)"
-                        tickStroke="rgb(221, 226, 229)"
-                        labelProps={{ textAnchor: 'middle', fontFamily: fontFamily, fontSize: 10, fill: 'rgb(221, 226, 229)' }}
-                        tickLabelProps={(val, i) => ({ dy: '0.25em', textAnchor: 'middle', fontFamily: fontFamily, fontSize: 10, fill: 'rgb(221, 226, 229)' })}
                       />
                     ))}
                     {rowDomain.map((rowValue, rowIdx) => (
@@ -493,17 +487,13 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
                         top={margin.top + rowIdx * (margin.row + cellHeight)}
                         left={margin.left - 5}
                         // label={measurement.replace(/[_-]/g, ' ').replace('|', ' / ')}
-                        stroke="rgb(221, 226, 229)"
-                        tickStroke="rgb(221, 226, 229)"
-                        labelProps={{ textAnchor: 'middle', fontFamily: fontFamily, fontSize: 10, fill: 'rgb(221, 226, 229)' }}
-                        tickLabelProps={(val, i) => ({ dx: '-0.25em', dy: '0.25em', textAnchor: 'end', fontFamily: fontFamily, fontSize: 10, fill: 'rgb(221, 226, 229)' })}
                       />
                     ))}
                     {col != null ? colDomain.map((colValue, colIdx) => (
-                      <Text fill="rgb(221, 226, 229)" fontFamily={fontFamily} key={colIdx} textAnchor="middle" y={margin.top - 15} x={margin.left + cellWidth / 2 + colIdx * (cellWidth + margin.col)}>{`${colLabelPrefix}${colValue}`.replace(/[-_]/g, ' ')}</Text>
+                      <Text fill="rgb(221, 226, 229)" key={colIdx} textAnchor="middle" y={margin.top - 15} x={margin.left + cellWidth / 2 + colIdx * (cellWidth + margin.col)}>{`${colLabelPrefix}${colValue}`.replace(/[-_]/g, ' ')}</Text>
                     )) : null}
                     {row != null ? rowDomain.map((rowValue, rowIdx) => (
-                      <Text fill="rgb(221, 226, 229)" fontFamily={fontFamily} key={rowIdx} textAnchor="middle" angle={90} x={width - margin.right + 15} y={margin.top + cellHeight / 2 + rowIdx * (cellHeight + margin.row)}>{`${rowLabelPrefix}${rowValue}`.replace(/[-_]/g, ' ')}</Text>
+                      <Text fill="rgb(221, 226, 229)" key={rowIdx} textAnchor="middle" angle={90} x={width - margin.right + 15} y={margin.top + cellHeight / 2 + rowIdx * (cellHeight + margin.row)}>{`${rowLabelPrefix}${rowValue}`.replace(/[-_]/g, ' ')}</Text>
                     )) : null}
                     {rowDomain.map((rowValue, rowIdx) => (
                       <Group key={rowIdx} top={margin.top + rowIdx * (margin.row + cellHeight)}>
