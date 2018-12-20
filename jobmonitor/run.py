@@ -16,7 +16,7 @@ import yaml
 from bson.objectid import ObjectId
 from telegraf.client import TelegrafClient
 
-from jobmonitor.api import job_by_id, update_job
+from jobmonitor.api import job_by_id, update_job, download_code_package
 from jobmonitor.utils import IntervalTimer
 
 
@@ -100,6 +100,8 @@ def main():
                 clone_info['path']
             )
             clone_directory(clone_from, code_dir)
+        elif 'code_package' in clone_info:
+            download_code_package(clone_info['code_package'], code_dir)
         else:
             raise ValueError('Current, only the "path" clone approach is supported')
 

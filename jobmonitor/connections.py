@@ -1,19 +1,21 @@
 import os
 
-from pymongo import MongoClient
+from gridfs import GridFS
 from influxdb import InfluxDBClient
-
+from pymongo import MongoClient
 
 KUBERNETES_NAMESPACE = os.getenv('JOBMONITOR_KUBERNETES_NAMESPACE', default='mlo')
 
 
-__all__ = ['mongo', 'influx', 'KUBERNETES_NAMESPACE']
+__all__ = ['mongo', 'influx', 'gridfs', 'KUBERNETES_NAMESPACE']
 
 mongo_client = MongoClient(
     host=os.getenv('JOBMONITOR_METADATA_HOST'),
     port=int(os.getenv('JOBMONITOR_METADATA_PORT'))
 )
 mongo = getattr(mongo_client, os.getenv('JOBMONITOR_METADATA_DB'))
+
+gridfs = GridFS(mongo)
 
 influx = InfluxDBClient(
     host=os.getenv('JOBMONITOR_TIMESERIES_HOST'),

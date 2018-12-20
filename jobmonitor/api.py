@@ -1,8 +1,12 @@
 import datetime
 import os
+import tarfile
+from fnmatch import fnmatch
+from tempfile import NamedTemporaryFile
 
 import kubernetes
 from bson.objectid import ObjectId
+from git import InvalidGitRepositoryError, Repo
 from kubernetes.client import (V1Container, V1EnvVar, V1Job, V1JobSpec,
                                V1ObjectMeta,
                                V1PersistentVolumeClaimVolumeSource, V1PodSpec,
@@ -10,7 +14,7 @@ from kubernetes.client import (V1Container, V1EnvVar, V1Job, V1JobSpec,
                                V1Volume, V1VolumeMount)
 from schema import Or, Schema
 
-from jobmonitor.connections import KUBERNETES_NAMESPACE, mongo
+from jobmonitor.connections import KUBERNETES_NAMESPACE, gridfs, mongo
 
 
 def job_by_id(job_id):
@@ -36,7 +40,7 @@ def register_job(project, experiment, job, config_overrides, runtime_environment
     Schema(str).validate(job)
     Schema({str: object}).validate(config_overrides)
     Schema(Or(None, {str: object})).validate(annotations)
-    Schema({'clone': {'path': str}, 'script': str}).validate(runtime_environment)
+    Schema({'clone': Or({'code_package': ObjectId}, {'path': str}), 'script': str}).validate(runtime_environment)
 
     # Format the database entry
     job_content = {
@@ -129,3 +133,70 @@ def result_dir(job):
     if type(job) == str:
         job = job_by_id(job)
     return os.path.join(root_dir, job['output_dir'])
+
+
+def describe_git_state(directory):
+    try:
+        repo = Repo(directory)
+        is_dirty = repo.is_dirty()
+        commit = repo.commit()
+        author = commit.author
+        return repo.remotes.origin.url, author.name, author.email, commit.hexsha, commit.message, is_dirty
+    except InvalidGitRepositoryError:
+        return None, None, None, None, None, None
+
+
+def upload_code_package(directory='.', excludes=None):
+    """
+    Uploads a compressed tar file with directory contents to mongodb (gridfs).
+    This package can be used in a job specification.
+    :return (1) ObjectId of the inserted file, (2) list of included files
+    """
+    included_files = []
+
+    # Make a function used to select/exclude files for the package
+    if excludes is None:
+        excludes = []
+    def filter_fn(tarinfo):
+        basename = os.path.basename(tarinfo.name)
+        if any(fnmatch(basename, pattern) for pattern in excludes):
+            return None
+        included_files.append(tarinfo.name)
+        return tarinfo
+
+    # Collect some metadata about the directory and git
+    directory_basename = os.path.basename(os.path.realpath(directory))
+    remote, author_name, author_email, commit, commit_message, is_dirty = describe_git_state(directory)
+    metadata = {
+        'gitAuthorEmail': author_email,
+        'gitAuthorName': author_name,
+        'gitCommit': commit,
+        'gitCommitMessage': commit_message.strip(),
+        'gitRepository': remote,
+        'gitWasDirty': is_dirty,
+    }
+
+    try:
+        # Create a temporary tar file
+        tmp = NamedTemporaryFile('rb')
+        with tarfile.open(tmp.name, "w:gz") as fp:
+            fp.add(directory, recursive=True, filter=filter_fn)
+        # Upload it to MongoDB
+        gridfs_id = gridfs.put(tmp, filename=directory_basename+'.tgz', metadata=metadata)
+        return gridfs_id, included_files
+    finally:
+        tmp.close()
+
+
+def download_code_package(package_id, destination):
+    if type(package_id) == str:
+        package_id = ObjectId(package_id)
+    try:
+        tmp = NamedTemporaryFile('wb+')
+        with gridfs.get(package_id) as fp:
+            tmp.write(fp.read())
+        tmp.seek(0)
+        with tarfile.open(tmp.name, "r") as fp:
+            fp.extractall(destination)
+    finally:
+        tmp.close()
