@@ -7,7 +7,11 @@ metadata:
   name: vogels-metadata
   labels:
     name: vogels-metadata
+    user: vogels
 spec:
+  securityContext:
+    runAsUser: 145554
+    fsGroup: 11169
   containers:
     - name: mongo
       image: mongo:4.0
@@ -16,9 +20,8 @@ spec:
         name: http
       volumeMounts:
       - mountPath: /data/db
-        name: mlo-scratch
-        subPath: vogels/databases/job-metadata-mongodb
+        name: data
   volumes:
-  - name: mlo-scratch
+  - name: data
     persistentVolumeClaim:
-      claimName: mlo-scratch
+      claimName: pv-mlodata1-vogels-databases-job-metadata-mongodb
