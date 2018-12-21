@@ -47,7 +47,7 @@ class JobLogs extends React.PureComponent {
                     {({ error, data }) => {
                         if (error) return <p>Error :( {error}</p>;
                         return (
-                            <ScrollTextArea value={data.job ? data.job.logs.trim() : 'Loading ...'} readOnly={true} fill={true} style={{ fontFamily: 'monospace', flexGrow: 1 }} />
+                            <ScrollTextArea value={data.job ? (data.job.logs || 'Unavailable ...').trim() : 'Loading ...'} readOnly={true} fill={true} style={{ fontFamily: 'monospace', flexGrow: 1 }} />
                         );
                     }}
                 </Query>
