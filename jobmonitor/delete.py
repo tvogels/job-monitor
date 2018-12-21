@@ -4,9 +4,10 @@ import os
 import shutil
 from argparse import ArgumentParser
 
-from jobmonitor.api import job_by_id, delete_job_by_id
+from jobmonitor.api import delete_job_by_id, job_by_id
+from jobmonitor.connections import influx, mongo
 from jobmonitor.kill import kill_job_in_kubernetes
-from jobmonitor.connections import influx
+
 
 """
 Delete all traces of a previously scheduled job (kubernetes, mongodb, influxdb, filesystem)
@@ -14,11 +15,40 @@ Delete all traces of a previously scheduled job (kubernetes, mongodb, influxdb, 
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument('job_ids', nargs='+', help='IDs of the jobs to be removed.')
+    parser.add_argument('job_ids', nargs='*', help='IDs of the jobs to be removed.')
+    parser.add_argument('--job')
+    parser.add_argument('--experiment')
+    parser.add_argument('--status')
     args = parser.parse_args()
 
-    for job_id in args.job_ids:
-        delete_job(job_id)
+    to_be_deleted = args.job_ids
+
+    query = {}
+    if args.experiment is not None:
+        query['experiment'] = args.experiment
+    if args.job is not None:
+        query['job'] = {"$regex": args.job}
+    if args.status is not None:
+        query['status'] = args.status
+
+    if query != {}:
+        for job in mongo.job.find(query, {}):
+            to_be_deleted.append(str(job['_id']))
+
+    print('Should I delete:')
+    for id in to_be_deleted:
+        job = job_by_id(id)
+        print("- {experiment} / {job} -- {status}".format(**job))
+
+    answer = None
+    while answer not in ['y', 'n', '']:
+        answer = input('Please confirm [Y/n]: ')
+
+    if answer == 'n':
+        print('Canceled ...')
+    else:
+        for job_id in to_be_deleted:
+            delete_job(job_id)
 
 
 def delete_job(job_id):
