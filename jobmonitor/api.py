@@ -68,12 +68,11 @@ def kubernetes_delete_job(kubernetes_job_name):
     return client.delete_namespaced_job(kubernetes_job_name, namespace=KUBERNETES_NAMESPACE, body=body)
 
 
-def kubernetes_schedule_job(job_id, docker_image_path, scratch_volume, scratch_sub_path, gpus=None, results_dir='/scratch/results'):
+def kubernetes_schedule_job(job_id, docker_image_path, volumes, gpus=None, environment_variables=[], results_dir='/scratch/results'):
     """
     Example inputs:
     docker_iamge_path: ic-registry.epfl.ch/mlo/jobmonitor_worker
-    scratch_volume: pv-mlodata1
-    scratch_sub_path: vogels
+    volumes: ['pv-mlodata1']
     """
     job = job_by_id(job_id)
     kubernetes.config.load_kube_config()
@@ -99,20 +98,24 @@ def kubernetes_schedule_job(job_id, docker_image_path, scratch_volume, scratch_s
                     restart_policy='Never',
                     volumes=[
                         V1Volume(
-                            name=scratch_volume,
-                            persistent_volume_claim=V1PersistentVolumeClaimVolumeSource(claim_name=scratch_volume),
-                        ),
+                            name=volume,
+                            persistent_volume_claim=V1PersistentVolumeClaimVolumeSource(claim_name=volume),
+                        )
+                        for volume in volumes
                     ],
                     containers=[
                         V1Container(
                             name='worker',
                             image=docker_image_path,
                             env=[
-                                V1EnvVar(name='DATA', value='/scratch'),
                                 V1EnvVar(name='JOBMONITOR_RESULTS_DIR', value=results_dir),
+                            ] + [
+                                V1EnvVar(name=name, value=value)
+                                for name, value in environment_variables.items()
                             ],
                             volume_mounts=[
-                                V1VolumeMount(mount_path='/scratch', name=scratch_volume, sub_path=scratch_sub_path)
+                                V1VolumeMount(mount_path='/'+volume, name=volume)
+                                for volume in volumes
                             ],
                             resources=(
                                 V1ResourceRequirements(limits={'nvidia.com/gpu': gpus}) if gpus else None
