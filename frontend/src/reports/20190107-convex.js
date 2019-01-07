@@ -4,7 +4,7 @@ import { FacetChart } from '../TimeseriesPage';
 export default {
     'slug': 'convex-baseline',
     'title': 'Convex problem (logistic regression on Epsilon) baseline',
-    'date': new Date('2019'),
+    'date': new Date('2019-01-07'),
     'author': 'Thijs Vogels',
     'render': () => (
         <div>
