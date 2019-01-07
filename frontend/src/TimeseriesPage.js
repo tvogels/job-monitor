@@ -398,8 +398,9 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
           return null;
         }
 
-        const rowDomain = Array.from(new Set(curves.map(e => e.properties[row]))).sort();
-        const colDomain = Array.from(new Set(curves.map(e => e.properties[col]))).sort();
+        const rowDomain = createDomain(curves.map(e => e.properties[row]));
+        const colDomain = createDomain(curves.map(e => e.properties[col]));
+
         const ncols = colDomain.length;
         const nrows = rowDomain.length;
 
@@ -540,6 +541,24 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
     </Query>
   );
 };
+
+/**
+ * Extract unique values from an array
+ */
+function createDomain(values) {
+  let uniqueValues = Array.from(new Set(values)).sort();
+  if (uniqueValues.length === 0) {
+    return [];
+  }
+  const type = typeof values[0];
+  const typeIsConsistent = uniqueValues.every(v => (typeof v) === type);
+  if (typeIsConsistent && type === 'number') {
+    uniqueValues = new Float64Array(uniqueValues);
+    uniqueValues.sort();
+    uniqueValues = Array.from(uniqueValues);
+  }
+  return uniqueValues;
+}
 
 const TimeseriesPage = ({ jobIds, facetChartState }) => (
   <div style={{ flexGrow: 1, flexShrink: 1, display: 'flex', overflow: 'hidden' }}>
