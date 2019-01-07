@@ -213,7 +213,7 @@ const AverageViewer = ({ jobId }) => {
 export default {
     'slug': 'averaging-windows',
     'title': 'Averaging windows',
-    'date': Date('2018-12-19'),
+    'date': new Date('2018-12-19'),
     'author': 'Thijs Vogels',
     'render': () => (
         <div>

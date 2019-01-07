@@ -4,7 +4,7 @@ import { FacetChart } from '../TimeseriesPage';
 export default {
     'slug': 'gradient-prediction-2',
     'title': 'Gradient prediction: reusing past predictions + larger learning rates',
-    'date': Date('2018-12-17'),
+    'date': new Date('2018-12-17'),
     'author': 'Thijs Vogels',
     'render': () => (
         <div>

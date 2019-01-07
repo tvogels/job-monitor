@@ -6,7 +6,7 @@ import { FacetChart } from '../TimeseriesPage';
 export default {
     'slug': 'gradient-prediction-1',
     'title': 'Initial gradient prediction experiments',
-    'date': Date('2018-12-11'),
+    'date': new Date('2018-12-11'),
     'author': 'Thijs Vogels',
     'render': () => (
         <div>
