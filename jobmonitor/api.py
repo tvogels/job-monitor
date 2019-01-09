@@ -1,5 +1,7 @@
 import datetime
 import os
+import random
+import string
 import tarfile
 from fnmatch import fnmatch
 from tempfile import NamedTemporaryFile
@@ -129,6 +131,66 @@ def kubernetes_schedule_job(job_id, docker_image_path, volumes, gpus=None, envir
     )
     client.create_namespaced_job(KUBERNETES_NAMESPACE, job)
     update_job(job_id, { 'status': 'SCHEDULED', 'schedule_time': datetime.datetime.utcnow() })
+
+
+def kubernetes_schedule_job_queue(job_ids, docker_image_path, volumes, gpus=None, environment_variables=[], results_dir='/scratch/results', parallelism=10):
+    """
+    Example inputs:
+    docker_iamge_path: ic-registry.epfl.ch/mlo/jobmonitor_worker
+    volumes: ['pv-mlodata1']
+    """
+    kubernetes.config.load_kube_config()
+    client = kubernetes.client.BatchV1Api()
+    random_id = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(6))
+    job_name = '{}-queue-{}'.format(os.getenv('USER'), random_id)
+    metadata = V1ObjectMeta(
+        name=job_name,
+        labels=dict(
+            app='jobmonitor',
+            user=os.getenv('USER'),
+        ),
+    )
+    job = V1Job(
+        metadata=metadata,
+        spec=V1JobSpec(
+            completions=len(job_ids),
+            parallelism=parallelism,
+            template=V1PodTemplateSpec(
+                metadata=metadata,
+                spec=V1PodSpec(
+                    restart_policy='Never',
+                    volumes=[
+                        V1Volume(
+                            name=volume,
+                            persistent_volume_claim=V1PersistentVolumeClaimVolumeSource(claim_name=volume),
+                        )
+                        for volume in volumes
+                    ],
+                    containers=[
+                        V1Container(
+                            name='worker',
+                            image=docker_image_path,
+                            env=[
+                                V1EnvVar(name='JOBMONITOR_RESULTS_DIR', value=results_dir),
+                            ] + [
+                                V1EnvVar(name=name, value=value)
+                                for name, value in environment_variables.items()
+                            ],
+                            volume_mounts=[
+                                V1VolumeMount(mount_path='/'+volume, name=volume)
+                                for volume in volumes
+                            ],
+                            resources=(
+                                V1ResourceRequirements(limits={'nvidia.com/gpu': gpus}) if gpus else None
+                            ),
+                            command=['/entrypoint.sh', 'jobrun', '--queue-mode'] + job_ids,
+                        )
+                    ]
+                )
+            ),
+        )
+    )
+    client.create_namespaced_job(KUBERNETES_NAMESPACE, job)
 
 
 def result_dir(job):
