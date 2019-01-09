@@ -16,6 +16,7 @@ import yaml
 from bson.objectid import ObjectId
 from telegraf.client import TelegrafClient
 
+from jobmonitor.connections import mongo
 from jobmonitor.api import job_by_id, update_job, download_code_package
 from jobmonitor.utils import IntervalTimer
 
@@ -48,11 +49,27 @@ It will
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument('job_id')
+    parser.add_argument('job_id', nargs='+')
+    parser.add_argument('--queue-mode', '-q', default=False, action='store_true', help='Queue mode: pick a job with status "CREATED"')
     args = parser.parse_args()
 
     # Retrieve the job description
-    job = job_by_id(args.job_id)
+    if args.queue_mode:
+        # Atomically find a job with status 'CREATED' among the job ids provided
+        job = mongo.job.find_and_modify(
+            query={
+                '_id': { '$in': [ObjectId(id) for id in args.job_id] },
+                'status': 'CREATED',
+            },
+            update={'$set': { 'status': 'SCHEDULED', 'schedule_time': datetime.datetime.utcnow() }}
+        )
+        if job is None:
+            print('No jobs left')
+            sys.exit(0)
+        job_id = str(job['_id'])
+    else:
+        job = job_by_id(args.job_id[0])
+        job_id = args.job_id[0]
 
     # Create an output directory
     output_dir = os.path.join(job['project'], job['experiment'], job['job'] + '_' + str(job['_id'])[-6:])
@@ -61,7 +78,7 @@ def main():
     code_dir = os.path.join(output_dir_abs, 'code')
 
     # Set job to 'RUNNING' in MongoDB
-    update_job(args.job_id, {
+    update_job(job_id, {
         'host': socket.gethostname(),
         'status': 'RUNNING',
         'start_time': datetime.datetime.utcnow(),
@@ -75,7 +92,7 @@ def main():
         tags={ # global tags for this experiment
             'host': socket.gethostname(),
             'user': job['user'],
-            'job_id': str(job['_id']),
+            'job_id': job_id,
             'project': job['project'],
             'experiment': job['experiment'],
             'job': job['job']
@@ -84,7 +101,7 @@ def main():
 
     # Start sending regular heartbeat updates to the db
     heartbeat_stop, heartbeat_thread = IntervalTimer.create(
-        lambda: update_job(args.job_id, { 'last_heartbeat_time': datetime.datetime.utcnow() }),
+        lambda: update_job(job_id, { 'last_heartbeat_time': datetime.datetime.utcnow() }),
         10
     )
     heartbeat_thread.start()
@@ -128,14 +145,14 @@ def main():
 
         # Give the script access to all logging facilities
         def log_info(info_dict):
-            update_job(args.job_id, info_dict)
+            update_job(job_id, info_dict)
 
         script.log_info = log_info
         script.output_dir = output_dir_abs
         script.log_metric = telegraf.metric
 
         # Store the effective config used in the database
-        update_job(args.job_id, { 'config': script.config })
+        update_job(job_id, { 'config': script.config })
 
         # and in the output directory, just to be sure
         with open(os.path.join(output_dir_abs, 'config.yml'), 'w') as fp:
@@ -147,7 +164,7 @@ def main():
         # Finished successfully
         sys.stdout = orig_stdout
         print('Job finished successfully')
-        update_job(args.job_id, {
+        update_job(job_id, {
             'status': 'FINISHED',
             'end_time': datetime.datetime.utcnow()
         })
@@ -162,7 +179,7 @@ def main():
             status = 'CANCELED'
         else:
             status='FAILED'
-        update_job(args.job_id, {
+        update_job(job_id, {
             'status': status,
             'end_time': datetime.datetime.utcnow(),
             'exception': repr(e),
