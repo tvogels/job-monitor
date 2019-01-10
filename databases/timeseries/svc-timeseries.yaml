@@ -5,11 +5,15 @@ apiVersion: v1
 kind: Service
 metadata:
   name: vogels-timeseries
+  labels:
+    name: vogels-timeseries
+    user: vogels
 spec:
   type: NodePort
   ports:
   - name: http
     port: 8086
+    nodePort: 30086
     protocol: TCP
   selector:
     name: vogels-timeseries

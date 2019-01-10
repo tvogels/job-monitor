@@ -5,11 +5,15 @@ apiVersion: v1
 kind: Service
 metadata:
   name: vogels-metadata
+  labels:
+    name: vogels-metadata
+    user: vogels
 spec:
   type: NodePort
   ports:
   - name: http
     port: 27017
+    nodePort: 30017
     protocol: TCP
   selector:
     name: vogels-metadata
