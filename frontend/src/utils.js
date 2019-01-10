@@ -25,9 +25,9 @@ export function copyToClipboard(str) {
 export const HideUnderscores = ({ string }) => {
     const parts = string.split(/[_-]/g);
     const result = [];
-    for (let part of parts) {
+    for (let [i, part] of parts.entries()) {
         result.push(part);
-        result.push(<span key={part} style={{ opacity: 0.1 }}>_</span>);
+        result.push(<span key={i} style={{ opacity: 0.1 }}>_</span>);
     }
     result.pop()
     return result;
