@@ -21,6 +21,8 @@ const influx = new InfluxDB({
     database: process.env.JOBMONITOR_TIMESERIES_DB,
 });
 
+let mongo;
+
 // The GraphQL schema
 const typeDefs = gql`
     scalar Date
@@ -123,7 +125,7 @@ function parseJobFromDatabase(entry) {
 const resolvers = {
     Query: {
         job: (root, args, context, info) => {
-            return context.db
+            return mongo
                 .collection('job')
                 .findOne({ _id: ObjectID(args.id) })
                 .then(parseJobFromDatabase);
@@ -133,7 +135,7 @@ const resolvers = {
             delete args.limit;
             const ids = args.ids;
             delete args.ids;
-            return context.db
+            return mongo
                 .collection('job')
                 .find({ ...args, ...statusQuery(args.status), ...jobRegexQuery(args.job), ...idsQuery(ids) })
                 .sort({'creation_time': -1})
@@ -367,14 +369,13 @@ function parseSeries(seriesString, jobId) {
 const server = new ApolloServer({
     typeDefs,
     resolvers,
-    context: async () => ({
-        db: await MongoClient
-            .connect(`mongodb://${host}:${port}/${database}`, { useNewUrlParser: true })
-            .then((db) => db.db())
-    }),
     cors: { origin: true },
 });
 
-server.listen().then(({ url }) => {
-    console.log(`🚀 Server ready at ${url}`)
-});
+MongoClient
+    .connect(`mongodb://${host}:${port}/${database}`, { useNewUrlParser: true })
+    .then((db) => mongo = db.db())
+    .then(() => server.listen())
+    .then(({ url }) => {
+        console.log(`🚀 Server ready at ${url}`)
+    });
