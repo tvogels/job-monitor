@@ -76,8 +76,8 @@ class AppWithSelectedJobs extends Component {
   }
 };
 
-  const NavBar = ({ handleNavbarKeys, jobs, selectedJobs, toggleHandler }) => (
-<div tabIndex={0} onKeyDown={handleNavbarKeys} className="navbar" style={{ padding: '1em', paddingTop: 0, paddingRight: '1.2em', overflow: 'auto', backgroundColor: 'rgba(0,0,0,0.1)', minWidth: '25em', flexShrink: 0 }}>
+const NavBar = ({ handleNavbarKeys, jobs, selectedJobs, toggleHandler }) => (
+  <div tabIndex={0} onKeyDown={handleNavbarKeys} className="navbar" style={{ padding: '1em', paddingTop: 0, paddingRight: '1.2em', overflow: 'auto', backgroundColor: 'rgba(0,0,0,0.1)', minWidth: '25em', flexShrink: 0 }}>
     {jobsByExperiment(jobs).map(([experiment, jobs]) => (
       <NavBarGroup experiment={experiment} key={experiment}>
         {jobs.map(job => (
@@ -108,7 +108,7 @@ const App = ({ selectedJobs, setSelectedJobs, toggleHandler }) => {
           pollInterval={10000}
         >
           {({ loading, error, data }) => {
-            if (error) return <Main><p>Error :( {error}</p></Main>;
+            if (error) return <Main><p>Error :( {JSON.stringify(error)}</p></Main>;
             const handleNavbarKeys = (event) => {
               if (event.key === 'a' && (event.ctrlKey || event.metaKey)) {
                 event.preventDefault();
@@ -121,29 +121,29 @@ const App = ({ selectedJobs, setSelectedJobs, toggleHandler }) => {
             };
             return (
               <div style={{ flexGrow: 1, flexShrink: 1, display: 'flex' }}>
-                  <Route exact path="/" render={() => (
-                    <Redirect to="/config" />
-                  )} />
-                  <Route exact path="/logs" render={(props) => (
-                    <>
-                      <NavBar handleNavbarKeys={handleNavbarKeys} jobs={data.jobs} selectedJobs={selectedJobs} toggleHandler={toggleHandler} />
-                      <Main><LogsPage {...props} jobs={(data.jobs || []).filter(j => selectedJobs.includes(j.id))} /></Main>
-                    </>
-                  )} />
-                  <Route exact path="/config" render={(props) => (
-                    <>
-                      <NavBar handleNavbarKeys={handleNavbarKeys} jobs={data.jobs} selectedJobs={selectedJobs} toggleHandler={toggleHandler} />
-                      <Main><ConfigPage {...props} jobIds={selectedJobs} /></Main>
-                    </>
-                  )} />
-                  <Route exact path="/timeseries" render={(props) => (
-                    <>
+                <Route exact path="/" render={() => (
+                  <Redirect to="/config" />
+                )} />
+                <Route exact path="/logs" render={(props) => (
+                  <>
                     <NavBar handleNavbarKeys={handleNavbarKeys} jobs={data.jobs} selectedJobs={selectedJobs} toggleHandler={toggleHandler} />
-                      <Main><TimeseriesPage {...props} jobIds={selectedJobs} facetChartState={facetChartState} /></Main>
-                    </>
-                  )} />
-                  <Route exact path="/reports" component={ReportIndex} />
-                  <Route exact path="/reports/:slug" component={ReportPage} />
+                    <Main><LogsPage {...props} jobs={(data.jobs || []).filter(j => selectedJobs.includes(j.id))} /></Main>
+                  </>
+                )} />
+                <Route exact path="/config" render={(props) => (
+                  <>
+                    <NavBar handleNavbarKeys={handleNavbarKeys} jobs={data.jobs} selectedJobs={selectedJobs} toggleHandler={toggleHandler} />
+                    <Main><ConfigPage {...props} jobIds={selectedJobs} /></Main>
+                  </>
+                )} />
+                <Route exact path="/timeseries" render={(props) => (
+                  <>
+                    <NavBar handleNavbarKeys={handleNavbarKeys} jobs={data.jobs} selectedJobs={selectedJobs} toggleHandler={toggleHandler} />
+                    <Main><TimeseriesPage {...props} jobIds={selectedJobs} facetChartState={facetChartState} /></Main>
+                  </>
+                )} />
+                <Route exact path="/reports" component={ReportIndex} />
+                <Route exact path="/reports/:slug" component={ReportPage} />
               </div>
             );
           }}
