@@ -1,3 +1,4 @@
+# This is an example of a dockerfile that can be used with the job monitor
 
 FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
 LABEL maintainer "Thijs Vogels <thijs.vogels@epfl.ch>"
