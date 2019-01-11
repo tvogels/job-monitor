@@ -127,12 +127,11 @@ def main():
         sys.path.append(code_dir)
 
         # Rewire stdout and stderr to write to the output file
-        orig_stdout = sys.stdout
         logfile_path = os.path.join(output_dir_abs, 'output.txt')
-        logfile = open(logfile_path, 'w')
-        print("Starting. Output redirected to {}".format(logfile_path))
-        sys.stdout = logfile
-        sys.stderr = logfile
+        logfile = open(logfile_path, 'a')
+        print("Starting. Output piped to {}".format(logfile_path))
+        sys.stdout = PipeToFile(sys.stdout, logfile)
+        sys.stderr = PipeToFile(sys.stderr, logfile)
 
         print("cwd: {}".format(code_dir))
 
@@ -162,7 +161,6 @@ def main():
         script.main()
 
         # Finished successfully
-        sys.stdout = orig_stdout
         print('Job finished successfully')
         update_job(job_id, {
             'status': 'FINISHED',
@@ -172,7 +170,6 @@ def main():
     except Exception as e:
         error_message = traceback.format_exc()
         print(error_message)
-        sys.stdout = orig_stdout
         print('Job failed. See {}'.format(logfile_path))
         print(error_message)
         if isinstance(e, KeyboardInterrupt):
@@ -189,6 +186,8 @@ def main():
         # Stop the heartbeat thread
         heartbeat_stop.set()
         heartbeat_thread.join(timeout=1)
+        sys.stdout.close_logfile()
+        sys.stderr.close_logfile()
 
 
 def clone_directory(from_directory, to_directory, overwrite=True):
@@ -208,6 +207,29 @@ def clone_directory(from_directory, to_directory, overwrite=True):
         ignore_patterns = None
 
     shutil.copytree(from_directory, to_directory, ignore=ignore_patterns)
+
+
+class PipeToFile():
+    """Change sys.stdout or sys.stderr to output to a file in addition to the normal channel"""
+
+    def __init__(self, channel, file_pointer):
+        self.channel = channel
+        self.logfile = file_pointer
+
+    def write(self, message):
+        self.channel.write(message)
+        if self.logfile is not None:
+            self.logfile.write(message)
+            self.logfile.flush()
+
+    def flush(self):
+        self.channel.flush()
+        if self.logfile is not None:
+            self.logfile.flush()
+
+    def close_logfile(self):
+        self.logfile.close()
+        self.logfile = None
 
 
 if __name__ == '__main__':
