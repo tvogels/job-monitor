@@ -45,7 +45,7 @@ class JobLogs extends React.PureComponent {
                     pollInterval={10000}
                 >
                     {({ error, data }) => {
-                        if (error) return <p>Error :( {error}</p>;
+                        if (error) return <p>Error :( {JSON.stringify(error)}</p>;
                         return (
                             <ScrollTextArea value={data.job ? (data.job.logs || 'Unavailable ...').trim() : 'Loading ...'} readOnly={true} fill={true} style={{ fontFamily: 'monospace', flexGrow: 1 }} />
                         );
