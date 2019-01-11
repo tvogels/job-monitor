@@ -6,6 +6,6 @@ if [ ! -f $TELEGRAF ]; then
     wget https://dl.influxdata.com/telegraf/releases/$TELEGRAF
 fi
 
-docker build . -t jobmonitor_telegraf
-docker tag jobmonitor_telegraf ic-registry.epfl.ch/mlo/jobmonitor_telegraf
-docker push ic-registry.epfl.ch/mlo/jobmonitor_telegraf
+docker build . -t jobmonitor_telegraf \
+&& docker tag jobmonitor_telegraf ic-registry.epfl.ch/mlo/jobmonitor_telegraf \
+&& docker push ic-registry.epfl.ch/mlo/jobmonitor_telegraf

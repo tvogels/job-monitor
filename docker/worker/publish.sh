@@ -14,6 +14,6 @@ if [ ! -f $TORCH ]; then
 fi
 
 # Build docker
-docker build . -t jobmonitor_worker
-docker tag jobmonitor_worker ic-registry.epfl.ch/mlo/jobmonitor_worker
-docker push ic-registry.epfl.ch/mlo/jobmonitor_worker
+docker build . -t jobmonitor_worker \
+&& docker tag jobmonitor_worker ic-registry.epfl.ch/mlo/jobmonitor_worker \
+&& docker push ic-registry.epfl.ch/mlo/jobmonitor_worker
