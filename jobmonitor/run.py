@@ -187,7 +187,9 @@ def main():
         heartbeat_stop.set()
         heartbeat_thread.join(timeout=1)
         sys.stdout.close_logfile()
+        sys.stdout = sys.stdout.channel
         sys.stderr.close_logfile()
+        sys.stderr = sys.stderr.channel
 
 
 def clone_directory(from_directory, to_directory, overwrite=True):
