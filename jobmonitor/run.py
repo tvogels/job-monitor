@@ -50,7 +50,8 @@ It will
 def main():
     parser = ArgumentParser()
     parser.add_argument('job_id', nargs='+')
-    parser.add_argument('--queue-mode', '-q', default=False, action='store_true', help='Queue mode: pick a job with status "CREATED"')
+    parser.add_argument('--queue-mode', '-q', default=False, action='store_true', help='Queue mode: pick a job with status "CREATED" from the job_id list')
+    parser.add_argument('--queue-repeat', '-r', default=False, action='store_true', help='Keep working until the queue is empty')
     args = parser.parse_args()
 
     # Retrieve the job description
@@ -190,6 +191,9 @@ def main():
         sys.stdout = sys.stdout.channel
         sys.stderr.close_logfile()
         sys.stderr = sys.stderr.channel
+
+    if args.queue_repeat:
+        main()
 
 
 def clone_directory(from_directory, to_directory, overwrite=True):
