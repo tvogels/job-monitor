@@ -203,7 +203,7 @@ const FacetChartController = ({ jobIds, state }) => {
   return (
     <Query query={INDEX_QUERY} variables={{ ids: jobIds }}>
       {({ loading, error, data }) => {
-        if (error) return "Error :(";
+        if (error) return <p>Error :( {JSON.stringify(error)}</p>;
         const curvesIndex = flattenCurveData(data);
         const measurementDomain = Array.from(new Set(curvesIndex.map(c => c.measurement))).sort();
         const tagDomain = getTagDomain(curvesIndex);
@@ -392,7 +392,7 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
   return (
     <Query query={DATA_QUERY} variables={{ ids: jobIds, measurement: measurementQuery.join('|'), tags: tagQuery.join(',') }}>
       {({ loading, error, data }) => {
-        if (error) return "Error :(";
+        if (error) return <p>Error :( {JSON.stringify(error)}</p>;
         const curves = flattenCurveData(data);
         if (curves.length === 0) {
           return null;
