@@ -279,8 +279,9 @@ def influx_query(query, merge=False):
     for (measurement, tags), values in raw_data.items():
         dataframe = pd.DataFrame(values)
         dataframe['measurement'] = measurement
-        for key, value in tags.items():
-            dataframe[key] = value
+        if tags is not None:
+            for key, value in tags.items():
+                dataframe[key] = value
         series.append(InfluxSeries(
             measurement=measurement,
             tags=tags,
