@@ -3,10 +3,12 @@ import os
 import random
 import string
 import tarfile
+from collections import namedtuple
 from fnmatch import fnmatch
 from tempfile import NamedTemporaryFile
 
 import kubernetes
+import pandas as pd
 from bson.objectid import ObjectId
 from git import InvalidGitRepositoryError, Repo
 from kubernetes.client import (V1Container, V1EnvVar, V1Job, V1JobSpec,
@@ -16,7 +18,7 @@ from kubernetes.client import (V1Container, V1EnvVar, V1Job, V1JobSpec,
                                V1Volume, V1VolumeMount)
 from schema import Or, Schema
 
-from jobmonitor.connections import KUBERNETES_NAMESPACE, gridfs, mongo
+from jobmonitor.connections import KUBERNETES_NAMESPACE, gridfs, influx, mongo
 
 
 def job_by_id(job_id):
@@ -265,3 +267,26 @@ def download_code_package(package_id, destination):
             fp.extractall(destination)
     finally:
         tmp.close()
+
+
+InfluxSeries = namedtuple('InfluxEntry', ['measurement', 'tags', 'data'])
+
+
+def influx_query(query, merge=False):
+    """Get a list of timeseries as {measurement, tags, data} from InfluxDB"""
+    raw_data = influx.query(query)
+    series = []
+    for (measurement, tags), values in raw_data.items():
+        dataframe = pd.DataFrame(values)
+        dataframe['measurement'] = measurement
+        for key, value in tags.items():
+            dataframe[key] = value
+        series.append(InfluxSeries(
+            measurement=measurement,
+            tags=tags,
+            data=dataframe,
+        ))
+    if not merge:
+        return series
+    else:
+        return pd.concat([s.data for s in series])
