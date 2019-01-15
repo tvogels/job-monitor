@@ -13,6 +13,7 @@ import { Text } from '@vx/text';
 import { extent } from 'd3-array';
 import { scaleLinear, scaleOrdinal } from 'd3-scale';
 import { schemeCategory10 } from 'd3-scale-chromatic';
+import { nest } from 'd3-collection';
 import gql from 'graphql-tag';
 import React, { useState } from 'react';
 import { Query } from 'react-apollo';
@@ -515,7 +516,7 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
                             {curves.filter(e => e.properties[row] === rowValue && e.properties[col] === colValue).map(entry => (
                               <LinePath
                                 key={entry.entryId}
-                                data={entry.values}
+                                data={aggregateBy(entry.values, d => x(d))}
                                 clipPath={`url(#${clipPathId})`}
                                 // defined={(d) => (y(d) >= yDomain[0] && y(d) <= yDomain[1] && x(d) >= xDomain[0] && x(d) <= xDomain[1])}
                                 x={d => xScale(x(d))} y={d => yScale(y(d))}
@@ -541,6 +542,32 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
     </Query>
   );
 };
+
+/**
+ * Take the mean of a list of dictionaries
+ */
+function dictMean(dictionaries) {
+  if (dictionaries.length === 0) {
+    return [];
+  }
+  const mean = {...dictionaries[0]};
+  let i = 1;
+  for (let entry of dictionaries.slice(1)) {
+    i += 1;
+    for (let [key, value] of Object.entries(entry)) {
+      mean[key] += (1/i) * (value - mean[key]);
+    }
+  }
+  return mean;
+}
+
+/**
+ * Aggreagate a list of data by a certain key
+ * Used to make sure that there is only one y per x value in a list of data points for a scatter plot
+ */
+function aggregateBy(values, byFn, aggregationFn=dictMean) {
+  return nest().key(byFn).rollup(aggregationFn).entries(values).map(({ value }) => value);
+}
 
 /**
  * Extract unique values from an array
