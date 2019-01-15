@@ -15,7 +15,7 @@ const FilterBar = ({ filter, setFilter, limit, setLimit, statusFilter, setStatus
             style={{ marginRight: '.6em' }}
             label="Limit"
             labelFor="limit-input">
-            <NumericInput id="limit-input" value={limit} placeholder="Limit" onValueChange={(val) => setLimit(val)} />
+            <NumericInput id="limit-input" value={limit} placeholder="Limit" onValueChange={(val) => setLimit(isNaN(val) ? 0 : val)} />
         </FormGroup>
         <FormGroup
             label="Status"
