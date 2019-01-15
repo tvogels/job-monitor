@@ -9,15 +9,15 @@ const { Kind } = require('graphql/language');
 const process = require('process');
 const { InfluxDB } = require('influx');
 
-const host = process.env.JOBMONITOR_METADATA_HOST;
-const port = process.env.JOBMONITOR_METADATA_PORT;
+const host = process.env.VOGELS_METADATA_PORT_27017_TCP_ADDR;
+const port = process.env.VOGELS_METADATA_PORT_27017_TCP_PORT;
 const database = process.env.JOBMONITOR_METADATA_DB;
 
 const HEARTBEAT_INTERVAL = 10; // seconds
 
 const influx = new InfluxDB({
-    host: process.env.JOBMONITOR_TIMESERIES_HOST,
-    port: process.env.JOBMONITOR_TIMESERIES_PORT,
+    host: process.env.VOGELS_TIMESERIES_PORT_8086_TCP_ADDR,
+    port: process.env.VOGELS_TIMESERIES_PORT_8086_TCP_PORT,
     database: process.env.JOBMONITOR_TIMESERIES_DB,
 });
 
