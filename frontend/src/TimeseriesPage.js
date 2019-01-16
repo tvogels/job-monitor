@@ -505,7 +505,7 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
                             <Grid
                               xScale={xScale}
                               yScale={yScale}
-                              stroke="rgb(50, 63, 76"
+                              stroke="rgb(50, 63, 76)"
                               numTicksRows={numTicksRows}
                               numTicksColumns={numTicksColumns}
                               width={cellWidth}
