@@ -10,3 +10,32 @@ text {
 .vx-axis-line, .vx-axis-tick line {
     stroke: rgb(221, 226, 229);
 }
+
+.navbar {
+    padding: 1em;
+    padding-top: 0;
+    padding-right: 1.2em;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.1);
+    width: 32em;
+    flex-shrink: 0
+}
+
+.navbar h4 {
+    margin-bottom: .4rem;
+}
+
+.navbar-description {
+    opacity: 0.4;
+    margin-bottom: .6rem;
+}
+
+.navbar-line {
+    display: flex;
+}
+
+.navbar-progress {
+    width: 8em;
+    text-align: right;
+    color: rgba(255, 255, 255, 0.5);
+}

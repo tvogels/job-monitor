@@ -20,6 +20,10 @@ const GET_JOBS = gql`
       status
       exception
       progress
+      annotations {
+        key
+        value
+      }
     }
   }
 `;
@@ -77,9 +81,9 @@ class AppWithSelectedJobs extends Component {
 };
 
 const NavBar = ({ handleNavbarKeys, jobs, selectedJobs, toggleHandler }) => (
-  <div tabIndex={0} onKeyDown={handleNavbarKeys} className="navbar" style={{ padding: '1em', paddingTop: 0, paddingRight: '1.2em', overflow: 'auto', backgroundColor: 'rgba(0,0,0,0.1)', minWidth: '25em', flexShrink: 0 }}>
+  <div tabIndex={0} onKeyDown={handleNavbarKeys} className="navbar">
     {jobsByExperiment(jobs).map(([experiment, jobs]) => (
-      <NavBarGroup experiment={experiment} key={experiment}>
+      <NavBarGroup experiment={experiment} key={experiment} description={(new Map(jobs[0].annotations.map(({ key, value }) => [key, value])).get('description'))}>
         {jobs.map(job => (
           <NavBarLine key={job.id} {...job} isSelected={selectedJobs.includes(job.id)} toggle={toggleHandler(job.id)} />
         ))}
