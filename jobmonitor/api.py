@@ -72,7 +72,7 @@ def kubernetes_delete_job(kubernetes_job_name):
     return client.delete_namespaced_job(kubernetes_job_name, namespace=KUBERNETES_NAMESPACE, body=body)
 
 
-def kubernetes_schedule_job(job_id, docker_image_path, volumes, gpus=None, environment_variables=[], results_dir='/scratch/results'):
+def kubernetes_schedule_job(job_id, docker_image_path, volumes, gpus=0, environment_variables=[], results_dir='/scratch/results'):
     """
     Example inputs:
     docker_iamge_path: ic-registry.epfl.ch/mlo/jobmonitor_worker
@@ -122,7 +122,10 @@ def kubernetes_schedule_job(job_id, docker_image_path, volumes, gpus=None, envir
                                 for volume in volumes
                             ],
                             resources=(
-                                V1ResourceRequirements(limits={'nvidia.com/gpu': gpus}) if gpus else None
+                                V1ResourceRequirements(
+                                    limits={'nvidia.com/gpu': gpus, 'memory': '128Gi', 'cpu': 20},
+                                    requests={'memory': '85Gi', 'cpu': '14'}
+                                )
                             ),
                             command=['/entrypoint.sh', 'jobrun', job_id],
                         )
@@ -135,7 +138,7 @@ def kubernetes_schedule_job(job_id, docker_image_path, volumes, gpus=None, envir
     update_job(job_id, { 'status': 'SCHEDULED', 'schedule_time': datetime.datetime.utcnow() })
 
 
-def kubernetes_schedule_job_queue(job_ids, docker_image_path, volumes, gpus=None, environment_variables=[], results_dir='/scratch/results', parallelism=10):
+def kubernetes_schedule_job_queue(job_ids, docker_image_path, volumes, gpus=0, environment_variables=[], results_dir='/scratch/results', parallelism=10):
     """
     Example inputs:
     docker_iamge_path: ic-registry.epfl.ch/mlo/jobmonitor_worker
@@ -183,7 +186,10 @@ def kubernetes_schedule_job_queue(job_ids, docker_image_path, volumes, gpus=None
                                 for volume in volumes
                             ],
                             resources=(
-                                V1ResourceRequirements(limits={'nvidia.com/gpu': gpus}) if gpus else None
+                                V1ResourceRequirements(
+                                    limits={'nvidia.com/gpu': gpus, 'memory': '128Gi', 'cpu': 20},
+                                    requests={'memory': '85Gi', 'cpu': '14'}
+                                )
                             ),
                             command=['/entrypoint.sh', 'jobrun', '--queue-mode'] + job_ids,
                         )
