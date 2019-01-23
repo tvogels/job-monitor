@@ -42,7 +42,7 @@ def register_job(project, experiment, job, config_overrides, runtime_environment
     Schema(str).validate(project)
     Schema(str).validate(experiment)
     Schema(str).validate(job)
-    Schema({str: object}).validate(config_overrides)
+    Schema(Or({}, {str: object})).validate(config_overrides)
     Schema(Or(None, {str: object})).validate(annotations)
     Schema({'clone': Or({'code_package': ObjectId}, {'path': str}), 'script': str}).validate(runtime_environment)
 
