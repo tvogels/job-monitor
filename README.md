@@ -38,8 +38,6 @@ Much of the log information that is interesting in ML training forms a timeserie
 
 ### InfluxDB Setup
 
-*(in the testing phase, you can use vogels-svc-timeseries)*
-
 The easiest way is to use the Docker image [influxdb](https://hub.docker.com/r/_/influxdb/) to run a server.
 
 Running an instance locally:
@@ -49,8 +47,8 @@ docker run -p 8086:8086 -it influxdb
 
 Deploying on the container cluster:
 ```bash
-# (1) replace 'vogels' in pod-timeseries.yaml by your username
-# (2) replace 'vogels' in svc-timeseries.yaml by your username
+# (1) In pod-timeseries.yaml, replace 'vogels' by your username and 'runAsUser' by your UID
+# (2) In svc-timeseries.yaml, replace 'vogels' by your username and 'runAsUser' by your UID
 kubectl create -f databases/timeseries/
 ```
 
