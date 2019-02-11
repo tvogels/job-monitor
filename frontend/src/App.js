@@ -83,7 +83,7 @@ class AppWithSelectedJobs extends Component {
 const NavBar = ({ handleNavbarKeys, jobs, selectedJobs, toggleHandler }) => (
   <div tabIndex={0} onKeyDown={handleNavbarKeys} className="navbar">
     {jobsByExperiment(jobs).map(([experiment, jobs]) => (
-      <NavBarGroup experiment={experiment} key={experiment} description={(new Map(jobs[0].annotations.map(({ key, value }) => [key, value])).get('description'))}>
+      <NavBarGroup experiment={jobs[0].experiment} key={experiment} description={jobDescription(jobs[0])}>
         {jobs.map(job => (
           <NavBarLine key={job.id} {...job} isSelected={selectedJobs.includes(job.id)} toggle={toggleHandler(job.id)} />
         ))}
@@ -94,7 +94,7 @@ const NavBar = ({ handleNavbarKeys, jobs, selectedJobs, toggleHandler }) => (
 
 const App = ({ selectedJobs, setSelectedJobs, toggleHandler }) => {
   const [filter, setFilter] = useState('');
-  const [limit, setLimit] = useState(25);
+  const [limit, setLimit] = useState(100);
   const [statusFilter, setStatusFilter] = useState('');
   const facetChartState = useFacetChartControllerState();
   return (
@@ -157,8 +157,17 @@ const App = ({ selectedJobs, setSelectedJobs, toggleHandler }) => {
   );
 };
 
+function jobDescription(job) {
+  const entry = job.annotations.find(({ key, value }) => key === 'description');
+  if (entry != null) {
+    return entry.value;
+  } else {
+    return '';
+  }
+}
+
 function jobsByExperiment(jobs) {
-  return Object.entries(groupBy(jobs, job => job.experiment));
+  return Object.entries(groupBy(jobs, job => job.experiment + jobDescription(job)));
 }
 
 export default AppWithSelectedJobs;
