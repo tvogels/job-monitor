@@ -78,16 +78,20 @@ def main(delete_fn=delete_job, action_name='delete'):
         for job in mongo.job.find(query, {}):
             to_be_deleted.append(str(job['_id']))
 
+    if len(to_be_deleted) == 0:  # if query matches no jobs or no job_ids provided
+        print('No jobs found that match the provided criteria.')
+        sys.exit(1)
+
     print('Should I {}:'.format(action_name))
     for id in to_be_deleted:
         job = job_by_id(id)
         print("- {experiment} / {job} -- {status}".format(**job))
 
     answer = None
-    while answer not in ['y', 'n', '']:
+    while answer not in ['Y', 'y', 'N','n', '']:
         answer = input('Please confirm [Y/n]: ')
 
-    if answer == 'n':
+    if answer.lower() == 'n':
         print('Canceled ...')
     else:
         for job_id in to_be_deleted:

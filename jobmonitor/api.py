@@ -4,6 +4,7 @@ import random
 import string
 import tarfile
 from collections import namedtuple
+from collections.abc import Iterable
 from fnmatch import fnmatch
 from tempfile import NamedTemporaryFile
 
@@ -72,12 +73,15 @@ def kubernetes_delete_job(kubernetes_job_name):
     return client.delete_namespaced_job(kubernetes_job_name, namespace=KUBERNETES_NAMESPACE, body=body)
 
 
-def kubernetes_schedule_job(job_id, docker_image_path, volumes, gpus=0, environment_variables=[], results_dir='/scratch/results'):
+def kubernetes_schedule_job(job_id, docker_image_path, volumes, gpus=0, environment_variables={}, results_dir='/scratch/results'):
     """
     Example inputs:
-    docker_iamge_path: ic-registry.epfl.ch/mlo/jobmonitor_worker
+    docker_image_path: ic-registry.epfl.ch/mlo/jobmonitor_worker
     volumes: ['pv-mlodata1']
     """
+    if isinstance(volumes, str) or not isinstance(volumes, Iterable):
+        raise ValueError("Volumes should be a list/iterable of volumes. E.g. volumes: ['pv-mlodata1']")
+
     job = job_by_id(job_id)
     kubernetes.config.load_kube_config()
     client = kubernetes.client.BatchV1Api()
@@ -138,12 +142,15 @@ def kubernetes_schedule_job(job_id, docker_image_path, volumes, gpus=0, environm
     update_job(job_id, { 'status': 'SCHEDULED', 'schedule_time': datetime.datetime.utcnow() })
 
 
-def kubernetes_schedule_job_queue(job_ids, docker_image_path, volumes, gpus=0, environment_variables=[], results_dir='/scratch/results', parallelism=10):
+def kubernetes_schedule_job_queue(job_ids, docker_image_path, volumes, gpus=0, environment_variables={}, results_dir='/scratch/results', parallelism=10):
     """
     Example inputs:
-    docker_iamge_path: ic-registry.epfl.ch/mlo/jobmonitor_worker
+    docker_image_path: ic-registry.epfl.ch/mlo/jobmonitor_worker
     volumes: ['pv-mlodata1']
     """
+    if isinstance(volumes, str) or not isinstance(volumes, Iterable):
+        raise ValueError("Volumes should be a list/iterable of volumes. E.g. volumes: ['pv-mlodata1']")
+
     kubernetes.config.load_kube_config()
     client = kubernetes.client.BatchV1Api()
     random_id = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(6))
