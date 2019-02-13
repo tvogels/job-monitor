@@ -77,10 +77,12 @@ def kubernetes_schedule_job(job_id, docker_image_path, volumes, gpus=0, environm
     """
     Example inputs:
     docker_image_path: ic-registry.epfl.ch/mlo/jobmonitor_worker
-    volumes: ['pv-mlodata1']
+    volumes: ['pv-mlodata1'] or {'pv-mlodata1': '/mlodata1'}
     """
-    if isinstance(volumes, str) or not isinstance(volumes, Iterable):
-        raise ValueError("Volumes should be a list/iterable of volumes. E.g. volumes: ['pv-mlodata1']")
+    if not isinstance(volumes, Iterable):
+        raise ValueError("Volumes should either be an iterable (list, tuple) or a dictionary {'volume_name': 'mount_path'}.")
+    if not isinstance(volumes, dict):
+        volumes = {volume: "/"+volume for volume in volumes}  # use volume-name as mount-path
 
     job = job_by_id(job_id)
     kubernetes.config.load_kube_config()
@@ -109,7 +111,7 @@ def kubernetes_schedule_job(job_id, docker_image_path, volumes, gpus=0, environm
                             name=volume,
                             persistent_volume_claim=V1PersistentVolumeClaimVolumeSource(claim_name=volume),
                         )
-                        for volume in volumes
+                        for volume in volumes.keys()
                     ],
                     containers=[
                         V1Container(
@@ -122,8 +124,8 @@ def kubernetes_schedule_job(job_id, docker_image_path, volumes, gpus=0, environm
                                 for name, value in environment_variables.items()
                             ],
                             volume_mounts=[
-                                V1VolumeMount(mount_path='/'+volume, name=volume)
-                                for volume in volumes
+                                V1VolumeMount(mount_path=mount_path, name=volume)
+                                for volume, mount_path in volumes.items()
                             ],
                             resources=(
                                 V1ResourceRequirements(
@@ -146,10 +148,12 @@ def kubernetes_schedule_job_queue(job_ids, docker_image_path, volumes, gpus=0, e
     """
     Example inputs:
     docker_image_path: ic-registry.epfl.ch/mlo/jobmonitor_worker
-    volumes: ['pv-mlodata1']
+    volumes: ['pv-mlodata1'] or {'pv-mlodata1': '/mlodata1'}
     """
-    if isinstance(volumes, str) or not isinstance(volumes, Iterable):
-        raise ValueError("Volumes should be a list/iterable of volumes. E.g. volumes: ['pv-mlodata1']")
+    if not isinstance(volumes, Iterable):
+        raise ValueError("Volumes should either be an iterable (list, tuple) or a dictionary {'volume_name': 'mount_path'}.")
+    if not isinstance(volumes, dict):
+        volumes = {volume: "/"+volume for volume in volumes}  # use volume-name as mount-path
 
     kubernetes.config.load_kube_config()
     client = kubernetes.client.BatchV1Api()
@@ -176,7 +180,7 @@ def kubernetes_schedule_job_queue(job_ids, docker_image_path, volumes, gpus=0, e
                             name=volume,
                             persistent_volume_claim=V1PersistentVolumeClaimVolumeSource(claim_name=volume),
                         )
-                        for volume in volumes
+                        for volume in volumes.keys()
                     ],
                     containers=[
                         V1Container(
@@ -189,8 +193,8 @@ def kubernetes_schedule_job_queue(job_ids, docker_image_path, volumes, gpus=0, e
                                 for name, value in environment_variables.items()
                             ],
                             volume_mounts=[
-                                V1VolumeMount(mount_path='/'+volume, name=volume)
-                                for volume in volumes
+                                V1VolumeMount(mount_path=mount_path, name=volume)
+                                for volume, mount_path in volumes.items()
                             ],
                             resources=(
                                 V1ResourceRequirements(
