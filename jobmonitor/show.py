@@ -29,6 +29,9 @@ def main():
         del job['config']
 
     job['id'] = str(job.pop('_id'))
+
+    del job['environment'] # too lazy to fix a bug
+
     print(yaml.safe_dump(job))
 
 
