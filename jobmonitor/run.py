@@ -158,6 +158,9 @@ def main():
         with open(os.path.join(output_dir_abs, 'config.yml'), 'w') as fp:
             yaml.dump(script.config, fp, default_flow_style=False)
 
+        # Wait for a few seconds to give InfluxDB time to start properly
+        sleep(10)
+
         # Run the task
         script.main()
 
@@ -194,6 +197,9 @@ def main():
 
     if args.queue_repeat:
         main()
+
+    # Wait for a few seconds to give Telegraf time to send its buffer over to InfluxDB
+    sleep(10)
 
 
 def clone_directory(from_directory, to_directory, overwrite=True):
