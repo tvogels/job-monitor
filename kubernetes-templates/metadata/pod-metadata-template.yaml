@@ -1,0 +1,27 @@
+# InfluxDB job-metadata database --
+# This is meant to store training logs and system usage metrics
+# usage: kubectl create -f pod-metadata.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{user.name}}-metadata
+  labels:
+    name: {{user.name}}-metadata
+    user: {{user.name}}
+spec:
+  securityContext:
+    runAsUser: {{user.id}}
+    fsGroup: {{user.group_id}}
+  containers:
+    - name: mongo
+      image: mongo:4.0
+      ports:
+      - containerPort: 27017
+        name: http
+      volumeMounts:
+      - mountPath: /data/db
+        name: data
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: pv-mlodata1-{{user.name}}-databases-job-metadata-mongodb

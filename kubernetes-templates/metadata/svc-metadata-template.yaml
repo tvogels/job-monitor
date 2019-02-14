@@ -1,0 +1,19 @@
+# InfluxDB job-metadata database --
+# This 'service' makes sure the open ports in the corresponding 'pod' are accessible.
+# usage: kubectl create -f svc-metadata.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{user.name}}-metadata
+  labels:
+    name: {{user.name}}-metadata
+    user: {{user.name}}
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    port: 27017
+    nodePort: {{ports.metadata}}
+    protocol: TCP
+  selector:
+    name: {{user.name}}-metadata
