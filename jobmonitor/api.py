@@ -306,6 +306,7 @@ def influx_query(query, merge=False):
             tags=tags,
             data=dataframe,
         ))
+        dataframe.time = pd.to_datetime(dataframe.time)
     if not merge:
         return series
     else:
