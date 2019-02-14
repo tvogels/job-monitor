@@ -4,26 +4,26 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: vogels-graphql
+  name: {{user.name}}-graphql
   labels:
-    name: vogels-graphql
-    user: vogels
+    name: {{user.name}}-graphql
+    user: {{user.name}}
 spec:
   securityContext:
     runAsUser: 145554
     fsGroup: 11169
   containers:
     - name: graphql
-      image: ic-registry.epfl.ch/mlo/vogels_graphql
+      image: ic-registry.epfl.ch/mlo/{{user.name}}_graphql
       ports:
       - containerPort: 4000
       env:
-        - {name: DATA,                     value: /data/vogels}
-        - {name: JOBMONITOR_RESULTS_DIR,   value: /data/vogels/results}
+        - {name: DATA,                     value: /data/{{user.name}}}
+        - {name: JOBMONITOR_RESULTS_DIR,   value: /data/{{user.name}}/results}
       volumeMounts:
         - mountPath: /scratch
           name: mlo-scratch
-          subPath: vogels
+          subPath: {{user.name}}
         - mountPath: /data
           name: mlodata1
   volumes:
