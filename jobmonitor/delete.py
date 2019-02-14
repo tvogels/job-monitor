@@ -37,23 +37,37 @@ def delete_job(job_id):
 
 
 def kill_job_in_kubernetes(job_id):
-    kubernetes.config.load_kube_config()
-    client = kubernetes.client.BatchV1Api()
-    job_results = client.list_namespaced_job(KUBERNETES_NAMESPACE, label_selector="job_id="+job_id)
-    if not job_results.items:
-        return False
-
-    job = job_results.items[0]
-    name = job.metadata.name
-    kubernetes_delete_job(name)
-
     # Set status to CANCELED in MongoDB if the job is still RUNNING
     mongo.job.update({ '_id': ObjectId(job_id), 'status': 'RUNNING' }, { '$set': { 'status': 'CANCELED' } })
 
-    if name:
-        print('- Killed job {} in Kubernetes'.format(name))
+    # See if there is a kubernetes job associated to this job
+    kubernetes.config.load_kube_config()
+    client = kubernetes.client.BatchV1Api()
+    job_results = client.list_namespaced_job(KUBERNETES_NAMESPACE, label_selector="job_id="+job_id, limit=1)
+    if job_results.items:
+        job = job_results.items[0]
+        name = job.metadata.name
+        kubernetes_delete_job(name)
+        if name:
+            print('- Killed job {} in Kubernetes'.format(name))
+        return name
+    
+    # There is no job, apparently.
+    # – Try to find a pod by the job's registered hostname
+    client = kubernetes.client.CoreV1Api()
+    job = job_by_id(job_id)
+    pod_results = client.list_namespaced_pod(KUBERNETES_NAMESPACE, limit=1, label_selector="user="+job.user, field_selector="metadata.name="+job.host)
+    if pod_results.items:
+        pod = pod_results.items[0]
+        name = pod.metadata.name
+        body = kubernetes.client.V1DeleteOptions(propagation_policy='Foreground')
+        client.delete_namespaced_pod(name, namespace=KUBERNETES_NAMESPACE, body=body)
+        if name:
+            print('- Killed pod {} in Kubernetes'.format(name))
+        return name
 
-    return name
+    # If non of the above approaches killed anything, we return False
+    return False
 
 
 def main(delete_fn=delete_job, action_name='delete'):
