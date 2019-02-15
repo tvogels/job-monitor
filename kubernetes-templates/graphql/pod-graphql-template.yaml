@@ -19,8 +19,17 @@ spec:
       ports:
       - containerPort: 4000
       env:
-        - {name: DATA,                     value: /data/{{user.name}}}
-        - {name: JOBMONITOR_RESULTS_DIR,   value: /data/{{user.name}}/results}
+        - {name: DATA,                        value: /data/{{user.name}}}
+        - {name: JOBMONITOR_RESULTS_DIR,      value: /data/{{user.name}}/results}
+        # Metadata
+        - {name: JOBMONITOR_METADATA_HOST,    value: {{user.name}}-metadata}
+        - {name: JOBMONITOR_METADATA_PORT,    value: 27017}
+        - {name: JOBMONITOR_METADATA_DB,      value: jobmonitor}
+        # InfluxDB
+        - {name: JOBMONITOR_TIMESERIES_HOST,  value: {{user.name}}-timeseries}
+        - {name: JOBMONITOR_TIMESERIES_PORT,  value: {{ports.timeseries}}}
+        - {name: JOBMONITOR_TIMESERIES_DB,    value: jobmonitor}
+
       volumeMounts:
         - mountPath: /scratch
           name: mlo-scratch
