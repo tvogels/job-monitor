@@ -1,6 +1,7 @@
-# InfluxDB timeseries database --
-# This 'service' makes sure the open ports in the corresponding 'pod' are accessible.
-# usage: kubectl create -f svc-timeseries.yaml
+"""
+NOTE:    This file has automatically been generated.
+         Datetime: {{now}}
+"""
 apiVersion: v1
 kind: Service
 metadata:
