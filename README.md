@@ -16,6 +16,22 @@ The documentation is not so mature yet, so it will still take a few days to adop
 
 ![Parts of the system](docs/img/jobmonitor-diagram.svg)
 
+
+## Docs to be added
+
+- Installation
+    * Installing the jobmonitor python package (local)
+    * Creating a pod and uploading it to the EPFL Docker repository
+    * Configuring & launching the permanent server pods
+- Scheduling a job
+    * The principle: make metadata entry and upload code
+    * Scheduling functions
+    * Requirements for a main script
+- Logging metrics
+- Monitoring job progress
+- Viewing results
+
+
 ## Web frontend
 
 ![Denoising experiment manager](docs/img/screenshot.png)
