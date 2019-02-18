@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="628px" height="404px" viewBox="0 0 628 404" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 53.1 (72631) - https://sketchapp.com -->
+    <title>jobmonitor-diagram</title>
+    <desc>Created with Sketch.</desc>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="jobmonitor-diagram">
+            <g id="Rectangle" transform="translate(0.000000, 142.000000)">
+                <rect stroke="#979797" stroke-width="1" fill="#D8D8D8" fill-rule="evenodd" x="0.5" y="0.5" width="166" height="98"></rect>
+                <text id="Block-name" font-family="Helvetica-Bold, Helvetica" font-size="12" font-weight="bold" fill="#000000">
+                    <tspan x="52.4833984" y="44">Filesystem</tspan>
+                </text>
+                <text id="subscript" font-family="Helvetica" font-size="12" font-weight="normal" fill="#000000">
+                    <tspan x="50.4824219" y="63">pv-mlodata1</tspan>
+                </text>
+                <text id="ports" opacity="0.667247954" font-family="Helvetica" font-size="12" font-weight="normal"></text>
+            </g>
+            <g id="Rectangle" transform="translate(231.000000, 142.000000)">
+                <rect stroke="#979797" stroke-width="1" fill="#D8D8D8" fill-rule="evenodd" x="0.5" y="0.5" width="166" height="98"></rect>
+                <text id="Block-name" font-family="Helvetica-Bold, Helvetica" font-size="12" font-weight="bold" fill="#000000">
+                    <tspan x="55.1757812" y="44">MongoDB</tspan>
+                </text>
+                <text id="subscript" font-family="Helvetica" font-size="12" font-weight="normal" fill="#000000">
+                    <tspan x="40.8056641" y="63">{user}-metadata</tspan>
+                </text>
+                <text id="ports" opacity="0.667247954" font-family="Helvetica" font-size="12" font-weight="normal" fill="#000000">
+                    <tspan x="74.9257812" y="19"> 27017 / 30?17</tspan>
+                </text>
+            </g>
+            <g id="Rectangle" transform="translate(231.000000, 0.000000)">
+                <rect stroke="#979797" stroke-width="1" fill="#D8D8D8" fill-rule="evenodd" x="0.5" y="0.5" width="166" height="98"></rect>
+                <text id="Block-name" font-family="Helvetica-Bold, Helvetica" font-size="12" font-weight="bold" fill="#000000">
+                    <tspan x="57.4990234" y="44">GraphQL</tspan>
+                </text>
+                <text id="subscript" font-family="Helvetica" font-size="12" font-weight="normal" fill="#000000">
+                    <tspan x="45.8066406" y="63">{user}-graphql</tspan>
+                </text>
+                <text id="ports" opacity="0.667247954" font-family="Helvetica" font-size="12" font-weight="normal" fill="#000000">
+                    <tspan x="84.9335938" y="19">4000 / 30?04</tspan>
+                </text>
+            </g>
+            <g id="Rectangle" transform="translate(461.000000, 0.000000)">
+                <rect stroke="#979797" stroke-width="1" fill="#D8D8D8" fill-rule="evenodd" x="0.5" y="0.5" width="166" height="98"></rect>
+                <text id="Block-name" font-family="Helvetica-Bold, Helvetica" font-size="12" font-weight="bold" fill="#000000">
+                    <tspan x="43.2783203" y="44">Web Frontend</tspan>
+                </text>
+                <text id="subscript" font-family="Helvetica" font-size="12" font-weight="normal" fill="#000000">
+                    <tspan x="43.8056641" y="63">{user}-frontend</tspan>
+                </text>
+                <text id="ports" opacity="0.667247954" font-family="Helvetica" font-size="12" font-weight="normal" fill="#000000">
+                    <tspan x="98.28125" y="19">80 / 30?05</tspan>
+                </text>
+            </g>
+            <g id="Rectangle" transform="translate(461.000000, 142.000000)">
+                <rect stroke="#979797" stroke-width="1" fill="#D8D8D8" fill-rule="evenodd" x="0.5" y="0.5" width="166" height="98"></rect>
+                <text id="Block-name" font-family="Helvetica-Bold, Helvetica" font-size="12" font-weight="bold" fill="#000000">
+                    <tspan x="58.8349609" y="44">InfluxDB</tspan>
+                </text>
+                <text id="subscript" font-family="Helvetica" font-size="12" font-weight="normal" fill="#000000">
+                    <tspan x="38.4824219" y="63">{user}-timeseries</tspan>
+                </text>
+                <text id="ports" opacity="0.667247954" font-family="Helvetica" font-size="12" font-weight="normal" fill="#000000">
+                    <tspan x="81.5996094" y="19"> 8086 / 30?86</tspan>
+                </text>
+            </g>
+            <path id="Path-Copy" d="M315.5,132.152006 L320.378424,123.479251 L322.121576,124.459773 L315.371576,136.459773 L314.5,138.009241 L313.628424,136.459773 L306.878424,124.459773 L308.621576,123.479251 L313.5,132.152006 L313.5,123.969512 L313.5,104.390244 L315.5,104.390244 L315.5,123.969512 L315.5,132.152006 Z" fill-opacity="0.431900131" fill="#979797" fill-rule="nonzero"></path>
+            <path id="Path-Copy-2" d="M409.561284,50.2384027 L418.203801,55.1701972 L417.212551,56.9072708 L405.25439,50.0834256 L403.710324,49.2023151 L405.265135,48.3403077 L417.306517,41.6644093 L418.276275,43.4135717 L409.573613,48.2384407 L417.747042,48.2888263 L452.006164,48.500019 L451.993836,50.499981 L417.734713,50.2887883 L409.561284,50.2384027 Z" fill-opacity="0.431900131" fill="#979797" fill-rule="nonzero"></path>
+            <path id="Path-Copy-3" d="M84,130.932493 L88.8784245,122.259739 L90.6215755,123.240261 L83.8715755,135.240261 L83,136.789729 L82.1284245,135.240261 L75.3784245,123.240261 L77.1215755,122.259739 L82,130.932493 L82,122.75 L82,115 L82,114 L83,114 L251,114 L251,104.390244 L253,104.390244 L253,115 L253,116 L252,116 L84,116 L84,122.75 L84,130.932493 Z" fill-opacity="0.431900131" fill="#979797" fill-rule="nonzero"></path>
+            <path id="Path-Copy-4" d="M547,130.932493 L551.878424,122.259739 L553.621576,123.240261 L546.871576,135.240261 L546,136.789729 L545.128424,135.240261 L538.378424,123.240261 L540.121576,122.259739 L545,130.932493 L545,122.75 L545,116 L380,116 L379,116 L379,115 L379,104.390244 L381,104.390244 L381,114 L546,114 L547,114 L547,115 L547,122.75 L547,130.932493 Z" fill-opacity="0.431900131" fill="#979797" fill-rule="nonzero"></path>
+            <text id="Job-Monitor-on-Kuber" font-family="Helvetica-Bold, Helvetica" font-size="16.8" font-weight="bold" line-spacing="22" fill="#000000">
+                <tspan x="4" y="20">Job Monitor on </tspan>
+                <tspan x="4" y="42">Kubernetes</tspan>
+            </text>
+            <rect id="Rectangle" stroke="#979797" fill="#D8D8D8" x="231.5" y="267.5" width="166" height="136"></rect>
+            <rect id="Rectangle-Copy" fill-opacity="0.539936626" fill="#FFFFFF" x="244" y="301" width="141" height="46"></rect>
+            <text id="Experiment-pod-/-job" font-family="Helvetica-Bold, Helvetica" font-size="12" font-weight="bold" fill="#000000">
+                <tspan x="244" y="289">Experiment pod / job</tspan>
+            </text>
+            <text id="Experiment-code-jobr" font-family="Helvetica" font-size="12" font-weight="normal" line-spacing="16" fill="#000000">
+                <tspan x="252" y="319">Experiment code</tspan>
+                <tspan x="252" y="335" font-family="Courier">jobrun {job id}</tspan>
+            </text>
+            <rect id="Rectangle-Copy-2" fill-opacity="0.539936626" fill="#FFFFFF" x="244" y="357" width="141" height="31"></rect>
+            <text id="Telegraf-service" font-family="Helvetica" font-size="12" font-weight="normal" fill="#000000">
+                <tspan x="252" y="377">Telegraf service</tspan>
+            </text>
+            <g id="Dots" transform="translate(411.000000, 335.000000)" fill="#6F6F6F">
+                <circle id="Oval" cx="3" cy="3" r="3"></circle>
+                <circle id="Oval-Copy" cx="13" cy="3" r="3"></circle>
+                <circle id="Oval-Copy-2" cx="23" cy="3" r="3"></circle>
+            </g>
+            <path id="Path-2" d="M543.5,250.903444 L538.621576,259.576199 L536.878424,258.595676 L543.628424,246.595676 L544.5,245.046209 L545.371576,246.595676 L552.121576,258.595676 L550.378424,259.576199 L545.5,250.903444 L545.5,259.085938 L545.5,373 L545.5,374 L544.5,374 L387,374 L387,372 L543.5,372 L543.5,259.085938 L543.5,250.903444 Z" fill-opacity="0.431900131" fill="#979797" fill-rule="nonzero"></path>
+            <path id="Path-3" d="M405.567507,192.5 L414.240261,197.378424 L413.259739,199.121576 L401.259739,192.371576 L399.710271,191.5 L401.259739,190.628424 L413.259739,183.878424 L414.240261,185.621576 L405.567507,190.5 L413.75,190.5 L427,190.5 L428,190.5 L428,191.5 L428,324 L428,325 L427,325 L387,325 L387,323 L426,323 L426,192.5 L413.75,192.5 L405.567507,192.5 Z" fill-opacity="0.431900131" fill="#979797" fill-rule="nonzero"></path>
+            <path id="Path-4" d="M82.5,250.903444 L77.6215755,259.576199 L75.8784245,258.595676 L82.6284245,246.595676 L83.5,245.046209 L84.3715755,246.595676 L91.1215755,258.595676 L89.3784245,259.576199 L84.5,250.903444 L84.5,259.085938 L84.5,323 L242,323 L242,325 L83.5,325 L82.5,325 L82.5,324 L82.5,259.085938 L82.5,250.903444 Z" fill-opacity="0.431900131" fill="#979797" fill-rule="nonzero"></path>
+        </g>
+    </g>
+</svg>

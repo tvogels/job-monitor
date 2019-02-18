@@ -1,17 +1,24 @@
 # MLO Job Monitor Scripts
 
-This is a work in progress. We are working on an environment that helps you to
+The aim of this environment is to help you:
 
-* keep track of experiments in a reproducible way
-* compare results (metrics, graphs, and custom data like images)
-* explain differences by diffing experiment configs
-* with more customizability than in tensorboard (e.g. custom axes, labels, grouping etc.)
+* __keep track of experiments__ in a reproducible way
+* __compare results__ (metrics, graphs)
+* __explain differences__ by diffing experiment configs
+* __schedule jobs__ on the Kubernetes cluster
 
-This repo will also contain utilities for using the EPFL container cluster to run these experiments.
+The project was initially designed by Thijs for single-person use.
+Andreas now adopted the system, too, and helped to improve documentation and concentrate user-specific code.
 
-An inspirational screenshot from Thijs' experiment manager at Disney:
+The documentation is not so mature yet, so it will still take a few days to adopt all the moving parts of the system.
 
-![Denoising experiment manager](docs/img/drz-rhea.png)
+## System overview
+
+![Parts of the system](docs/img/jobmonitor-diagram.svg)
+
+## Web frontend
+
+![Denoising experiment manager](docs/img/screenshot.png)
 
 
 
