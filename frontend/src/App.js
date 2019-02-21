@@ -9,6 +9,7 @@ import FilterBar from './FilterBar';
 import LogsPage from './LogsPage';
 import { NavBarGroup, NavBarLine } from './NavBar';
 import TimeseriesPage, { useFacetChartControllerState } from './TimeseriesPage';
+import ImagesPage from './ImagesPage';
 import { ReportIndex, ReportPage } from './reports';
 
 const GET_JOBS = gql`
@@ -144,6 +145,12 @@ const App = ({ selectedJobs, setSelectedJobs, toggleHandler }) => {
                   <>
                     <NavBar handleNavbarKeys={handleNavbarKeys} jobs={data.jobs} selectedJobs={selectedJobs} toggleHandler={toggleHandler} />
                     <Main><TimeseriesPage {...props} jobIds={selectedJobs} facetChartState={facetChartState} /></Main>
+                  </>
+                )} />
+                <Route exact path="/images" render={(props) => (
+                  <>
+                    <NavBar handleNavbarKeys={handleNavbarKeys} jobs={data.jobs} selectedJobs={selectedJobs} toggleHandler={toggleHandler} />
+                    <Main><ImagesPage {...props} jobIds={selectedJobs} /></Main>
                   </>
                 )} />
                 <Route exact path="/reports" component={ReportIndex} />

@@ -10,10 +10,10 @@ import App from './App';
 import './index.css';
 import { defaults, resolvers } from './resolvers';
 import * as serviceWorker from './serviceWorker';
-
+import { GRAPHQL } from './settings';
 
 const client = new ApolloClient({
-    uri: "http://vogels-graphql.mlo.k8s.iccluster.epfl.ch:30004/graphql",
+    uri: GRAPHQL + "/graphql",
     clientState: { defaults, resolvers },
 });
 
