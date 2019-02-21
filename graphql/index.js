@@ -36,7 +36,7 @@ const typeDefs = gql`
         experiment: String!
         job: String!
         status: Status!
-        host: String!
+        host: String
         outputDirectory: String
         creationTime: Date!
         startTime: Date
@@ -362,22 +362,27 @@ function searchQuery(query) {
 function postHocSearchFilter(query) {
     if (query != null && isSpecificSearch(query)) {
         const expression = query.substr(3);
-        return new Function('job', `try {
-            // Add job variable to the local filter function scope
-            if (job.config != null) {
-                Object.entries(job.config).forEach(([key, value]) => {
+        try {
+            return new Function('job', `try {
+                // Add job variable to the local filter function scope
+                if (job.config != null) {
+                    Object.entries(job.config).forEach(([key, value]) => {
+                        this[key] = value;
+                    });
+                }
+                Object.entries(job).forEach(([key, value]) => {
                     this[key] = value;
                 });
-            }
-            Object.entries(job).forEach(([key, value]) => {
-                this[key] = value;
-            });
-            // Run the user's experssion
-            return ${expression};
+                // Run the user's experssion
+                return ${expression};
+            } catch (err) {
+                // Return no results if an error occurred.
+                return false;
+            }`);
         } catch (err) {
-            // Return no results if an error occurred.
-            return false;
-        }`);
+            console.error(err);
+            return () => false;
+        }
     } else {
         // No Filtering
         return () => true;

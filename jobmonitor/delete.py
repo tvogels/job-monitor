@@ -51,12 +51,12 @@ def kill_job_in_kubernetes(job_id):
         if name:
             print('- Killed job {} in Kubernetes'.format(name))
         return name
-    
+
     # There is no job, apparently.
     # – Try to find a pod by the job's registered hostname
     client = kubernetes.client.CoreV1Api()
     job = job_by_id(job_id)
-    pod_results = client.list_namespaced_pod(KUBERNETES_NAMESPACE, limit=1, label_selector="user="+job.user, field_selector="metadata.name="+job.host)
+    pod_results = client.list_namespaced_pod(KUBERNETES_NAMESPACE, limit=1, label_selector="user="+job['user'], field_selector="metadata.name="+job['host'])
     if pod_results.items:
         pod = pod_results.items[0]
         name = pod.metadata.name
