@@ -100,27 +100,6 @@ const typeDefs = gql`
     }
 `;
 
-function parseJobFromDatabase(entry) {
-    return {
-        id: entry._id.toString(),
-        user: entry.user,
-        project: entry.project,
-        experiment: entry.experiment,
-        job: entry.job,
-        status: jobStatus(entry),
-        host: entry.host,
-        outputDirectory: entry.output_dir,
-        creationTime: entry.creation_time,
-        startTime: entry.start_time,
-        endTime: entry.end_time,
-        config: Object.entries(entry.config || {}).map(([k, v]) => ({ key: k, value: v})),
-        exception: entry.exception,
-        annotations: Object.entries(entry.annotations || {}).map(([k, v]) => ({ key: k, value: v})),
-        environment: entry.environment || entry.initialization,
-        progress: (entry.state || {}).progress,
-    }
-}
-
 // A map of functions which return data for the schema.
 const resolvers = {
     Query: {
@@ -135,12 +114,12 @@ const resolvers = {
             delete args.limit;
             const ids = args.ids;
             delete args.ids;
-            const search  = args.search;
+            const search = args.search;
             delete args.search;
             return mongo
                 .collection('job')
                 .find({ ...args, ...statusQuery(args.status), ...searchQuery(search), ...idsQuery(ids) })
-                .sort({'creation_time': -1})
+                .sort({ 'creation_time': -1 })
                 .limit(limit)
                 .toArray()
                 .then(entries => entries.filter(postHocSearchFilter(search)).map(parseJobFromDatabase));
@@ -218,9 +197,9 @@ const resolvers = {
                     });
                 })
         },
-        currentValue: getValueFromTimeseries('LAST', 'last'),
-        maxValue: getValueFromTimeseries('MAX', 'max'),
-        minValue: getValueFromTimeseries('MIN', 'min'),
+        currentValue: getValueFromTimeseries('LAST'),
+        maxValue: getValueFromTimeseries('MAX'),
+        minValue: getValueFromTimeseries('MIN'),
     },
     Date: new GraphQLScalarType({
         name: 'Date',
@@ -287,21 +266,57 @@ const resolvers = {
     })
 };
 
+
+/**
+ * Turn a MongoDB record into the desired output format for GraphQL queries
+ */
+function parseJobFromDatabase(entry) {
+    return {
+        id: entry._id.toString(),
+        user: entry.user,
+        project: entry.project,
+        experiment: entry.experiment,
+        job: entry.job,
+        status: jobStatus(entry),
+        host: entry.host,
+        outputDirectory: entry.output_dir,
+        creationTime: entry.creation_time,
+        startTime: entry.start_time,
+        endTime: entry.end_time,
+        config: Object.entries(entry.config || {}).map(([k, v]) => ({ key: k, value: v })),
+        exception: entry.exception,
+        annotations: Object.entries(entry.annotations || {}).map(([k, v]) => ({ key: k, value: v })),
+        environment: entry.environment || entry.initialization,
+        progress: (entry.state || {}).progress,
+    }
+}
+
+/**
+ * Construct a MongoDB query for a desired `STATUS`
+ * For the desired status `RUNNING` or `UNRESPONSIVE`, we need to take the heartbeat into account
+ * For any other status, we can directly filter on the job's `status` field.
+ * @param {string} status
+ */
 function statusQuery(status) {
-    let statusSearch = { };
+    let statusSearch = {};
     const heartbeatThreshold = new Date(Date.now() - 2 * HEARTBEAT_INTERVAL * 1000);
     if (status === 'UNRESPONSIVE') {
         statusSearch['status'] = 'RUNNING';
-        statusSearch['last_heartbeat_time'] = {'$lte': heartbeatThreshold };
+        statusSearch['last_heartbeat_time'] = { '$lte': heartbeatThreshold };
     } else if (status === 'RUNNING') {
         statusSearch['status'] = 'RUNNING';
-        statusSearch['last_heartbeat_time'] = {'$gt': heartbeatThreshold };
+        statusSearch['last_heartbeat_time'] = { '$gt': heartbeatThreshold };
     } else if (status) {
         statusSearch['status'] = status;
     }
     return statusSearch;
 }
 
+
+/**
+ * Construct a MongoDB query that finds jobs that have any of the requested IDs.
+ * @param {string[]} ids
+ */
 function idsQuery(ids) {
     if (ids == null) {
         return {};
@@ -310,38 +325,21 @@ function idsQuery(ids) {
     }
 }
 
-function getValueFromTimeseries(operator, name_prefix) {
-    return (timeseries, args, context, info) => {
-        const { measurement, jobId, tags } = timeseries;
-        const whereClause = Object.entries(tags).map(([key, value]) => ` and ${key}='${value}'`).join(' ');
-        const query = `SELECT ${operator}(*::field) FROM ${measurement} WHERE job_id='${jobId}'${whereClause} GROUP BY *`;
-        return influx
-            .query(query)
-            .then((res) => {
-                const { _, rows } = res.groups()[0]
-                return rows.map(row => {
-                    let fields = {}
-                    Object.entries(row).forEach(([key, value]) => {
-                        if (key.indexOf(name_prefix + '') === 0) {
-                            fields[key.substr(name_prefix.length + 1)] = value;
-                        }
-                    });
-                    return fields;
-                });
-            })
-    };
-}
 
-function jobRegexQuery(jobRegex) {
-    if (jobRegex != null) {
-        return { 'name': null, 'job': { '$regex': '^' + jobRegex + '$' } }
-    } else {
-        return {};
-    }
-}
-
+/**
+ * Figures out if a search query should be handled 'specific' (by a post-hoc javascript-based filter)
+ * or 'fuzzy' (by MongoDB)
+ * @param {string} query
+ */
 const isSpecificSearch = (query) => query.indexOf('js:') == 0;
 
+/**
+ * Generate a fuzzy MongoDB query for a given search string
+ * If the query starst with 'js:', precise searching should be activated.
+ * Precise searching is not handled by mongoDB, but by a post-hoc filter executed after
+ * the results are returned.
+ * @param {string} query
+ */
 function searchQuery(query) {
     if (query == null) return {};
     if (isSpecificSearch(query)) {
@@ -351,14 +349,23 @@ function searchQuery(query) {
         // General search
         return {
             '$or': [
-                { 'job': { '$regex': query }  },
-                { 'experiment': { '$regex': query }  },
-                { 'annotations.description': { '$regex': query }  },
+                { 'job': { '$regex': query } },
+                { 'experiment': { '$regex': query } },
+                { 'annotations.description': { '$regex': query } },
             ]
         }
     }
 }
-
+/**
+ * Create a filter function for precise querying
+ *
+ * If the input query starts with "js:", we create a filter that evaluates the
+ * boolean expression that follows in the context of a job.
+ * If the expression fails to compile or throws errors, the filter always returns false.
+ * If the input query doesn't start with "js:", the filter should not exclude anything.
+ *
+ * @param {string} query
+ */
 function postHocSearchFilter(query) {
     if (query != null && isSpecificSearch(query)) {
         const expression = query.substr(3);
@@ -389,6 +396,13 @@ function postHocSearchFilter(query) {
     }
 }
 
+/**
+ * Derive the current job status from a MongoDB entry
+ *
+ * If MongoDB thinks the job is running, we check if the heartbeat is up to date.
+ * If the heartbeat is too old, we return 'UNRESPONSIVE'
+ * @param {{ status: string, last_heartbeat_time: DateTime }} entry
+ */
 function jobStatus(entry) {
     // Job status from a database entry
     let status = entry.status;
@@ -403,6 +417,40 @@ function jobStatus(entry) {
     return status
 }
 
+/**
+ * Create a resolver that finds an aggregate value (max, min, last, ...) from a timeseries in InfluxDB
+ * @param {'MAX' | 'MIN' | 'LAST'} operator
+ */
+function getValueFromTimeseries(operator) {
+    const name_prefix = { MAX: 'max', MIN: 'min', LAST: 'last' }[operator];
+    return (timeseries, args, context, info) => {
+        const { measurement, jobId, tags } = timeseries;
+        const whereClause = Object.entries(tags).map(([key, value]) => ` and ${key}='${value}'`).join(' ');
+        const query = `SELECT ${operator}(*::field) FROM ${measurement} WHERE job_id='${jobId}'${whereClause} GROUP BY *`;
+        return influx
+            .query(query)
+            .then((res) => {
+                const { _, rows } = res.groups()[0]
+                return rows.map(row => {
+                    let fields = {}
+                    Object.entries(row).forEach(([key, value]) => {
+                        if (key.indexOf(name_prefix + '') === 0) {
+                            fields[key.substr(name_prefix.length + 1)] = value;
+                        }
+                    });
+                    return fields;
+                });
+            })
+    };
+}
+
+
+/**
+ * Parse a timeseries string as returned by InfluxDB into a series
+ * of measurements and a tag dictionary.
+ * @param {string} seriesString
+ * @param {string} jobId
+ */
 function parseSeries(seriesString, jobId) {
     const tagBlacklist = ['experiment', 'host', 'influxdb_database', 'job', 'job_id', 'project', 'user'];
     [measurement, ...tagStrings] = seriesString.split(',');
@@ -410,7 +458,7 @@ function parseSeries(seriesString, jobId) {
         .map(s => {
             const [key, value] = s.split('=');
             return { key, value };
-        }).filter(({ key }) => tagBlacklist.indexOf(key) === -1)
+        }).filter(({ key }) => !tagBlacklist.includes(key))
     let tags = {}
     for (let { key, value } of tagList) {
         tags[key] = value;
@@ -418,16 +466,10 @@ function parseSeries(seriesString, jobId) {
     return { measurement, tags, jobId };
 }
 
-const server = new ApolloServer({
-    typeDefs,
-    resolvers,
-    cors: { origin: true },
-});
 
+const server = new ApolloServer({ typeDefs, resolvers, cors: { origin: true } });
 MongoClient
     .connect(`mongodb://${host}:${port}/${database}`, { useNewUrlParser: true })
     .then((db) => mongo = db.db())
     .then(() => server.listen())
-    .then(({ url }) => {
-        console.log(`🚀 Server ready at ${url}`)
-    });
+    .then(({ url }) => { console.log(`🚀 Server ready at ${url}`) });
