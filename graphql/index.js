@@ -54,8 +54,8 @@ const typeDefs = gql`
         progress: Float
         textFile(filename: String!): String
         jsonFile(filename: String!): Dictionary
+        images: [Image]
     }
-
     enum Status {
         CREATED
         SCHEDULED
@@ -64,6 +64,10 @@ const typeDefs = gql`
         CANCELED
         FAILED
         UNRESPONSIVE
+    }
+    type Image {
+        key: String!
+        path: String!
     }
     type Config {
         key: String
@@ -289,6 +293,7 @@ function parseJobFromDatabase(entry) {
         annotations: Object.entries(entry.annotations || {}).map(([k, v]) => ({ key: k, value: v })),
         environment: entry.environment || entry.initialization,
         progress: (entry.state || {}).progress,
+        images: entry.images ? Object.entries(entry.images).map(([key, path]) => ({ key, path })) : [],
     }
 }
 
