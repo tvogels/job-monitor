@@ -96,7 +96,7 @@ const typeDefs = gql`
         "Get a job entry by ID"
         job(id: ID!): Job
         "Get a list of jobs satisfying the specified criteria. 'job' allows for regex"
-        jobs(ids: [ID], user: String, project: String, experiment: String, job: String, status: Status, limit: Int): [Job]
+        jobs(ids: [ID], user: String, project: String, experiment: String, job: String, search: String, status: Status, limit: Int): [Job]
     }
 `;
 
@@ -135,13 +135,15 @@ const resolvers = {
             delete args.limit;
             const ids = args.ids;
             delete args.ids;
+            const search  = args.search;
+            delete args.search;
             return mongo
                 .collection('job')
-                .find({ ...args, ...statusQuery(args.status), ...jobRegexQuery(args.job), ...idsQuery(ids) })
+                .find({ ...args, ...statusQuery(args.status), ...searchQuery(search), ...idsQuery(ids) })
                 .sort({'creation_time': -1})
                 .limit(limit)
                 .toArray()
-                .then(entries => entries.map(parseJobFromDatabase));
+                .then(entries => entries.filter(postHocSearchFilter(search)).map(parseJobFromDatabase));
         },
     },
     Job: {
@@ -335,6 +337,50 @@ function jobRegexQuery(jobRegex) {
         return { 'name': null, 'job': { '$regex': '^' + jobRegex + '$' } }
     } else {
         return {};
+    }
+}
+
+const isSpecificSearch = (query) => query.indexOf('js:') == 0;
+
+function searchQuery(query) {
+    if (query == null) return {};
+    if (isSpecificSearch(query)) {
+        // We will filter post-hoc
+        return {};
+    } else {
+        // General search
+        return {
+            '$or': [
+                { 'job': { '$regex': query }  },
+                { 'experiment': { '$regex': query }  },
+                { 'annotations.description': { '$regex': query }  },
+            ]
+        }
+    }
+}
+
+function postHocSearchFilter(query) {
+    if (query != null && isSpecificSearch(query)) {
+        const expression = query.substr(3);
+        return new Function('job', `try {
+            // Add job variable to the local filter function scope
+            if (job.config != null) {
+                Object.entries(job.config).forEach(([key, value]) => {
+                    this[key] = value;
+                });
+            }
+            Object.entries(job).forEach(([key, value]) => {
+                this[key] = value;
+            });
+            // Run the user's experssion
+            return ${expression};
+        } catch (err) {
+            // Return no results if an error occurred.
+            return false;
+        }`);
+    } else {
+        // No Filtering
+        return () => true;
     }
 }
 
