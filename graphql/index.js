@@ -2,12 +2,13 @@
 
 const path = require('path');
 const fs = require('fs');
-const { ApolloServer, gql } = require('apollo-server');
+const { ApolloServer, gql } = require('apollo-server-express');
 const { MongoClient, ObjectID } = require('mongodb');
 const { GraphQLScalarType } = require('graphql');
 const { Kind } = require('graphql/language');
 const process = require('process');
 const { InfluxDB } = require('influx');
+const express = require('express');
 
 const host = process.env.VOGELS_METADATA_PORT_27017_TCP_ADDR;
 const port = process.env.VOGELS_METADATA_PORT_27017_TCP_PORT;
@@ -467,9 +468,31 @@ function parseSeries(seriesString, jobId) {
 }
 
 
+
+const app = express();
+
 const server = new ApolloServer({ typeDefs, resolvers, cors: { origin: true } });
+server.applyMiddleware({ app, path: '/graphql' });
+
+/** Handler for serving the files stored in the job's result directories */
+app.get('/file/:jobId*', function (req, res, next) {
+    const jobId = req.params.jobId;
+    const subpath = req.params['0'];
+
+    mongo.collection('job').findOne({ _id: ObjectID(jobId) }, { projection: { output_dir: true } })
+        .then((job) => {
+            if (job == null) return next('Job not found');
+            const { output_dir } = job;
+            const fullPath = path.join(process.env.JOBMONITOR_RESULTS_DIR, output_dir, subpath);
+            if (!fs.existsSync(fullPath)) return next('File not found');
+            res.sendFile(fullPath);
+        })
+        .catch((err) => next(err));
+});
+
+const tcpPort = 4000;
 MongoClient
     .connect(`mongodb://${host}:${port}/${database}`, { useNewUrlParser: true })
     .then((db) => mongo = db.db())
-    .then(() => server.listen())
-    .then(({ url }) => { console.log(`🚀 Server ready at ${url}`) });
+    .then(() => app.listen(tcpPort))
+    .then(({ url }) => { console.log(`🚀 Server ready at port ${tcpPort}`) });
