@@ -408,9 +408,15 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
         const x = (d) => d[xValue];
         const y = (d) => d[yValue];
         const xExtent = extent(curves.map(e => e.values).flat(), x);
-        const yExtent = extent(curves.map(e => e.values).flat(), y);
         const xDomain = [xmin || xExtent[0], xmax || xExtent[1]];
+
+        const liesInXdomain = (v) => {
+          const xValue = x(v);
+          return xValue >= xDomain[0] && xValue <= xDomain[1];
+        }
+        const yExtent = extent(curves.map(e => e.values.filter(liesInXdomain)).flat(), y);
         const yDomain = [ymin || yExtent[0], ymax || yExtent[1]];
+
         const hueDomain = Array.from(new Set(curves.map(e => e.properties[hue]))).sort();
         const patternDomain = Array.from(new Set(curves.map(e => e.properties[pattern]))).sort();
         const hueScale = hue ? scaleOrdinal(schemeCategory10).domain(hueDomain) : null;
