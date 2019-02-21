@@ -12,8 +12,8 @@ import TimeseriesPage, { useFacetChartControllerState } from './TimeseriesPage';
 import { ReportIndex, ReportPage } from './reports';
 
 const GET_JOBS = gql`
-  query Job($nameFilter: String!, $limit: Int!, $status: Status) {
-    jobs(job: $nameFilter, limit: $limit, status: $status) {
+  query Job($searchFilter: String!, $limit: Int!, $status: Status) {
+    jobs(search: $searchFilter, limit: $limit, status: $status) {
       id
       experiment
       job
@@ -108,7 +108,7 @@ const App = ({ selectedJobs, setSelectedJobs, toggleHandler }) => {
         />
         <Query
           query={GET_JOBS}
-          variables={{ nameFilter: '.*' + filter + '.*', limit: limit, status: statusFilter === '' ? undefined : statusFilter }}
+          variables={{ searchFilter: filter, limit: limit, status: statusFilter === '' ? undefined : statusFilter }}
           pollInterval={10000}
         >
           {({ loading, error, data }) => {
