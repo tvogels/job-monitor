@@ -1,5 +1,4 @@
 import React from 'react';
-import { FacetChart } from '../TimeseriesPage';
 import Latex from 'react-latex';
 import cp from './20190218/cp.png'
 import tucker from './20190218/tucker.png'
@@ -44,12 +43,12 @@ export default {
             <p>We have to applications in mind that require factorizing weight tensors: gradient compression and model compression/growing. I studied various ways to factorize tensors. An excellent overview paper is “Tensor Decompositions and Applications” by Kolda et al. The two most prominent methods are CP decomposition and Tucker decomposition. They are illustarted below:</p>
 
             <figure>
-                <img src={cp} style={{maxWidth: '100%'}} />
+                <img alt="CP Decomposition" src={cp} style={{maxWidth: '100%'}} />
                 <figcaption>CP decomposition: sum of rank 1 combinations</figcaption>
             </figure>
 
             <figure>
-                <img src={tucker} style={{maxWidth: '100%'}} />
+                <img alt="Tucker decomposition" src={tucker} style={{maxWidth: '100%'}} />
                 <figcaption>Tucker decomposition: a core matrix multiplied (made larger) along each dimension by sequentially multiplying the slices in each dimension with matrices.</figcaption>
             </figure>
 
@@ -63,16 +62,16 @@ export default {
             <p>Works well with sign+norm when batch norm is on. When it is off, the algorithm <strong>doesn't converge</strong>. I verified this with a generous grid search over learning rates.</p>
 
             <h3>Fast Rank 1 approximation</h3>
-            <p>We can get a reasonably good estimate very fast by sampling a vector <Latex>{`$\\vec\{p}$`}</Latex> and computing <Latex>{`$\\vec{q}=\\mathbf{X} \\mathbf{X}^\\text{T} \\mathbf{X} \\vec{p}$`}</Latex> If this vector is normalized, <Latex>{`$\\vec{p} \\, \\vec{q}^\\text{T}$`}</Latex> is a good rank 1 approximation of the matrix. This method is called fast<sub>1</sub> in the comparisson of approximation quality of various compression methods below</p>
+            <p>We can get a reasonably good estimate very fast by sampling a vector <Latex>{`$\\vec{p}$`}</Latex> and computing <Latex>{`$\\vec{q}=\\mathbf{X} \\mathbf{X}^\\text{T} \\mathbf{X} \\vec{p}$`}</Latex> If this vector is normalized, <Latex>{`$\\vec{p} \\, \\vec{q}^\\text{T}$`}</Latex> is a good rank 1 approximation of the matrix. This method is called fast<sub>1</sub> in the comparisson of approximation quality of various compression methods below</p>
 
             <h3>Approximation quality of compression methods</h3>
 
             <figure style={{display: 'flex', marginLeft: 0, marginRight: 0}}>
             <div style={{flex: '1 1 50%', marginRight: '1em', position: 'relative'}}>
-                <img src={alignment} style={{backgroundColor: 'white', marginRight: '1em', width: '100%'}}></img>
+                <img alt="Alignment" src={alignment} style={{backgroundColor: 'white', marginRight: '1em', width: '100%'}}></img>
             </div>
             <div style={{flex: '1 1 50%', position: 'relative'}}>
-                <img src={rel_error} style={{backgroundColor: 'white', width: '100%'}}></img>
+                <img alt="Relative error" src={rel_error} style={{backgroundColor: 'white', width: '100%'}}></img>
             </div>
             </figure>
 
