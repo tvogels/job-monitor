@@ -18,7 +18,9 @@ export class NavBarGroup extends React.PureComponent {
 
 export class NavBarLine extends React.PureComponent {
     render() {
-        const { id, status, isSelected, toggle, exception, job, progress } = this.props;
+        const { id, status, isSelected, toggle, exception, job, progress, annotations } = this.props;
+        const isBuggy = annotations.find(({ key, value }) => key === 'bug' && value);
+        const isStarred = annotations.find(({ key, value }) => key === 'star' && value);
         return (
             <div className="navbar-line">
                 <Tooltip content={id}><Icon icon="clipboard" onClick={() => copyToClipboard(id)} style={{ cursor: 'pointer', marginRight: '.7em', opacity: .5 }} /></Tooltip>
@@ -26,7 +28,11 @@ export class NavBarLine extends React.PureComponent {
                 <div className="navbar-progress">
                     {status === 'RUNNING' ?
                         <ProgressBar className="inline-progress" value={progress} animate={status === 'RUNNING'} stripes={status === 'RUNNING'} /> :
-                        <JobStatusIndicator status={status} exception={exception} />
+                        <span>
+                            { isBuggy ? <Icon icon="issue" style={{marginRight: '.3em'}} /> : null}
+                            { isStarred ? <Icon icon="star" style={{marginRight: '.3em'}} /> : <Icon icon="star-empty" style={{cursor: 'pointer', opacity: 0.3, marginRight: '.3em'}} />}
+                            <JobStatusIndicator status={status} exception={exception} />
+                        </span>
                     }
                 </div>
             </div>
