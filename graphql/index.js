@@ -75,7 +75,7 @@ const typeDefs = gql`
     }
     type Annotation {
         key: String
-        value: String
+        value: Object
     }
     type CloneConfiguration {
         path: String
@@ -103,6 +103,10 @@ const typeDefs = gql`
         "Get a list of jobs satisfying the specified criteria. 'job' allows for regex"
         jobs(ids: [ID], user: String, project: String, experiment: String, job: String, search: String, status: Status, limit: Int): [Job]
     }
+    type Mutation {
+        "Change a specific annotation on a job"
+        setAnnotation(jobId: ID!, key: String!, value: Object): Job
+    }
 `;
 
 // A map of functions which return data for the schema.
@@ -129,6 +133,21 @@ const resolvers = {
                 .toArray()
                 .then(entries => entries.filter(postHocSearchFilter(search)).map(parseJobFromDatabase));
         },
+    },
+    Mutation: {
+        setAnnotation: (root, args, context, info) => {
+            const idQuery = { _id: ObjectID(args.jobId) };
+            let update;
+            if (args.value != null) {
+                update = { $set: { ['annotations.'+args.key]: args.value } };
+            } else {
+                update = { $unset: { ['annotations.'+args.key]: '' } };
+            }
+            return mongo.collection('job')
+                .updateOne(idQuery, update)
+                .then(() => mongo.collection('job').findOne(idQuery))
+                .then(parseJobFromDatabase);
+        }
     },
     Job: {
         logs: (job, args, context, info) => {
