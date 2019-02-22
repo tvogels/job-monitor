@@ -24,7 +24,9 @@ setup(name='jobmonitor',
             'jobdelete=jobmonitor.delete:main',
             'jobkill=jobmonitor.kill:main',
             'jobshow=jobmonitor.show:main',
-            'joblist=jobmonitor.list:main'
+            'joblist=jobmonitor.list:main',
+            'jobstar=jobmonitor.star:main',
+            'jobbug=jobmonitor.bug:main'
         ],
     },
     zip_safe=False,
