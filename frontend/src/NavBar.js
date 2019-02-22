@@ -23,14 +23,14 @@ const AnnotationStatus = ({ isActive, annotationKey, jobId, icon, inactiveIcon }
         isActive ?
             <Icon
                 icon={icon}
-                style={{cursor: 'pointer'}}
+                className="navbar-icon-active"
                 onClick={() => {
                     setAnnotation({ variables: { jobId, key: annotationKey }});
                 }}
             /> :
             <Icon
                 icon={inactiveIcon}
-                style={{cursor: 'pointer', opacity: 0.3}}
+                className="navbar-icon-inactive"
                 onClick={() => {
                     setAnnotation({ variables: { jobId, key: annotationKey, value: true }});
                 }}
@@ -65,8 +65,8 @@ export class NavBarLine extends React.PureComponent {
                     {status === 'RUNNING' ?
                         <ProgressBar className="inline-progress" value={progress} animate={status === 'RUNNING'} stripes={status === 'RUNNING'} /> :
                         <span className="navbar-icons">
-                            { isBuggy ? <Icon icon="issue" /> : null}
                             <AnnotationStatus isActive={isStarred} jobId={id} annotationKey='star' icon='star' inactiveIcon='star-empty' />
+                            { isBuggy ? <Icon icon="issue" /> : null}
                             <JobStatusIndicator status={status} exception={exception} />
                         </span>
                     }

@@ -40,6 +40,17 @@ text {
     color: rgba(255, 255, 255, 0.5);
 }
 
+.navbar-icon-inactive, .navbar-icon-active {
+    cursor: pointer;
+}
+
+.navbar-icon-inactive {
+    opacity: 0.1;
+}
+
+.navbar-line:hover .navbar-icon-inactive {
+    opacity: 0.4;
+}
 .navbar-icons > * {
     margin-left: .3em;
 }
