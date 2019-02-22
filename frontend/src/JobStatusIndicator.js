@@ -6,8 +6,8 @@ const JobStatusIndicator = ({ status, exception }) => {
     let output;
     switch (status) {
         case 'FINISHED':
-            icon = <Icon icon="tick-circle" intent={Intent.SUCCESS} />;
-            output = icon;
+            // icon = <Icon icon="tick-circle" intent={Intent.SUCCESS} />;
+            output = '';
             break;
         case 'SCHEDULED':
             icon = <Icon icon="time" intent={Intent.NONE} />;
