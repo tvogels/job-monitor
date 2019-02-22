@@ -1,7 +1,43 @@
 import { Checkbox, Icon, ProgressBar, Tooltip } from '@blueprintjs/core';
+import { Mutation } from 'react-apollo';
+import gql from 'graphql-tag';
 import React from 'react';
 import JobStatusIndicator from './JobStatusIndicator';
 import { copyToClipboard, HideUnderscores } from './utils';
+
+const ANNOTATION_MUTATION = gql`
+mutation SetAnnotation($jobId: ID!, $key: String!, $value: Object) {
+    setAnnotation(jobId: $jobId, key: $key, value: $value) {
+        id
+        annotations {
+            key
+            value
+        }
+    }
+}
+`;
+
+const AnnotationStatus = ({ isActive, annotationKey, jobId, icon, inactiveIcon }) => (
+    <Mutation mutation={ANNOTATION_MUTATION}>
+    {setAnnotation => (
+        isActive ?
+            <Icon
+                icon={icon}
+                style={{cursor: 'pointer', marginRight: '.3em'}}
+                onClick={() => {
+                    setAnnotation({ variables: { jobId, key: annotationKey }});
+                }}
+            /> :
+            <Icon
+                icon={inactiveIcon}
+                style={{cursor: 'pointer', opacity: 0.3, marginRight: '.3em'}}
+                onClick={() => {
+                    setAnnotation({ variables: { jobId, key: annotationKey, value: true }});
+                }}
+            />
+    )}
+    </Mutation>
+);
 
 export class NavBarGroup extends React.PureComponent {
     render() {
@@ -30,7 +66,7 @@ export class NavBarLine extends React.PureComponent {
                         <ProgressBar className="inline-progress" value={progress} animate={status === 'RUNNING'} stripes={status === 'RUNNING'} /> :
                         <span>
                             { isBuggy ? <Icon icon="issue" style={{marginRight: '.3em'}} /> : null}
-                            { isStarred ? <Icon icon="star" style={{marginRight: '.3em'}} /> : <Icon icon="star-empty" style={{cursor: 'pointer', opacity: 0.3, marginRight: '.3em'}} />}
+                            <AnnotationStatus isActive={isStarred} jobId={id} annotationKey='star' icon='star' inactiveIcon='star-empty' />
                             <JobStatusIndicator status={status} exception={exception} />
                         </span>
                     }
