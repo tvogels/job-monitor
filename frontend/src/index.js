@@ -13,7 +13,7 @@ import * as serviceWorker from './serviceWorker';
 
 
 const client = new ApolloClient({
-    uri: "http://vogels-graphql.mlo.k8s.iccluster.epfl.ch:30004/graphql",
+    uri: "http://" + process.env.NB_USER + "-graphql.mlo.k8s.iccluster.epfl.ch:30004/graphql",
     clientState: { defaults, resolvers },
 });
 

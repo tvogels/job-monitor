@@ -15,3 +15,6 @@ spec:
       image: ic-registry.epfl.ch/mlo/{{user.name}}_frontend
       ports:
       - containerPort: 80
+    env:
+      - name: NB_USER
+        value: {{user.name}}

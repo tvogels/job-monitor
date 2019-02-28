@@ -4,7 +4,7 @@ user:
   group_id: GENERATOR_GROUPID
 
 ports:
-  frontend: GENERATOR_FRONTEND_PORT
-  graphql: GENERATOR_GRAPHQL_PORT
-  metadata: GENERATOR_METADATA_PORT
-  timeseries: GENERATOR_TIMESERIES_PORT
+  frontend: # 30?05 where {?=0: Thijs, ?=1: Andreas, X=2: available}
+  graphql: # 30?04 where {?=0: Thijs, ?=1: Andreas, X=2: available}
+  metadata: # 30?17 where {?=0: Thijs, ?=1: Andreas, X=2: available}
+  timeseries: # 30?86 where {?=0: Thijs, ?=1: Andreas, X=2: available}

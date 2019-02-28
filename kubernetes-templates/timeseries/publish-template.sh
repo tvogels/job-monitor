@@ -1,4 +1,4 @@
 #!/bin/bash
 
-kubectl delete -f . --ignore-note-found
+kubectl delete -f . --ignore-not-found \
 && kubectl create -f .
