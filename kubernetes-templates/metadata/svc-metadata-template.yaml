@@ -1,0 +1,20 @@
+"""
+NOTE:    This file has automatically been generated.
+         Datetime: {{now}}
+"""
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{user.name}}-metadata
+  labels:
+    name: {{user.name}}-metadata
+    user: {{user.name}}
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    port: 27017
+    nodePort: {{ports.metadata}}
+    protocol: TCP
+  selector:
+    name: {{user.name}}-metadata

@@ -1,0 +1,45 @@
+"""
+NOTE:    This file has automatically been generated.
+         Datetime: {{now}}
+"""
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{user.name}}-graphql
+  labels:
+    name: {{user.name}}-graphql
+    user: {{user.name}}
+spec:
+  securityContext:
+    runAsUser: {{user.id}}
+    fsGroup: {{user.group_id}}
+  containers:
+    - name: graphql
+      image: ic-registry.epfl.ch/mlo/{{user.name}}_graphql
+      ports:
+      - containerPort: 4000
+      env:
+        - {name: DATA,                        value: /data/{{user.name}}}
+        - {name: JOBMONITOR_RESULTS_DIR,      value: /data/{{user.name}}/results}
+        # Metadata
+        - {name: JOBMONITOR_METADATA_HOST,    value: {{user.name}}-metadata}
+        - {name: JOBMONITOR_METADATA_PORT,    value: 27017}
+        - {name: JOBMONITOR_METADATA_DB,      value: jobmonitor}
+        # InfluxDB
+        - {name: JOBMONITOR_TIMESERIES_HOST,  value: {{user.name}}-timeseries}
+        - {name: JOBMONITOR_TIMESERIES_PORT,  value: {{ports.timeseries}}}
+        - {name: JOBMONITOR_TIMESERIES_DB,    value: jobmonitor}
+
+      volumeMounts:
+        - mountPath: /scratch
+          name: mlo-scratch
+          subPath: {{user.name}}
+        - mountPath: /data
+          name: mlodata1
+  volumes:
+  - name: mlo-scratch
+    persistentVolumeClaim:
+      claimName: mlo-scratch
+  - name: mlodata1
+    persistentVolumeClaim:
+      claimName: pv-mlodata1

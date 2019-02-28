@@ -1,0 +1,10 @@
+user:
+  name: GENERATOR_USERNAME
+  id: GENERATOR_USERID
+  group_id: GENERATOR_GROUPID
+
+ports:
+  frontend: # 30?05 where {?=0: Thijs, ?=1: Andreas, X=2: available}
+  graphql: # 30?04 where {?=0: Thijs, ?=1: Andreas, X=2: available}
+  metadata: # 30?17 where {?=0: Thijs, ?=1: Andreas, X=2: available}
+  timeseries: # 30?86 where {?=0: Thijs, ?=1: Andreas, X=2: available}
