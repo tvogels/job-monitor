@@ -1,0 +1,28 @@
+"""
+NOTE:    This file has automatically been generated.
+         Datetime: {{now}}
+"""
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{user.name}}-metadata
+  labels:
+    name: {{user.name}}-metadata
+    user: {{user.name}}
+spec:
+  securityContext:
+    runAsUser: {{user.id}}
+    fsGroup: {{user.group_id}}
+  containers:
+    - name: mongo
+      image: mongo:4.0
+      ports:
+      - containerPort: 27017
+        name: http
+      volumeMounts:
+      - mountPath: /data/db
+        name: data
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: pv-mlodata1-{{user.name}}-databases-job-metadata-mongodb

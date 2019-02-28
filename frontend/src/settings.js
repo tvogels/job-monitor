@@ -1,1 +1,1 @@
-export const GRAPHQL = 'http://vogels-graphql.mlo.k8s.iccluster.epfl.ch:30004';
+export const GRAPHQL = `http://${process.env.GRAPHQL_HOST}:${process.env.GRAPHQL_PORT}/graphql`;

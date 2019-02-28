@@ -1,0 +1,20 @@
+"""
+WARNING: This file has automatically been generated.
+         Datetime: {{now}}
+"""
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{user.name}}-frontend
+  labels:
+    user: {{user.name}}
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    targetPort: 80
+    port: 80
+    nodePort: {{ports.frontend}}
+    protocol: TCP
+  selector:
+    name: {{user.name}}-frontend
