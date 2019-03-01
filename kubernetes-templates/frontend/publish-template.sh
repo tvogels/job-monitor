@@ -8,6 +8,5 @@ docker build ../../frontend -t {{user.name}}_frontend \
   --build-arg GRAPHQL_PORT={{ports.graphql}} \
 && docker tag {{user.name}}_frontend ic-registry.epfl.ch/mlo/{{user.name}}_frontend \
 && docker push ic-registry.epfl.ch/mlo/{{user.name}}_frontend \
-&& kubectl delete -f . --ignore-not-found \
-&& sleep 5 \
+&& kubectl delete -f . --ignore-not-found --wait=true \
 && kubectl create -f .
