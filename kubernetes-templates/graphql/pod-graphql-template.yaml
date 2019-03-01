@@ -1,7 +1,7 @@
-"""
-NOTE:    This file has automatically been generated.
-         Datetime: {{now}}
-"""
+#
+# NOTE:    This file has automatically been generated.
+#          Datetime: {{now}}
+#
 apiVersion: v1
 kind: Pod
 metadata:
@@ -23,11 +23,11 @@ spec:
         - {name: JOBMONITOR_RESULTS_DIR,      value: /data/{{user.name}}/results}
         # Metadata
         - {name: JOBMONITOR_METADATA_HOST,    value: {{user.name}}-metadata}
-        - {name: JOBMONITOR_METADATA_PORT,    value: 27017}
+        - {name: JOBMONITOR_METADATA_PORT,    value: "27017"}
         - {name: JOBMONITOR_METADATA_DB,      value: jobmonitor}
         # InfluxDB
         - {name: JOBMONITOR_TIMESERIES_HOST,  value: {{user.name}}-timeseries}
-        - {name: JOBMONITOR_TIMESERIES_PORT,  value: {{ports.timeseries}}}
+        - {name: JOBMONITOR_TIMESERIES_PORT,  value: "{{ports.timeseries}}"}
         - {name: JOBMONITOR_TIMESERIES_DB,    value: jobmonitor}
 
       volumeMounts:

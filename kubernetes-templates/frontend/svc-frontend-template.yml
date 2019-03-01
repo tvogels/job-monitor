@@ -1,7 +1,7 @@
-"""
-WARNING: This file has automatically been generated.
-         Datetime: {{now}}
-"""
+#
+# NOTE:    This file has automatically been generated.
+#          Datetime: {{now}}
+#
 apiVersion: v1
 kind: Service
 metadata:
