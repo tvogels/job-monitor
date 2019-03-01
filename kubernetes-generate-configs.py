@@ -27,7 +27,7 @@ def create(args):
     # generating kubernetes configuration files
     print("Generating Kubernetes configuration files...")
     if os.path.exists(args.output_dir):
-        print("{} already exists. Should the configuration files be overwritten?".format(args.output_dir))
+        print("Output directory {} already exists. Should the configuration files be overwritten?".format(args.output_dir))
         answer = None
         while answer not in ['Y', 'y', 'N', 'n', '']:
             answer = input('Please confirm [Y/n]: ')
@@ -71,7 +71,7 @@ def clean():
 
 if __name__ == "__main__":
     argparse = argparse.ArgumentParser()
-    argparse.add_argument("command", type=str, help="Options=[clean, create].")
+    argparse.add_argument("command", type=str, choices=["clean", "create"])
     argparse.add_argument("--config-file", type=str, help="YAML file containing all the necessary parameters.", default="config.yaml")
     argparse.add_argument("--template-dir", type=str, help="Folder containing configuration templates (Jinja templates).", default="kubernetes-templates")
     argparse.add_argument("--output-dir", type=str, help="Output directory of generated files.", default="kubernetes")
