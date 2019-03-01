@@ -1,4 +1,4 @@
-# copy this file as `config.yaml` and update the fields
+# Copy this file as `config.yaml` and update the fields
 user:
   name: GENERATOR_USERNAME
   id: GENERATOR_USERID
