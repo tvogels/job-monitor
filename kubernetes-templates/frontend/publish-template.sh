@@ -1,10 +1,5 @@
 #!/bin/bash
 
-pushd ../../frontend
-npm install
-yarn build
-popd
-
 docker build ../../frontend -t {{user.name}}_frontend \
   --build-arg GRAPHQL_HOST={{user.name}}-graphql.mlo.k8s.iccluster.epfl.ch \
   --build-arg GRAPHQL_PORT={{ports.graphql}} \
