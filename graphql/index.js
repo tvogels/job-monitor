@@ -10,17 +10,17 @@ const process = require('process');
 const { InfluxDB } = require('influx');
 const express = require('express');
 
-const NB_USER = process.env.NB_USER.toUpperCase()
-
-const host = process.env[NB_USER + "_METADATA_PORT_27017_TCP_ADDR"];
-const port = process.env[NB_USER + "_METADATA_PORT_27017_TCP_PORT"];
-const database = process.env.JOBMONITOR_METADATA_DB;
-
 const HEARTBEAT_INTERVAL = 10; // seconds
 
+const metadataPodName = process.env.JOBMONITOR_METADATA_HOST.toUpperCase().replace("-", "_");
+const metadataHost = process.env[metadataPodName + "_PORT_27017_TCP_ADDR"];
+const metadataPort = process.env[metadataPodName + "_PORT_27017_TCP_PORT"];
+const metadataDb = process.env.JOBMONITOR_METADATA_DB;
+
+const timeseriesPodName = process.env.JOBMONITOR_TIMESERIES_HOST.toUpperCase().replace("-", "_");
 const influx = new InfluxDB({
-    host: process.env[NB_USER + "_TIMESERIES_PORT_8086_TCP_ADDR"],
-    port: process.env[NB_USER + "_TIMESERIES_PORT_8086_TCP_PORT"],
+    host: process.env[timeseriesPodName + "_PORT_8086_TCP_ADDR"],
+    port: process.env[timeseriesPodName + "_PORT_8086_TCP_PORT"],
     database: process.env.JOBMONITOR_TIMESERIES_DB,
 });
 
@@ -518,7 +518,9 @@ app.get('/file/:jobId*', function (req, res, next) {
 
 const tcpPort = 4000;
 MongoClient
-    .connect(`mongodb://${host}:${port}/${database}`, { useNewUrlParser: true })
+    .connect(`mongodb://${metadataHost}:${metadataPort}/${metadataDb}`, {
+        useNewUrlParser: true
+    })
     .then((db) => mongo = db.db())
     .then(() => app.listen(tcpPort))
     .then(({ url }) => { console.log(`🚀 Server ready at port ${tcpPort}`) });
