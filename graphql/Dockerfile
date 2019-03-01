@@ -8,6 +8,8 @@ ENV DATA=/scratch \
 
 ADD . .
 
+RUN npm install
+
 EXPOSE 4000
 
 CMD ["./index.js"]
