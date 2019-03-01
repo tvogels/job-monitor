@@ -1,3 +1,4 @@
 .vscode/
 kubernetes/
 publish.sh
+node_modules/
