@@ -257,7 +257,7 @@ def upload_code_package(directory='.', excludes=None):
         'gitAuthorEmail': author_email,
         'gitAuthorName': author_name,
         'gitCommit': commit,
-        'gitCommitMessage': commit_message.strip(),
+        'gitCommitMessage': commit_message,
         'gitRepository': remote,
         'gitWasDirty': is_dirty,
     }
