@@ -56,15 +56,16 @@ def kill_job_in_kubernetes(job_id):
     # – Try to find a pod by the job's registered hostname
     client = kubernetes.client.CoreV1Api()
     job = job_by_id(job_id)
-    pod_results = client.list_namespaced_pod(KUBERNETES_NAMESPACE, limit=1, label_selector="user="+job['user'], field_selector="metadata.name="+job['host'])
-    if pod_results.items:
-        pod = pod_results.items[0]
-        name = pod.metadata.name
-        body = kubernetes.client.V1DeleteOptions(propagation_policy='Foreground')
-        client.delete_namespaced_pod(name, namespace=KUBERNETES_NAMESPACE, body=body)
-        if name:
-            print('- Killed pod {} in Kubernetes'.format(name))
-        return name
+    if 'host' in job:
+        pod_results = client.list_namespaced_pod(KUBERNETES_NAMESPACE, limit=1, label_selector="user="+job['user'], field_selector="metadata.name="+job['host'])
+        if pod_results.items:
+            pod = pod_results.items[0]
+            name = pod.metadata.name
+            body = kubernetes.client.V1DeleteOptions(propagation_policy='Foreground')
+            client.delete_namespaced_pod(name, namespace=KUBERNETES_NAMESPACE, body=body)
+            if name:
+                print('- Killed pod {} in Kubernetes'.format(name))
+            return name
 
     # If non of the above approaches killed anything, we return False
     return False
