@@ -206,7 +206,10 @@ const resolvers = {
             return influx
                 .query(query)
                 .then((res) => {
-                    const { tags, rows } = res.groups()[0]
+                    if (res.groups().length < 0) {
+                        return [];
+                    }
+                    const { tags, rows } = res.groups()[0];
                     const tagNames = new Set(Object.keys(tags));
                     return rows.map(row => {
                         let fields = {}
