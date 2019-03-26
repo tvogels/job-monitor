@@ -373,7 +373,7 @@ function relativeMousePosition(event) {
 }
 
 export const FacetChart = (props) => {
-  const { colLabelPrefix = '', rowLabelPrefix = '', hueLegendName, patternLegendName, jobIds, measurementQuery, tagQuery, row, col, pattern, hue, xValue = 'epoch', yValue = 'value', xmin, xmax, ymin, ymax, lineOpacity = 0.6, style } = props;
+  const { colLabelPrefix = '', rowLabelPrefix = '', hueLegendName, hueShowLegend = true, patternLegendName, jobIds, measurementQuery, tagQuery, row, col, pattern, hue, xValue = 'epoch', yValue = 'value', xLabel = 'Epochs', yLabel = '', xmin, xmax, ymin, ymax, lineOpacity = 0.6, style } = props;
   const [crossHair, setCrossHair] = useState(null);
 
   const handleKeys = (event) => {
@@ -426,7 +426,7 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
 
         return (
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', ...style }} tabIndex={0} onKeyDown={handleKeys}>
-            {hue ?
+            {(hue && hueShowLegend) ?
               <div style={{ display: 'flex', flexDirection: 'row', backgroundColor: 'rgb(62, 78, 91)', marginLeft: margin.left, marginRight: margin.right, padding: '.3em .8em' }}>
                 <div style={{ marginRight: '1em' }}>{hueLegendName || hue.replace(/[-_]/g, ' ')}:</div>
                 <LegendOrdinal
@@ -483,7 +483,7 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
                         numTicks={numTicksColumns}
                         top={height - margin.bottom + 5}
                         left={margin.left + colIdx * (cellWidth + margin.col)}
-                        label="Epochs"
+                        label={xLabel}
                         hideZero
                       />
                     ))}
@@ -494,7 +494,7 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
                         numTicks={numTicksRows}
                         top={margin.top + rowIdx * (margin.row + cellHeight)}
                         left={margin.left - 5}
-                        // label={measurement.replace(/[_-]/g, ' ').replace('|', ' / ')}
+                        label={yLabel}
                       />
                     ))}
                     {col != null ? colDomain.map((colValue, colIdx) => (
