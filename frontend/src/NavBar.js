@@ -39,6 +39,22 @@ const AnnotationStatus = ({ isActive, annotationKey, jobId, icon, inactiveIcon }
     </Mutation>
 );
 
+export class HueIndicator extends React.PureComponent {
+    render() {
+        const { hue } = this.props;
+        return (
+            <div style={{width: ".8em",
+                height: ".8em",
+                display: "inline-block",
+                "background-color": hue,
+                "position": "abslute",
+                "left": "5px",
+                "top": "5px",}}></div>
+        )
+    }
+}
+
+
 export class NavBarGroup extends React.PureComponent {
     render() {
         const { experiment, description=null, children } = this.props;
@@ -51,10 +67,9 @@ export class NavBarGroup extends React.PureComponent {
         );
     }
 }
-
 export class NavBarLine extends React.PureComponent {
     render() {
-        const { id, status, isSelected, toggle, exception, job, progress, annotations } = this.props;
+        const { id, status, isSelected, toggle, exception, job, progress, annotations, hue = null } = this.props;
         const isBuggy = annotations.find(({ key, value }) => key === 'bug' && value);
         const isStarred = annotations.find(({ key, value }) => key === 'star' && value);
         return (
@@ -62,6 +77,7 @@ export class NavBarLine extends React.PureComponent {
                 <Tooltip content={id}><Icon icon="clipboard" onClick={() => copyToClipboard(id)} style={{ cursor: 'pointer', marginRight: '.7em', opacity: .5 }} /></Tooltip>
                 <Checkbox checked={isSelected} label={<HideUnderscores string={job} />} onChange={toggle} style={{ flexGrow: 1, paddingRight: '1em' }} />
                 <div className="navbar-progress">
+                    {hue ? <HueIndicator hue={hue} /> : null}
                     {status === 'RUNNING' ?
                         <ProgressBar className="inline-progress" value={progress} animate={status === 'RUNNING'} stripes={status === 'RUNNING'} /> :
                         <span className="navbar-icons">

@@ -417,7 +417,8 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
         const yExtent = extent(curves.map(e => e.values.filter(liesInXdomain)).flat(), y);
         const yDomain = [ymin || yExtent[0], ymax || yExtent[1]];
 
-        const hueDomain = Array.from(new Set(curves.map(e => e.properties[hue]))).sort();
+        // for "jobid" hue, missing curve should not change the color
+        const hueDomain = (hue === "jobId") ? Array.from(jobIds).sort() : Array.from(new Set(curves.map(e => e.properties[hue]))).sort();
         const patternDomain = Array.from(new Set(curves.map(e => e.properties[pattern]))).sort();
         const hueScale = hue ? scaleOrdinal(schemeCategory10).domain(hueDomain) : null;
         const patternScale = pattern ? scaleOrdinal([null, [5, 5], [2, 2], [8, 4]]).domain(patternDomain) : null;

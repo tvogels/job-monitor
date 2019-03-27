@@ -6,6 +6,7 @@ import React from 'react';
 import { Query } from 'react-apollo';
 import styled from 'styled-components';
 import { HideUnderscores, Spinner } from './utils';
+import { HueIndicator } from './NavBar'
 
 const CONFIG_QUERY = gql`
   query Job($ids: [ID]) {
@@ -106,7 +107,7 @@ const ConfigTableRow = ({ field, children }) => {
                 let color = 'white';
                 let fontWeight = 'normal';
                 if (children.length > 1 && !allTheSame) {
-                    color = cmap(c);
+                    // color = cmap(c);
                     fontWeight = 'bold';
                 }
                 return <TableCell style={{ opacity, color, fontWeight }} key={i}>{printValue(c)}</TableCell>
@@ -118,6 +119,14 @@ const ConfigTableRow = ({ field, children }) => {
 class ConfigTable extends React.PureComponent {
     render() {
         const { jobs } = this.props;
+
+        console.log(jobs);
+        const compareIds = (first, second) =>
+            ((first.id === second.id) ? 0 : (first.id < second.id) ? -1 : 1);
+        jobs.sort(compareIds);
+
+        const hueScale = scaleOrdinal(schemeCategory10).domain(Array.from(jobs).map(job => job.id))
+
         const fields = new Set();
         const values = new Map();
         for (let job of jobs) {
@@ -130,7 +139,7 @@ class ConfigTable extends React.PureComponent {
             <Table>
                 <TableRowHeader>
                     <TableHeader></TableHeader>
-                    {jobs.map(job => <TableCellHeader key={job.id}><HideUnderscores string={job.experiment} /></TableCellHeader>)}
+                    {jobs.map(job => <TableCellHeader key={job.id}><HideUnderscores string={job.experiment} />  <HueIndicator hue={hueScale(job.id)}/></TableCellHeader>)}
                 </TableRowHeader>
                 <TableRowHeader style={{marginBottom: '.5em'}}>
                     <TableHeader></TableHeader>

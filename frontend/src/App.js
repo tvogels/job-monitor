@@ -12,6 +12,8 @@ import TimeseriesPage, { useFacetChartControllerState } from './TimeseriesPage';
 import DashboardPage from './DashboardPage';
 import ImagesPage from './ImagesPage';
 import { ReportIndex, ReportPage } from './reports';
+import { scaleOrdinal } from 'd3-scale';
+import { schemeCategory10 } from 'd3-scale-chromatic';
 
 const GET_JOBS = gql`
   query Job($searchFilter: String!, $limit: Int!, $status: Status) {
@@ -82,17 +84,25 @@ class AppWithSelectedJobs extends Component {
   }
 };
 
-const NavBar = ({ handleNavbarKeys, jobs, selectedJobs, toggleHandler }) => (
-  <div tabIndex={0} onKeyDown={handleNavbarKeys} className="navbar">
+
+const NavBar = ({ handleNavbarKeys, jobs, selectedJobs, toggleHandler }) => {
+  const hueScale = scaleOrdinal(schemeCategory10).domain(Array.from(selectedJobs).sort())
+
+  return (<div tabIndex={0} onKeyDown={handleNavbarKeys} className="navbar">
     {jobsByExperiment(jobs).map(([experiment, jobs]) => (
       <NavBarGroup experiment={jobs[0].experiment} key={experiment} description={jobDescription(jobs[0])}>
         {jobs.map(job => (
-          <NavBarLine key={job.id} {...job} isSelected={selectedJobs.includes(job.id)} toggle={toggleHandler(job.id)} />
+          <NavBarLine
+            key={job.id}
+            {...job}
+            isSelected={selectedJobs.includes(job.id)}
+            hue={selectedJobs.includes(job.id) ? hueScale(job.id) : null}
+            toggle={toggleHandler(job.id)} />
         ))}
       </NavBarGroup>
     ))}
-  </div>
-);
+  </div>);
+};
 
 const App = ({ selectedJobs, setSelectedJobs, toggleHandler }) => {
   const [filter, setFilter] = useState('');

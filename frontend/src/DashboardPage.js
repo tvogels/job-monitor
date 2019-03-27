@@ -36,38 +36,9 @@ function createDashboard(jobIds) {
     { measurementQuery: "STS15_all_pearson_mean", title: "STS15" }
   ];
 
-  const margin = { left: 0, right: 0, top: 40, bottom: 60, row: 30, col: 30 };
-  const hueDomain = Array.from(new Set(jobIds)).sort();
-  const hueScale = scaleOrdinal(schemeCategory10).domain(hueDomain)
-
-  const hueLegend = (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "row",
-        backgroundColor: "rgb(62, 78, 91)",
-        marginLeft: margin.left,
-        marginRight: margin.right,
-        padding: ".3em .8em"
-      }}
-    >
-      <div style={{ marginRight: "1em" }}>
-        jobId
-      </div>
-      <LegendOrdinal
-        scale={hueScale}
-        domain={hueDomain}
-        direction="row"
-        style={{ display: "flex", flexWrap: "wrap" }}
-        labelMargin="0 20px 0 0"
-      />
-    </div>
-  );
-
   return (
     <div>
       <h1>Sentence representations</h1>
-      {hueLegend}
       <h2>Training</h2>
       <div
         style={{
