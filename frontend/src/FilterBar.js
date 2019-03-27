@@ -40,6 +40,7 @@ const FilterBar = ({ filter, setFilter, limit, setLimit, statusFilter, setStatus
                 <NavLink className="bp3-button bp3-icon-list" to="/config" activeClassName="bp3-active">Config</NavLink>
                 <NavLink className="bp3-button bp3-icon-database" to="/logs" activeClassName="bp3-active">Logs</NavLink>
                 <NavLink className="bp3-button bp3-icon-chart" to="/timeseries" activeClassName="bp3-active">Timeseries</NavLink>
+                <NavLink className="bp3-button bp3-icon-dashboard" to="/dashboard" activeClassName="bp3-active">Dashboard</NavLink>
                 <NavLink className="bp3-button bp3-icon-document" to="/reports" activeClassName="bp3-active">Reports</NavLink>
                 <NavLink className="bp3-button bp3-icon-media" to="/images" activeClassName="bp3-active">Images</NavLink>
             </ButtonGroup>

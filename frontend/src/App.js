@@ -9,6 +9,7 @@ import FilterBar from './FilterBar';
 import LogsPage from './LogsPage';
 import { NavBarGroup, NavBarLine } from './NavBar';
 import TimeseriesPage, { useFacetChartControllerState } from './TimeseriesPage';
+import DashboardPage from './DashboardPage';
 import ImagesPage from './ImagesPage';
 import { ReportIndex, ReportPage } from './reports';
 
@@ -145,6 +146,12 @@ const App = ({ selectedJobs, setSelectedJobs, toggleHandler }) => {
                   <>
                     <NavBar handleNavbarKeys={handleNavbarKeys} jobs={data.jobs} selectedJobs={selectedJobs} toggleHandler={toggleHandler} />
                     <Main><TimeseriesPage {...props} jobIds={selectedJobs} facetChartState={facetChartState} /></Main>
+                  </>
+                )} />
+                <Route exact path="/dashboard" render={(props) => (
+                  <>
+                    <NavBar handleNavbarKeys={handleNavbarKeys} jobs={data.jobs} selectedJobs={selectedJobs} toggleHandler={toggleHandler} />
+                    <Main><DashboardPage {...props} jobIds={selectedJobs} facetChartState={facetChartState} /></Main>
                   </>
                 )} />
                 <Route exact path="/images" render={(props) => (
