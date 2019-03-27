@@ -22,7 +22,12 @@ spec:
       volumeMounts:
       - mountPath: /data/db
         name: data
+      - mountPath: /mlodata1
+        name: mlodata1
   volumes:
   - name: data
     persistentVolumeClaim:
       claimName: pv-mlodata1-{{user.name}}-databases-job-metadata-mongodb
+  - name: mlodata1
+    persistentVolumeClaim:
+      claimName: pv-mlodata1
