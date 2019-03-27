@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cordonni-runner
+  labels:
+    user: jb
+spec:
+  restartPolicy: Never
+  securityContext:
+    runAsUser: 125633
+    fsGroup: 11169
+  containers:
+  - name:  cordonni-worker
+    image: ic-registry.epfl.ch/mlo/cordonni-worker:0.2.2
+    command:
+      - sleep
+      - infinity
+    env:
+      - {name: JOBMONITOR_TELEGRAF_HOST, value: 'localhost'}
+      - {name: JOBMONITOR_TELEGRAF_PORT, value: '8092'}
+      # MongoDB
+      - {name: JOBMONITOR_METADATA_HOST, value: 'cordonni-metadata'}
+      - {name: JOBMONITOR_METADATA_PORT, value: '27017'}
+      - {name: JOBMONITOR_METADATA_DB, value: 'jobmonitor'}
+      # InfluxDB
+      - {name: JOBMONITOR_TIMESERIES_HOST, value: 'cordonni-timeseries'}
+      - {name: JOBMONITOR_TIMESERIES_PORT, value: '8086'}
+      - {name: JOBMONITOR_TIMESERIES_DB, value: 'jobmonitor'}
+    resources:
+      limits:
+        nvidia.com/gpu: 0 # requesting GPUs
+    volumeMounts:
+      - mountPath: /mlodata1
+        name: mlodata1
+  volumes:
+    - name: mlodata1
+      persistentVolumeClaim:
+        claimName: pv-mlodata1
