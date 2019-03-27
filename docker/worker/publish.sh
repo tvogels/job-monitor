@@ -1,19 +1,38 @@
 #!/bin/bash
 
+set -e
+
+if [ "$#" -ne 1 ]; then
+    echo "usage: $0 version"
+    exit 1
+fi
+
+version=$1
+
 # Build the Python code into a package
-rm jobmonitor*.whl
+rm -f jobmonitor*.whl
 pushd ../..
 python3 setup.py sdist bdist_wheel
 cp dist/jobmonitor*.whl docker/worker
 popd
 
-# Download the torch executable
-TORCH=torch-0.4.1-cp35-cp35m-manylinux1_x86_64.whl
-if [ ! -f $TORCH ]; then
-    wget https://files.pythonhosted.org/packages/f9/4e/1bcb4688b7506c340ca6ba5b9f57f4ad3b59a193bba365bf2b51e9e4bb3e/$TORCH
-fi
+# build local image
+docker build . -t ic-registry.epfl.ch/mlo/cordonni-worker-local:$version \
+  --build-arg DOCKER_USER=jb \
+  --build-arg DOCKER_UID=501 \
+  --build-arg DOCKER_GROUP=admin \
+  --build-arg DOCKER_GID=80
 
-# Build docker
-docker build . -t jobmonitor_worker \
-&& docker tag jobmonitor_worker ic-registry.epfl.ch/mlo/jobmonitor_worker \
-&& docker push ic-registry.epfl.ch/mlo/jobmonitor_worker
+# build image for kubernetes
+docker build . -t ic-registry.epfl.ch/mlo/cordonni-worker:$version \
+  --build-arg DOCKER_USER=cordonni \
+  --build-arg DOCKER_UID=125633 \
+  --build-arg DOCKER_GROUP=mlo \
+  --build-arg DOCKER_GID=11169
+
+# push kubernetes image
+docker push ic-registry.epfl.ch/mlo/cordonni-worker:$version
+
+echo "Create docker image: ic-registry.epfl.ch/mlo/cordonni-worker-local:$version"
+echo "Create docker image: ic-registry.epfl.ch/mlo/cordonni-worker:$version"
+echo "Pushed docker image: ic-registry.epfl.ch/mlo/cordonni-worker:$version"
