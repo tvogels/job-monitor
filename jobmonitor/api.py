@@ -44,9 +44,13 @@ def update_job(job_id, update_dict):
     return mongo.job.update({"_id": ObjectId(job_id)}, {"$set": update_dict})
 
 
+<<<<<<< HEAD
 def register_job(
     project, experiment, job, config_overrides, runtime_environment, annotations=None, user=None
 ):
+=======
+def register_job(project, experiment, job, config_overrides, runtime_environment, annotations=None, user=None, _id=None):
+>>>>>>> Add possiblity to give _id to MongoDB
     if user is None:
         user = os.getenv("USER")
 
