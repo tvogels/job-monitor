@@ -90,6 +90,7 @@ def main():
     # check config exists
     if not os.path.exists(worker_kubernetes_file):
         print(f"Please run this in a directory containing '{worker_kubernetes_file}''")
+        exit(1)
 
     with open(worker_kubernetes_file, "r") as f:
         deployment = yaml.safe_load(f)
