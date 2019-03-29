@@ -7,13 +7,15 @@ printenv | grep JOBMONITOR | sudo tee /etc/default/telegraf
 sudo service telegraf start
 
 # move to code directory if any
+OUTPUT_FILE="/dev/null"
 if [ -d "$JOBMONITOR_DIRECTORY" ]; then
   cd "$JOBMONITOR_DIRECTORY"
+  OUTPUT_FILE="$JOBMONITOR_DIRECTORY/../output/output.txt"
 fi
 
 # run the command in a tmux session
 echo "Create new tmux session and run command."
-tmux new -d "$@"
+tmux new -d "$@" \; pipe-pane "cat > $OUTPUT_FILE"
 
 # keep container alive until all tmux sessions are killed
 echo "Wait for tmux sessions to be finished."

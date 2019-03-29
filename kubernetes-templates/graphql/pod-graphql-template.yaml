@@ -20,7 +20,7 @@ spec:
       - containerPort: 4000
       env:
         - {name: DATA,                        value: /data/{{user.name}}}
-        - {name: JOBMONITOR_RESULTS_DIR,      value: /data/{{user.name}}/results}
+        - {name: JOBMONITOR_RESULTS_DIR,      value: /data/{{user.name}}/runs}
         # Metadata
         - {name: JOBMONITOR_METADATA_HOST,    value: {{user.name}}-metadata}
         - {name: JOBMONITOR_METADATA_PORT,    value: "27017"}
