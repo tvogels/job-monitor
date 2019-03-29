@@ -26,7 +26,8 @@ function createDashboard(jobIds) {
 
   const trainingMetrics = [
     { measurementQuery: "loss", title: "Loss" },
-    { measurementQuery: "tokens_per_sec", title: "Tokens/s" }
+    { measurementQuery: "tokens_per_sec", title: "Tokens/s" },
+    { measurementQuery: "lr", title: "Learning rate" }
   ];
 
   const evaluationMetrics = [
