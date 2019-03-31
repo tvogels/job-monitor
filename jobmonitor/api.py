@@ -223,7 +223,7 @@ def kubernetes_create_base_pod_spec(
 
 def result_dir(job):
     root_dir = os.getenv("JOBMONITOR_RESULTS_DIR")
-    if type(job) == str:
+    if isinstance(job, str):
         job = job_by_id(job)
     return os.path.join(root_dir, job["output_dir"])
 
