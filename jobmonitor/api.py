@@ -20,6 +20,7 @@ from kubernetes.client import (V1Container, V1EnvVar, V1Job, V1JobSpec,
 from schema import Or, Schema
 
 from jobmonitor.connections import KUBERNETES_NAMESPACE, gridfs, influx, mongo
+from typing import List
 
 
 def job_by_id(job_id):
@@ -99,45 +100,20 @@ def kubernetes_schedule_job(job_id, docker_image_path, volumes, gpus=0, environm
             job_id=job_id,
         ),
     )
+    pod_spec = kubernetes_create_base_pod_spec(
+        cmd=['jobrun', job_id],
+        docker_image_path=docker_image_path,
+        gpus=gpus,
+        environment_variables={'JOBMONITOR_RESULTS_DIR': results_dir, **environment_variables},
+        volumes=volumes,
+    )
     job = V1Job(
         metadata=metadata,
         spec=V1JobSpec(
             backoff_limit=0,
             template=V1PodTemplateSpec(
                 metadata=metadata,
-                spec=V1PodSpec(
-                    restart_policy='Never',
-                    volumes=[
-                        V1Volume(
-                            name=volume,
-                            persistent_volume_claim=V1PersistentVolumeClaimVolumeSource(claim_name=volume),
-                        )
-                        for volume in volumes.keys()
-                    ],
-                    containers=[
-                        V1Container(
-                            name='worker',
-                            image=docker_image_path,
-                            env=[
-                                V1EnvVar(name='JOBMONITOR_RESULTS_DIR', value=results_dir),
-                            ] + [
-                                V1EnvVar(name=name, value=value)
-                                for name, value in environment_variables.items()
-                            ],
-                            volume_mounts=[
-                                V1VolumeMount(mount_path=mount_path, name=volume)
-                                for volume, mount_path in volumes.items()
-                            ],
-                            resources=(
-                                V1ResourceRequirements(
-                                    limits={'nvidia.com/gpu': gpus, 'memory': '128Gi', 'cpu': 20},
-                                    requests={'memory': '85Gi', 'cpu': '14'}
-                                )
-                            ),
-                            command=['/entrypoint.sh', 'jobrun', job_id],
-                        )
-                    ]
-                )
+                spec=pod_spec
             ),
         )
     )
@@ -167,6 +143,13 @@ def kubernetes_schedule_job_queue(job_ids, docker_image_path, volumes, gpus=0, e
             user=os.getenv('USER'),
         ),
     )
+    pod_spec = kubernetes_create_base_pod_spec(
+        cmd=['jobrun', '--queue-mode', *job_ids],
+        docker_image_path=docker_image_path,
+        gpus=gpus,
+        environment_variables={'JOBMONITOR_RESULTS_DIR': results_dir, **environment_variables},
+        volumes=volumes,
+    )
     job = V1Job(
         metadata=metadata,
         spec=V1JobSpec(
@@ -175,44 +158,45 @@ def kubernetes_schedule_job_queue(job_ids, docker_image_path, volumes, gpus=0, e
             parallelism=parallelism,
             template=V1PodTemplateSpec(
                 metadata=metadata,
-                spec=V1PodSpec(
-                    restart_policy='Never',
-                    volumes=[
-                        V1Volume(
-                            name=volume,
-                            persistent_volume_claim=V1PersistentVolumeClaimVolumeSource(claim_name=volume),
-                        )
-                        for volume in volumes.keys()
-                    ],
-                    containers=[
-                        V1Container(
-                            name='worker',
-                            image=docker_image_path,
-                            env=[
-                                V1EnvVar(name='JOBMONITOR_RESULTS_DIR', value=results_dir),
-                            ] + [
-                                V1EnvVar(name=name, value=value)
-                                for name, value in environment_variables.items()
-                            ],
-                            volume_mounts=[
-                                V1VolumeMount(mount_path=mount_path, name=volume)
-                                for volume, mount_path in volumes.items()
-                            ],
-                            resources=(
-                                V1ResourceRequirements(
-                                    limits={'nvidia.com/gpu': gpus, 'memory': '128Gi', 'cpu': 20},
-                                    requests={'memory': '85Gi', 'cpu': '14'}
-                                )
-                            ),
-                            command=['/entrypoint.sh', 'jobrun', '--queue-mode'] + job_ids,
-                        )
-                    ]
-                )
+                spec=pod_spec,
             ),
         )
     )
     client.create_namespaced_job(KUBERNETES_NAMESPACE, job)
 
+
+def kubernetes_create_base_pod_spec(cmd: List[str], docker_image_path, gpus=0, mem=128, cpu=20, environment_variables={}, volumes={}):
+    return V1PodSpec(
+        restart_policy='Never',
+        volumes=[
+            V1Volume(
+                name=volume,
+                persistent_volume_claim=V1PersistentVolumeClaimVolumeSource(claim_name=volume),
+            )
+            for volume in volumes.keys()
+        ],
+        containers=[
+            V1Container(
+                name='worker',
+                image=docker_image_path,
+                env=[
+                    V1EnvVar(name=name, value=value)
+                    for name, value in environment_variables.items()
+                ],
+                volume_mounts=[
+                    V1VolumeMount(mount_path=mount_path, name=volume)
+                    for volume, mount_path in volumes.items()
+                ],
+                resources=(
+                    V1ResourceRequirements(
+                        limits={'nvidia.com/gpu': gpus, 'memory': f'{mem}Gi', 'cpu': cpu},
+                        requests={'memory': f'{mem * 2 // 3}Gi', 'cpu': cpu * 2 // 3}
+                    )
+                ),
+                command=['/entrypoint.sh', *cmd],
+            )
+        ]
+    )
 
 def result_dir(job):
     root_dir = os.getenv('JOBMONITOR_RESULTS_DIR')
