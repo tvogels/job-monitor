@@ -12,11 +12,19 @@ import kubernetes
 import pandas as pd
 from bson.objectid import ObjectId
 from git import InvalidGitRepositoryError, Repo
-from kubernetes.client import (V1Container, V1EnvVar, V1Job, V1JobSpec,
-                               V1ObjectMeta,
-                               V1PersistentVolumeClaimVolumeSource, V1PodSpec,
-                               V1PodTemplateSpec, V1ResourceRequirements,
-                               V1Volume, V1VolumeMount)
+from kubernetes.client import (
+    V1Container,
+    V1EnvVar,
+    V1Job,
+    V1JobSpec,
+    V1ObjectMeta,
+    V1PersistentVolumeClaimVolumeSource,
+    V1PodSpec,
+    V1PodTemplateSpec,
+    V1ResourceRequirements,
+    V1Volume,
+    V1VolumeMount,
+)
 from schema import Or, Schema
 
 from jobmonitor.connections import KUBERNETES_NAMESPACE, gridfs, influx, mongo
@@ -24,20 +32,22 @@ from typing import List
 
 
 def job_by_id(job_id):
-    return mongo.job.find_one({ '_id': ObjectId(job_id) })
+    return mongo.job.find_one({"_id": ObjectId(job_id)})
 
 
 def delete_job_by_id(job_id):
-    return mongo.job.delete_one({ '_id': ObjectId(job_id) })
+    return mongo.job.delete_one({"_id": ObjectId(job_id)})
 
 
 def update_job(job_id, update_dict):
-    return mongo.job.update({ '_id': ObjectId(job_id) }, { '$set': update_dict })
+    return mongo.job.update({"_id": ObjectId(job_id)}, {"$set": update_dict})
 
 
-def register_job(project, experiment, job, config_overrides, runtime_environment, annotations=None, user=None):
+def register_job(
+    project, experiment, job, config_overrides, runtime_environment, annotations=None, user=None
+):
     if user is None:
-        user = os.getenv('USER')
+        user = os.getenv("USER")
 
     # Validate the inputs
     Schema(str).validate(user)
@@ -46,21 +56,23 @@ def register_job(project, experiment, job, config_overrides, runtime_environment
     Schema(str).validate(job)
     Schema(Or({}, {str: object})).validate(config_overrides)
     Schema(Or(None, {str: object})).validate(annotations)
-    Schema({'clone': Or({'code_package': ObjectId}, {'path': str}), 'script': str}).validate(runtime_environment)
+    Schema({"clone": Or({"code_package": ObjectId}, {"path": str}), "script": str}).validate(
+        runtime_environment
+    )
 
     # Format the database entry
     job_content = {
-        'user': user,
-        'project': project,
-        'experiment': experiment,
-        'job': job,
-        'config': config_overrides,
-        'environment': runtime_environment,
-        'status': 'CREATED',
-        'creation_time': datetime.datetime.utcnow(),
+        "user": user,
+        "project": project,
+        "experiment": experiment,
+        "job": job,
+        "config": config_overrides,
+        "environment": runtime_environment,
+        "status": "CREATED",
+        "creation_time": datetime.datetime.utcnow(),
     }
     if annotations is not None:
-        job_content['annotations'] = annotations
+        job_content["annotations"] = annotations
 
     insert_result = mongo.job.insert_one(job_content)
     job_id = str(insert_result.inserted_id)
@@ -70,84 +82,95 @@ def register_job(project, experiment, job, config_overrides, runtime_environment
 def kubernetes_delete_job(kubernetes_job_name):
     kubernetes.config.load_kube_config()
     client = kubernetes.client.BatchV1Api()
-    body = kubernetes.client.V1DeleteOptions(propagation_policy='Foreground')
-    return client.delete_namespaced_job(kubernetes_job_name, namespace=KUBERNETES_NAMESPACE, body=body)
+    body = kubernetes.client.V1DeleteOptions(propagation_policy="Foreground")
+    return client.delete_namespaced_job(
+        kubernetes_job_name, namespace=KUBERNETES_NAMESPACE, body=body
+    )
 
 
-def kubernetes_schedule_job(job_id, docker_image_path, volumes, gpus=0, environment_variables={}, results_dir='/scratch/results'):
+def kubernetes_schedule_job(
+    job_id,
+    docker_image_path,
+    volumes,
+    gpus=0,
+    environment_variables={},
+    results_dir="/scratch/results",
+):
     """
     Example inputs:
     docker_image_path: ic-registry.epfl.ch/mlo/jobmonitor_worker
     volumes: ['pv-mlodata1'] or {'pv-mlodata1': '/mlodata1'}
     """
     if not isinstance(volumes, Iterable):
-        raise ValueError("Volumes should either be an iterable (list, tuple) or a dictionary {'volume_name': 'mount_path'}.")
+        raise ValueError(
+            "Volumes should either be an iterable (list, tuple) or a dictionary {'volume_name': 'mount_path'}."
+        )
     if not isinstance(volumes, dict):
-        volumes = {volume: "/"+volume for volume in volumes}  # use volume-name as mount-path
+        volumes = {volume: "/" + volume for volume in volumes}  # use volume-name as mount-path
 
     job = job_by_id(job_id)
     kubernetes.config.load_kube_config()
     client = kubernetes.client.BatchV1Api()
-    job_name = '{}-{}'.format(job['user'], job_id[-6:])
+    job_name = "{}-{}".format(job["user"], job_id[-6:])
     metadata = V1ObjectMeta(
         name=job_name,
         labels=dict(
-            app='jobmonitor',
-            user=job['user'],
-            project=job['project'],
-            experiment=job['experiment'],
-            job=job['job'],
+            app="jobmonitor",
+            user=job["user"],
+            project=job["project"],
+            experiment=job["experiment"],
+            job=job["job"],
             job_id=job_id,
         ),
     )
     pod_spec = kubernetes_create_base_pod_spec(
-        cmd=['jobrun', job_id],
+        cmd=["jobrun", job_id],
         docker_image_path=docker_image_path,
         gpus=gpus,
-        environment_variables={'JOBMONITOR_RESULTS_DIR': results_dir, **environment_variables},
+        environment_variables={"JOBMONITOR_RESULTS_DIR": results_dir, **environment_variables},
         volumes=volumes,
     )
     job = V1Job(
         metadata=metadata,
         spec=V1JobSpec(
-            backoff_limit=0,
-            template=V1PodTemplateSpec(
-                metadata=metadata,
-                spec=pod_spec
-            ),
-        )
+            backoff_limit=0, template=V1PodTemplateSpec(metadata=metadata, spec=pod_spec)
+        ),
     )
     client.create_namespaced_job(KUBERNETES_NAMESPACE, job)
-    update_job(job_id, { 'status': 'SCHEDULED', 'schedule_time': datetime.datetime.utcnow() })
+    update_job(job_id, {"status": "SCHEDULED", "schedule_time": datetime.datetime.utcnow()})
 
 
-def kubernetes_schedule_job_queue(job_ids, docker_image_path, volumes, gpus=0, environment_variables={}, results_dir='/scratch/results', parallelism=10):
+def kubernetes_schedule_job_queue(
+    job_ids,
+    docker_image_path,
+    volumes,
+    gpus=0,
+    environment_variables={},
+    results_dir="/scratch/results",
+    parallelism=10,
+):
     """
     Example inputs:
     docker_image_path: ic-registry.epfl.ch/mlo/jobmonitor_worker
     volumes: ['pv-mlodata1'] or {'pv-mlodata1': '/mlodata1'}
     """
     if not isinstance(volumes, Iterable):
-        raise ValueError("Volumes should either be an iterable (list, tuple) or a dictionary {'volume_name': 'mount_path'}.")
+        raise ValueError(
+            "Volumes should either be an iterable (list, tuple) or a dictionary {'volume_name': 'mount_path'}."
+        )
     if not isinstance(volumes, dict):
-        volumes = {volume: "/"+volume for volume in volumes}  # use volume-name as mount-path
+        volumes = {volume: "/" + volume for volume in volumes}  # use volume-name as mount-path
 
     kubernetes.config.load_kube_config()
     client = kubernetes.client.BatchV1Api()
-    random_id = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(6))
-    job_name = '{}-queue-{}'.format(os.getenv('USER'), random_id)
-    metadata = V1ObjectMeta(
-        name=job_name,
-        labels=dict(
-            app='jobmonitor',
-            user=os.getenv('USER'),
-        ),
-    )
+    random_id = "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(6))
+    job_name = "{}-queue-{}".format(os.getenv("USER"), random_id)
+    metadata = V1ObjectMeta(name=job_name, labels=dict(app="jobmonitor", user=os.getenv("USER")))
     pod_spec = kubernetes_create_base_pod_spec(
-        cmd=['jobrun', '--queue-mode', *job_ids],
+        cmd=["jobrun", "--queue-mode", *job_ids],
         docker_image_path=docker_image_path,
         gpus=gpus,
-        environment_variables={'JOBMONITOR_RESULTS_DIR': results_dir, **environment_variables},
+        environment_variables={"JOBMONITOR_RESULTS_DIR": results_dir, **environment_variables},
         volumes=volumes,
     )
     job = V1Job(
@@ -156,18 +179,17 @@ def kubernetes_schedule_job_queue(job_ids, docker_image_path, volumes, gpus=0, e
             backoff_limit=0,
             completions=len(job_ids),
             parallelism=parallelism,
-            template=V1PodTemplateSpec(
-                metadata=metadata,
-                spec=pod_spec,
-            ),
-        )
+            template=V1PodTemplateSpec(metadata=metadata, spec=pod_spec),
+        ),
     )
     client.create_namespaced_job(KUBERNETES_NAMESPACE, job)
 
 
-def kubernetes_create_base_pod_spec(cmd: List[str], docker_image_path, gpus=0, mem=128, cpu=20, environment_variables={}, volumes={}):
+def kubernetes_create_base_pod_spec(
+    cmd: List[str], docker_image_path, gpus=0, mem=128, cpu=20, environment_variables={}, volumes={}
+):
     return V1PodSpec(
-        restart_policy='Never',
+        restart_policy="Never",
         volumes=[
             V1Volume(
                 name=volume,
@@ -177,7 +199,7 @@ def kubernetes_create_base_pod_spec(cmd: List[str], docker_image_path, gpus=0, m
         ],
         containers=[
             V1Container(
-                name='worker',
+                name="worker",
                 image=docker_image_path,
                 env=[
                     V1EnvVar(name=name, value=value)
@@ -189,20 +211,21 @@ def kubernetes_create_base_pod_spec(cmd: List[str], docker_image_path, gpus=0, m
                 ],
                 resources=(
                     V1ResourceRequirements(
-                        limits={'nvidia.com/gpu': gpus, 'memory': f'{mem}Gi', 'cpu': cpu},
-                        requests={'memory': f'{mem * 2 // 3}Gi', 'cpu': cpu * 2 // 3}
+                        limits={"nvidia.com/gpu": gpus, "memory": f"{mem}Gi", "cpu": cpu},
+                        requests={"memory": f"{mem * 2 // 3}Gi", "cpu": cpu * 2 // 3},
                     )
                 ),
-                command=['/entrypoint.sh', *cmd],
+                command=["/entrypoint.sh", *cmd],
             )
-        ]
+        ],
     )
 
+
 def result_dir(job):
-    root_dir = os.getenv('JOBMONITOR_RESULTS_DIR')
+    root_dir = os.getenv("JOBMONITOR_RESULTS_DIR")
     if type(job) == str:
         job = job_by_id(job)
-    return os.path.join(root_dir, job['output_dir'])
+    return os.path.join(root_dir, job["output_dir"])
 
 
 def describe_git_state(directory):
@@ -211,12 +234,19 @@ def describe_git_state(directory):
         is_dirty = repo.is_dirty()
         commit = repo.commit()
         author = commit.author
-        return repo.remotes.origin.url, author.name, author.email, commit.hexsha, commit.message, is_dirty
+        return (
+            repo.remotes.origin.url,
+            author.name,
+            author.email,
+            commit.hexsha,
+            commit.message,
+            is_dirty,
+        )
     except InvalidGitRepositoryError:
         return None, None, None, None, None, None
 
 
-def upload_code_package(directory='.', excludes=None):
+def upload_code_package(directory=".", excludes=None):
     """
     Uploads a compressed tar file with directory contents to mongodb (gridfs).
     This package can be used in a job specification.
@@ -227,6 +257,7 @@ def upload_code_package(directory='.', excludes=None):
     # Make a function used to select/exclude files for the package
     if excludes is None:
         excludes = []
+
     def filter_fn(tarinfo):
         basename = os.path.basename(tarinfo.name)
         if any(fnmatch(basename, pattern) for pattern in excludes):
@@ -236,23 +267,25 @@ def upload_code_package(directory='.', excludes=None):
 
     # Collect some metadata about the directory and git
     directory_basename = os.path.basename(os.path.realpath(directory))
-    remote, author_name, author_email, commit, commit_message, is_dirty = describe_git_state(directory)
+    remote, author_name, author_email, commit, commit_message, is_dirty = describe_git_state(
+        directory
+    )
     metadata = {
-        'gitAuthorEmail': author_email,
-        'gitAuthorName': author_name,
-        'gitCommit': commit,
-        'gitCommitMessage': commit_message,
-        'gitRepository': remote,
-        'gitWasDirty': is_dirty,
+        "gitAuthorEmail": author_email,
+        "gitAuthorName": author_name,
+        "gitCommit": commit,
+        "gitCommitMessage": commit_message,
+        "gitRepository": remote,
+        "gitWasDirty": is_dirty,
     }
 
     try:
         # Create a temporary tar file
-        tmp = NamedTemporaryFile('rb')
+        tmp = NamedTemporaryFile("rb")
         with tarfile.open(tmp.name, "w:gz") as fp:
             fp.add(directory, recursive=True, filter=filter_fn)
         # Upload it to MongoDB
-        gridfs_id = gridfs.put(tmp, filename=directory_basename+'.tgz', metadata=metadata)
+        gridfs_id = gridfs.put(tmp, filename=directory_basename + ".tgz", metadata=metadata)
         return gridfs_id, included_files
     finally:
         tmp.close()
@@ -262,7 +295,7 @@ def download_code_package(package_id, destination):
     if type(package_id) == str:
         package_id = ObjectId(package_id)
     try:
-        tmp = NamedTemporaryFile('wb+')
+        tmp = NamedTemporaryFile("wb+")
         with gridfs.get(package_id) as fp:
             tmp.write(fp.read())
         tmp.seek(0)
@@ -272,7 +305,7 @@ def download_code_package(package_id, destination):
         tmp.close()
 
 
-InfluxSeries = namedtuple('InfluxEntry', ['measurement', 'tags', 'data'])
+InfluxSeries = namedtuple("InfluxEntry", ["measurement", "tags", "data"])
 
 
 def influx_query(query, merge=False):
@@ -281,15 +314,11 @@ def influx_query(query, merge=False):
     series = []
     for (measurement, tags), values in raw_data.items():
         dataframe = pd.DataFrame(values)
-        dataframe['measurement'] = measurement
+        dataframe["measurement"] = measurement
         if tags is not None:
             for key, value in tags.items():
                 dataframe[key] = value
-        series.append(InfluxSeries(
-            measurement=measurement,
-            tags=tags,
-            data=dataframe,
-        ))
+        series.append(InfluxSeries(measurement=measurement, tags=tags, data=dataframe))
         dataframe.time = pd.to_datetime(dataframe.time)
     if not merge:
         return series
