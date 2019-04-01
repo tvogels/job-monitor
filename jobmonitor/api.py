@@ -7,6 +7,7 @@ from collections import namedtuple
 from collections.abc import Iterable
 from fnmatch import fnmatch
 from tempfile import NamedTemporaryFile
+from typing import List
 
 import kubernetes
 import pandas as pd
@@ -19,6 +20,7 @@ from kubernetes.client import (
     V1JobSpec,
     V1ObjectMeta,
     V1PersistentVolumeClaimVolumeSource,
+    V1Pod,
     V1PodSpec,
     V1PodTemplateSpec,
     V1ResourceRequirements,
@@ -28,7 +30,6 @@ from kubernetes.client import (
 from schema import Or, Schema
 
 from jobmonitor.connections import KUBERNETES_NAMESPACE, gridfs, influx, mongo
-from typing import List
 
 
 def job_by_id(job_id):
@@ -110,10 +111,10 @@ def kubernetes_schedule_job(
 
     job = job_by_id(job_id)
     kubernetes.config.load_kube_config()
-    client = kubernetes.client.BatchV1Api()
-    job_name = "{}-{}".format(job["user"], job_id[-6:])
+    client = kubernetes.client.CoreV1Api()
+    pod_name = "{}-{}".format(job["user"], job_id[-6:])
     metadata = V1ObjectMeta(
-        name=job_name,
+        name=pod_name,
         labels=dict(
             app="jobmonitor",
             user=job["user"],
@@ -130,13 +131,8 @@ def kubernetes_schedule_job(
         environment_variables={"JOBMONITOR_RESULTS_DIR": results_dir, **environment_variables},
         volumes=volumes,
     )
-    job = V1Job(
-        metadata=metadata,
-        spec=V1JobSpec(
-            backoff_limit=0, template=V1PodTemplateSpec(metadata=metadata, spec=pod_spec)
-        ),
-    )
-    client.create_namespaced_job(KUBERNETES_NAMESPACE, job)
+    pod = V1Pod(metadata=metadata, spec=V1PodTemplateSpec(metadata=metadata, spec=pod_spec))
+    client.create_namespaced_pod(KUBERNETES_NAMESPACE, pod)
     update_job(job_id, {"status": "SCHEDULED", "schedule_time": datetime.datetime.utcnow()})
 
 
