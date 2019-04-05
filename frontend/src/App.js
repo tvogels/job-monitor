@@ -125,7 +125,7 @@ const App = ({ selectedJobs, setSelectedJobs, toggleHandler }) => {
               }
             };
             return (
-              <div style={{ flexGrow: 1, flexShrink: 1, display: 'flex' }}>
+              <div style={{ flexGrow: 1, flexShrink: 1, display: 'flex', height: '10em' }}>
                 <Route exact path="/" render={() => (
                   <Redirect to="/config" />
                 )} />
