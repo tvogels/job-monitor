@@ -112,33 +112,33 @@ def main():
     deployment["spec"]["containers"][0]["env"] = env
 
     # add command to run from CLI
-    exec_command = ["/entrypoint.sh", f"cd {job_directory}/code && " + " ".join(command)]
+    exec_command = ["/entrypoint.sh", " ".join(command)]
     deployment["spec"]["containers"][0]["command"] = exec_command
 
     worker_pod_name = deployment["metadata"]["name"]
 
-    print(f"Creating directory structure and copying code...", end=" ")
-    sys.stdout.flush()
+    # print(f"Creating directory structure and copying code...", end=" ")
+    # sys.stdout.flush()
 
-    # create directory structure
-    subprocess.run(
-        [
-            "kubectl",
-            "exec",
-            "-it",
-            Config.metadata_pod,
-            "--",
-            "mkdir",
-            "-p",
-            f"{job_directory}/output",
-        ]
-    )
+    # # create directory structure
+    # subprocess.run(
+    #     [
+    #         "kubectl",
+    #         "exec",
+    #         "-it",
+    #         Config.metadata_pod,
+    #         "--",
+    #         "mkdir",
+    #         "-p",
+    #         f"{job_directory}/output",
+    #     ]
+    # )
 
-    # copy current directory
-    subprocess.run(
-        ["kubectl", "cp", ".", f"{Config.namespace}/{Config.metadata_pod}:{job_directory}/code"]
-    )
-    print("Done.")
+    # # copy current directory
+    # subprocess.run(
+    #     ["kubectl", "cp", ".", f"{Config.namespace}/{Config.metadata_pod}:{job_directory}/code"]
+    # )
+    # print("Done.")
 
     # deploy the pods and wait until created
     print(f"Creating '{worker_pod_name}' pod...", end=" ")
