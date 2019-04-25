@@ -25,10 +25,12 @@ def delete_job(job_id):
 
     job = job_by_id(job_id)
     if job:
-        if "output_dir" in job:
-            output_dir = job["output_dir"]
-            shutil.rmtree(os.path.join(os.getenv("JOBMONITOR_RESULTS_DIR"), job["output_dir"]))
-            print("- Cleared output directory {}".format(output_dir))
+        if 'output_dir' in job:
+            output_dir = job['output_dir']
+            output_path = os.path.join(os.getenv('JOBMONITOR_RESULTS_DIR'), job['output_dir'])
+            if os.path.exists(output_path):
+                shutil.rmtree(output_path)
+                print('- Cleared output directory {}'.format(output_dir))
 
         delete_job_by_id(job_id)
         print("- Deleted entry in MongoDB")
