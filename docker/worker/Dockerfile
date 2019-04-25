@@ -69,16 +69,21 @@ RUN pip3 install --upgrade --no-cache-dir \
   pandas \
   pygsp \
   pylint \
+  pytorch_nlp \
   rope \
   scikit-learn \
   scipy \
   seaborn \
   sentencepiece \
+  spacy \
   tabulate \
   termcolor \
   torch \
   torchvision \
   tqdm
+
+# Install Spacy language dependency
+RUN python -m spacy download en_core_web_sm
 
 # install sentencepiece
 RUN git clone https://github.com/google/sentencepiece.git /opt/sentencepiece && \
