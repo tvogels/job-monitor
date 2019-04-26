@@ -53,11 +53,12 @@ def kill_job_in_kubernetes(job_id):
     )
     if job_results.items:
         for job in job_results.items:
-            name = job.metadata.name
-            kubernetes_delete_job(name)
-            if name:
-                print("- Killed job {} in Kubernetes".format(name))
-                deleted_stuff.append(name)
+            if job.spec.completions == 1:  # Don't kill queue jobs
+                name = job.metadata.name
+                kubernetes_delete_job(name)
+                if name:
+                    print("- Killed job {} in Kubernetes".format(name))
+                    deleted_stuff.append(name)
 
     client = kubernetes.client.CoreV1Api()
 
