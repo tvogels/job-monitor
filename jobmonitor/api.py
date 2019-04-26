@@ -131,7 +131,7 @@ def kubernetes_schedule_job(
         environment_variables={"JOBMONITOR_RESULTS_DIR": results_dir, **environment_variables},
         volumes=volumes,
     )
-    pod = V1Pod(metadata=metadata, spec=V1PodTemplateSpec(metadata=metadata, spec=pod_spec))
+    pod = V1Pod(metadata=metadata, spec=pod_spec)
     client.create_namespaced_pod(KUBERNETES_NAMESPACE, pod)
     update_job(job_id, {"status": "SCHEDULED", "schedule_time": datetime.datetime.utcnow()})
 
@@ -185,6 +185,7 @@ def kubernetes_create_base_pod_spec(
     cmd: List[str], docker_image_path, gpus=0, mem=128, cpu=20, environment_variables={}, volumes={}
 ):
     return V1PodSpec(
+        host_ipc=True,  # Against shared memory limit
         restart_policy="Never",
         volumes=[
             V1Volume(
