@@ -152,11 +152,11 @@ def main():
         script.log_metric = telegraf.metric
 
         # Store the effective config used in the database
-        update_job(job_id, { 'config': script.config })
+        update_job(job_id, { 'config': dict(script.config) })
 
         # and in the output directory, just to be sure
         with open(os.path.join(output_dir_abs, 'config.yml'), 'w') as fp:
-            yaml.dump(script.config, fp, default_flow_style=False)
+            yaml.dump(dict(script.config), fp, default_flow_style=False)
 
         # Run the task
         script.main()
