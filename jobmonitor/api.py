@@ -192,7 +192,6 @@ def kubernetes_create_base_pod_spec(
     host_ipc=False,
 ):
     return V1PodSpec(
-        host_ipc=True,  # Against shared memory limit
         restart_policy="Never",
         volumes=[
             V1Volume(
