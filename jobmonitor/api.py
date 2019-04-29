@@ -44,13 +44,9 @@ def update_job(job_id, update_dict):
     return mongo.job.update({"_id": ObjectId(job_id)}, {"$set": update_dict})
 
 
-<<<<<<< HEAD
 def register_job(
     project, experiment, job, config_overrides, runtime_environment, annotations=None, user=None
 ):
-=======
-def register_job(project, experiment, job, config_overrides, runtime_environment, annotations=None, user=None, _id=None):
->>>>>>> Add possiblity to give _id to MongoDB
     if user is None:
         user = os.getenv("USER")
 
@@ -186,7 +182,14 @@ def kubernetes_schedule_job_queue(
 
 
 def kubernetes_create_base_pod_spec(
-    cmd: List[str], docker_image_path, gpus=0, mem=128, cpu=20, environment_variables={}, volumes={}
+    cmd: List[str],
+    docker_image_path,
+    gpus=0,
+    mem=128,
+    cpu=20,
+    environment_variables={},
+    volumes={},
+    host_ipc=False,
 ):
     return V1PodSpec(
         host_ipc=True,  # Against shared memory limit
@@ -198,6 +201,7 @@ def kubernetes_create_base_pod_spec(
             )
             for volume in volumes.keys()
         ],
+        host_ipc=host_ipc,
         containers=[
             V1Container(
                 name="worker",

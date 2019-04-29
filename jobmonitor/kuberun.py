@@ -24,6 +24,7 @@ def main():
     parser.add_argument("-l", "--labels", default=[], nargs="+", help="format: key=label")
     parser.add_argument("-u", "--user", default=os.getenv("USER"))
     parser.add_argument("-v", "--volumes", nargs="+", default=["pv-mlodata1"])
+    parser.add_argument("--host-ipc", action="store_true")
     parser.add_argument("command", nargs="+")
     args = parser.parse_args()
 
@@ -47,6 +48,7 @@ def main():
             "JOBMONITOR_RESULTS_DIR": f"/pv-mlodata1/{args.user}/results",
         },
         volumes={v: v for v in args.volumes},
+        host_ipc=args.host_ipc,
     )
 
     labels = dict(label_string.split("=") for label_string in args.labels)
