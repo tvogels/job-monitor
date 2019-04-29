@@ -105,7 +105,7 @@ export default {
                 ymax={0.95}
                 pattern={""}
                 hue={"optimizer_batch_size"}
-                hueLegendName="Batch size: "
+                hueLegendName="Batch size"
                 style={{ height: '25em', width: '80em', marginLeft: '-15em', marginTop: '1.5em' }}
                 row={"measurement"}
                 col={"experiment"}
@@ -127,7 +127,7 @@ export default {
                 ymax={0.95}
                 pattern={""}
                 hue={"optimizer_batch_size"}
-                hueLegendName="Batch size: "
+                hueLegendName="Batch size"
                 style={{ height: '25em', width: '80em', marginLeft: '-15em', marginTop: '1.5em' }}
                 row={"measurement"}
                 col={"job"}
@@ -145,7 +145,7 @@ export default {
                 ymax={0.95}
                 pattern={""}
                 hue={"optimizer_batch_size"}
-                hueLegendName="Batch size: "
+                hueLegendName="Batch size"
                 style={{ height: '25em', width: '80em', marginLeft: '-15em', marginTop: '1.5em' }}
                 row={"measurement"}
                 col={"experiment"}
@@ -178,11 +178,12 @@ export default {
                 jobIds={["5cb4f744d792d59e432581e4", "5cb4f744d792d59e432581e7", "5cb4f744d792d59e432581ea", "5cb4f744d792d59e432581ed", "5cab227cfbe5451caffbe8e1", "5cab227cfbe5451caffbe8e2", "5cab227cfbe5451caffbe8e4", "5cab227cfbe5451caffbe8e3"]}
                 measurementQuery={["last_accuracy"]}
                 tagQuery={["split=test"]}
-                lineOpacity={0.8}
+                lineOpacity={0.9}
                 ymin={".9"}
                 ymax={".95"}
                 pattern={""}
                 hue={"optimizer_batch_size"}
+                hueLegendName={"Batch size"}
                 row={"measurement"}
                 col={"experiment"}
                 rowLabelPrefix="Batch size = "
@@ -197,11 +198,12 @@ export default {
                 jobIds={["5cb44c517a737571bd4d0589", "5cb44c517a737571bd4d058a", "5cb44c517a737571bd4d058b"]}
                 measurementQuery={["runavg_accuracy"]}
                 tagQuery={["split=test"]}
-                lineOpacity={0.8}
+                lineOpacity={0.9}
                 ymin={".9"}
                 ymax={".95"}
                 pattern={""}
                 hue={"job"}
+                hueLegendName={"Job"}
                 row={"measurement"}
                 style={{ height: '22em', width: '80em', marginLeft: '-15em', marginTop: '1.5em' }}
             />
@@ -213,14 +215,19 @@ export default {
                 <li><code>SignAndNorm</code> — message size is 7.5x bigger + no all_reduce</li>
                 <li><code>RandomSparse</code> — random selection from the memory is sent, message size equal to Rank1</li>
                 <li><code>RandomSparseBlock</code> — same as above, but sending consequtive blocks for efficiency</li>
+                <li><code>TopK</code> — Sending top K gradients entries in absolute value. Cannot use all-reduce.</li>
             </ul>
             <FacetChart
-                jobIds={["5cb5c5777a7375b4f96f9c76", "5cb5c5777a7375b4f96f9c77", "5cb5c5777a7375b4f96f9c78", "5cb5c5777a7375b4f96f9c79", "5cb5c5777a7375b4f96f9c7a", "5cb5c5777a7375b4f96f9c7b", "5cb5c5777a7375b4f96f9c7c", "5cb5c5777a7375b4f96f9c7d", "5cb5c5777a7375b4f96f9c7e", "5cb5c5777a7375b4f96f9c7f", "5cb5c5777a7375b4f96f9c80", "5cb5c5777a7375b4f96f9c81", "5cb57fe5c2472da03a5a67a3", "5cb57fe6c2472da03a5a67a9", "5cb57fe6c2472da03a5a67af", "5cb57fe6c2472da03a5a67b5", "5cb57fe6c2472da03a5a67b9", "5cb57fe6c2472da03a5a67b3", "5cb57fe6c2472da03a5a67ad", "5cb57fe6c2472da03a5a67a7"]}
+                jobIds={
+                    [
+                        "5cb5c5777a7375b4f96f9c76", "5cb5c5777a7375b4f96f9c77", "5cb5c5777a7375b4f96f9c78", "5cb5c5777a7375b4f96f9c79", "5cb5c5777a7375b4f96f9c7a", "5cb5c5777a7375b4f96f9c7b", "5cb5c5777a7375b4f96f9c7c", "5cb5c5777a7375b4f96f9c7d", "5cb5c5777a7375b4f96f9c7e", "5cb5c5777a7375b4f96f9c7f", "5cb5c5777a7375b4f96f9c80", "5cb5c5777a7375b4f96f9c81", "5cb57fe5c2472da03a5a67a3", "5cb57fe6c2472da03a5a67a9", "5cb57fe6c2472da03a5a67af", "5cb57fe6c2472da03a5a67b5", "5cb57fe6c2472da03a5a67b9", "5cb57fe6c2472da03a5a67b3", "5cb57fe6c2472da03a5a67ad", "5cb57fe6c2472da03a5a67a7",
+                        "5cc2cd9ed7847c96ba475cde", "5cc2cd9ed7847c96ba475cdd", "5cc2cd9ed7847c96ba475cdc", "5cc2cd9ed7847c96ba475cdb"
+                    ]}
                 measurementQuery={["runavg_accuracy"]}
                 tagQuery={["split=test"]}
-                lineOpacity={0.8}
+                lineOpacity={0.9}
                 ymax={".95"}
-                ymin={".85"}
+                ymin={".9"}
                 pattern={""}
                 hue={"optimizer_reducer"}
                 colLabelPrefix={"Batch size "}
@@ -230,6 +237,75 @@ export default {
                 style={{ height: '22em', width: '80em', marginLeft: '-15em', marginTop: '1.5em' }}
             />
 
+            <h2>Full-precision SVD</h2>
+
+            <p>Using a truncated exact singular value decomposition, we can evaluate what we can achieve if we improve the quality of the power-iteration style rank 1 factorization. From rank 4, we catch up with Sign+Norm and full-precision gradient communication. In that case, it is still 2x more compressed than Sign+Norm (assuming actual 1-bit tensors).</p>
+
+            <FacetChart
+                jobIds={["5cc2d265d7847c9a5fbcf08a", "5cc2d265d7847c9a5fbcf08b", "5cc2d265d7847c9a5fbcf08c", "5cc1a512d7847c85bea8cd83", "5cb57fe6c2472da03a5a67b9", "5cb5c5777a7375b4f96f9c81"]}
+                measurementQuery={["runavg_accuracy"]}
+                tagQuery={["split=test"]}
+                lineOpacity={0.8}
+                ymin={".9"}
+                row={"measurement"}
+                pattern={""}
+                colLabelPrefix={"Batch size "}
+                hueLegendName="Gradients"
+                hue={"reducer_name"}
+                col={"optimizer_batch_size"}
+                style={{ height: '30em', width: '80em', marginLeft: '-15em', marginTop: '1.5em' }}
+            />
+
+            <h2>Normfix</h2>
+            <p>Inspecting the effective learning rate of conv layers with batch norm, I saw that there was more difference between the batch sizes for Rank 1 than for exact gradients. This observation motivated a new attempt to see if normfix can help for large batch sizes. The experiment <code>reducers_with_normfix</code> shows that it is consistently worse for <strong>batch size 2048</strong>.</p>
+
+            <FacetChart
+                jobIds={["5cc15e9d96fc5671910db420", "5cb57fe6c2472da03a5a67b9", "5cb57fe6c2472da03a5a67b7", "5cc15e9d96fc5671910db41f", "5cc15e9d96fc5671910db41e", "5cb57fe6c2472da03a5a67b5"]}
+                measurementQuery={["runavg_accuracy"]}
+                tagQuery={["split=test"]}
+                lineOpacity={0.9}
+                ymin={".8"}
+                row={"measurement"}
+                pattern={""}
+                hueLegendName="Gradients"
+                hue={"reducer_name"}
+                col={"fix_conv_weight_norm"}
+                colLabelPrefix={"Normfix = "}
+                style={{ height: '22em', width: '80em', marginLeft: '-15em', marginTop: '1.5em' }}
+            />
+
+
+            <h2>Reusing query vectors in the large batch setting</h2>
+            <p>Previously, in the case of batch size 256, we could not show the benefits of reusing the old query points in power-iteration-style apprixmate rank 1. We have now seen that in the larger-batch setting, extra power iteration steps improve the quality of convergence.</p>
+
+            <p>We now find that reusing old query vectors gets us the same benefit as an extra step of power-iteration. This is great, because it saves a factor 2 in communication.</p>
+
+            <FacetChart
+                jobIds={["5cc69b24b98614cd8f54dafa", "5cc69b1ab98614cd78362481", "5cc69b1ab98614cd78362480", "5cc5f69fcb3e0bc916629375", "5cc5f69fcb3e0bc916629374", "5cc15e9d96fc5671910db420", "5cc1a512d7847c85bea8cd83", "5cc69b24b98614cd8f54dafb", "5cb57fe6c2472da03a5a67b7"]}
+                measurementQuery={["runavg_accuracy"]}
+                tagQuery={["split=test"]}
+                lineOpacity={0.9}
+                ymin={".9"}
+                ymax={".95"}
+                pattern={""}
+                hueLegendName="Gradients"
+                hue={"reducer_name"}
+                col={"optimizer_batch_size"}
+                row={"measurement"}
+                colLabelPrefix={"Batch size "}
+                style={{ height: '30em', width: '80em', marginLeft: '-15em', marginTop: '1.5em' }}
+            />
+
+            <h2>Optimized memory allocation for Rank 1</h2>
+            <p>
+                I changed the rank 1 computation to use pre-allocated contiguous memory. This makes the reduction operation very simple, as it avoids having to copy the vectors into a buffer for sending. It also makes it easy to reuse past query vectors. When <code>reuse == true</code>, the time for a single-worker rank 1 compression is now only 0.008s, compared to 0.015s with fresh new random vectors each iteration.
+            </p>
+
+            <h2>Code refactoring</h2>
+            <p>
+                I changed the code a bit. I removed the notion of 'different optimizers'. Because the optimizer is the center of attention for this project, all of its code is in the main <code>train.py</code>. Also, the 'tasks' are refactored considerably, making it much easier to add new tasks such as a transformer model.
+            </p>
+            <p>The experiment <code>rank1_new_code</code> is the first experiment with this new code, and there is no sign of performance regressions.</p>
         </div>
     )
 };
