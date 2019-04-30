@@ -19,6 +19,8 @@ spec:
       ports:
       - containerPort: 8086
         name: api
+      - containerPort: 8088
+        name: rcp
       volumeMounts:
       - mountPath: /var/lib/influxdb
         name: data

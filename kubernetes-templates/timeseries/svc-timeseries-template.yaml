@@ -16,5 +16,9 @@ spec:
     port: 8086
     nodePort: {{ports.timeseries}}
     protocol: TCP
+  - name: rcp
+    port: 8088
+    nodePort: {{ports.timeseries_rcp}}
+    protocol: TCP
   selector:
     name: {{user.name}}-timeseries
