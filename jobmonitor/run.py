@@ -147,7 +147,14 @@ def main():
         def log_info(info_dict):
             update_job(job_id, info_dict)
 
+        # Allows the script to register images
+        def log_image(key: str, path: str):
+            if path.startswith(output_dir_abs):
+                path = path[len(output_dir_abs) + 1:]
+            update_job(job_id, {f"images.{key}": path})
+
         script.log_info = log_info
+        script.log_image = log_image
         script.output_dir = output_dir_abs
         script.log_metric = telegraf.metric
 
