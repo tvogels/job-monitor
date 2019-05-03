@@ -45,7 +45,14 @@ def update_job(job_id, update_dict):
 
 
 def register_job(
-    project, experiment, job, config_overrides, runtime_environment, annotations=None, user=None
+    project,
+    experiment,
+    job,
+    config_overrides,
+    runtime_environment,
+    annotations=None,
+    user=None,
+    n_workers=1,
 ):
     if user is None:
         user = os.getenv("USER")
@@ -67,6 +74,8 @@ def register_job(
         "project": project,
         "experiment": experiment,
         "job": job,
+        "n_workers": n_workers,
+        "registered_workers": 0,
         "config": config_overrides,
         "environment": runtime_environment,
         "status": "CREATED",

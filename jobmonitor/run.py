@@ -71,16 +71,37 @@ def main():
     if args.queue_mode:
         # Atomically find a job with status 'CREATED' among the job ids provided
         job = mongo.job.find_and_modify(
-            query={"_id": {"$in": [ObjectId(id) for id in args.job_id]}, "status": "CREATED"},
-            update={"$set": {"status": "SCHEDULED", "schedule_time": datetime.datetime.utcnow()}},
+            query={
+                "_id": {"$in": [ObjectId(id) for id in args.job_id]},
+                "$expr": {"$lt": ["$registered_workers", "$n_workers"]},
+            },
+            update={
+                "$set": {"status": "SCHEDULED", "schedule_time": datetime.datetime.utcnow()},
+                "$inc": {"registered_workers": 1},
+            },
         )
         if job is None:
             print("No jobs left")
             sys.exit(0)
         job_id = str(job["_id"])
     else:
-        job = job_by_id(args.job_id[0])
-        job_id = args.job_id[0]
+        job = mongo.job.find_and_modify(
+            query={
+                "_id": ObjectId(args.job_id[0]),
+                "$expr": {"$lt": ["$registered_workers", "$n_workers"]},
+            },
+            update={
+                "$set": {"status": "SCHEDULED", "schedule_time": datetime.datetime.utcnow()},
+                "$inc": {"registered_workers": 1},
+            },
+        )
+        if job is None:
+            print("No jobs left")
+            sys.exit(0)
+        job_id = str(job["_id"])
+
+    rank = job["registered_workers"]
+    n_workers = job["n_workers"]
 
     # Create an output directory
     output_dir = os.path.join(
@@ -90,16 +111,34 @@ def main():
     os.makedirs(output_dir_abs, exist_ok=True)
     code_dir = os.path.join(output_dir_abs, "code")
 
+    # Copy the files to run into the output directory
+    if rank == 0:
+        clone_info = job["environment"]["clone"]
+        if "path" in clone_info:
+            # fill in any environment variables used in the path
+            clone_from = re.sub(
+                r"""\$([\w_]+)""", lambda match: os.getenv(match.group(1)), clone_info["path"]
+            )
+            clone_directory(clone_from, code_dir)
+        elif "code_package" in clone_info:
+            download_code_package(clone_info["code_package"], code_dir)
+        else:
+            raise ValueError('Current, only the "path" clone approach is supported')
+
+    # Wait for all the workers to reach this point
+    barrier("jobstart", job_id, n_workers)
+
     # Set job to 'RUNNING' in MongoDB
-    update_job(
-        job_id,
-        {
-            "host": socket.gethostname(),
-            "status": "RUNNING",
-            "start_time": datetime.datetime.utcnow(),
-            "output_dir": output_dir,
-        },
-    )
+    if rank == 0:
+        update_job(
+            job_id,
+            {
+                "host": socket.gethostname(),
+                "status": "RUNNING",
+                "start_time": datetime.datetime.utcnow(),
+                "output_dir": output_dir,
+            },
+        )
 
     # Create a telegraf client
     telegraf = TelegrafClient(
@@ -117,30 +156,27 @@ def main():
 
     # Start sending regular heartbeat updates to the db
     heartbeat_stop, heartbeat_thread = IntervalTimer.create(
-        lambda: update_job(job_id, {"last_heartbeat_time": datetime.datetime.utcnow()}), 10
+        lambda: update_job(
+            job_id,
+            {
+                "last_heartbeat_time": datetime.datetime.utcnow(),
+                f"last_worker_heartbeat_time.{rank}": datetime.datetime.utcnow(),
+            },
+        ),
+        10,
     )
     heartbeat_thread.start()
 
     try:
-        # Copy the files to run into the output directory
-        clone_info = job["environment"]["clone"]
-        if "path" in clone_info:
-            # fill in any environment variables used in the path
-            clone_from = re.sub(
-                r"""\$([\w_]+)""", lambda match: os.getenv(match.group(1)), clone_info["path"]
-            )
-            clone_directory(clone_from, code_dir)
-        elif "code_package" in clone_info:
-            download_code_package(clone_info["code_package"], code_dir)
-        else:
-            raise ValueError('Current, only the "path" clone approach is supported')
-
         # Change directory to the right directory
         os.chdir(code_dir)
         sys.path.append(code_dir)
 
         # Rewire stdout and stderr to write to the output file
-        logfile_path = os.path.join(output_dir_abs, "output.txt")
+        if rank == 0:
+            logfile_path = os.path.join(output_dir_abs, "output.txt")
+        else:
+            logfile_path = os.path.join(output_dir_abs, f"output.worker{rank}.txt")
         logfile = open(logfile_path, "a")
         print("Starting. Output piped to {}".format(logfile_path))
         sys.stdout = PipeToFile(sys.stdout, logfile)
@@ -154,6 +190,9 @@ def main():
         # Override non-default config parameters
         for key, value in job.get("config", {}).items():
             script.config[key] = value
+        script.config["rank"] = rank
+        script.config["n_workers"] = n_workers
+        script.config["distributed_init_file"] = os.path.join(output_dir_abs, "dist_init")
 
         # Give the script access to all logging facilities
         def log_info(info_dict):
@@ -170,19 +209,20 @@ def main():
         script.output_dir = output_dir_abs
         script.log_metric = telegraf.metric
 
-        # Store the effective config used in the database
-        update_job(job_id, {"config": dict(script.config)})
-
-        # and in the output directory, just to be sure
-        with open(os.path.join(output_dir_abs, "config.yml"), "w") as fp:
-            yaml.dump(dict(script.config), fp, default_flow_style=False)
+        if rank == 0:
+            # Store the effective config used in the database
+            update_job(job_id, {"config": dict(script.config)})
+            # and in the output directory, just to be sure
+            with open(os.path.join(output_dir_abs, "config.yml"), "w") as fp:
+                yaml.dump(dict(script.config), fp, default_flow_style=False)
 
         # Run the task
         script.main()
 
         # Finished successfully
         print("Job finished successfully")
-        update_job(job_id, {"status": "FINISHED", "end_time": datetime.datetime.utcnow()})
+        if rank == 0:
+            update_job(job_id, {"status": "FINISHED", "end_time": datetime.datetime.utcnow()})
 
     except Exception as e:
         error_message = traceback.format_exc()
@@ -227,6 +267,28 @@ def clone_directory(from_directory, to_directory, overwrite=True):
         ignore_patterns = None
 
     shutil.copytree(from_directory, to_directory, ignore=ignore_patterns)
+
+
+def barrier(name, job_id, desired_count, poll_interval=2):
+    """Wait for all workers to reach this point"""
+    if desired_count == 1:
+        return
+
+    print(f"Reached barrier {name}")
+    # Report that we reached this point
+    query = {"_id": ObjectId(job_id)}
+    mongo.job.find_and_modify(query=query, update={"$inc": {f"barrier.{name}": 1}})
+
+    # Wait until all the workers reached the barrier
+    while True:
+        res = mongo.job.find_one(query, {f"barrier.{name}": 1})
+        count = res["barrier"][name]
+        if count >= desired_count:
+            print("... all workers registered. time to continue.")
+            break
+        else:
+            print(f"... workers registered: {count} / {desired_count}")
+            sleep(poll_interval)
 
 
 class PipeToFile:
