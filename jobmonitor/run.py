@@ -47,79 +47,91 @@ It will
 - run main() from the {environment.script}
 """
 
+
 def main():
     parser = ArgumentParser()
-    parser.add_argument('job_id', nargs='+')
-    parser.add_argument('--queue-mode', '-q', default=False, action='store_true', help='Queue mode: pick a job with status "CREATED" from the job_id list')
-    parser.add_argument('--queue-repeat', '-r', default=False, action='store_true', help='Keep working until the queue is empty')
+    parser.add_argument("job_id", nargs="+")
+    parser.add_argument(
+        "--queue-mode",
+        "-q",
+        default=False,
+        action="store_true",
+        help='Queue mode: pick a job with status "CREATED" from the job_id list',
+    )
+    parser.add_argument(
+        "--queue-repeat",
+        "-r",
+        default=False,
+        action="store_true",
+        help="Keep working until the queue is empty",
+    )
     args = parser.parse_args()
 
     # Retrieve the job description
     if args.queue_mode:
         # Atomically find a job with status 'CREATED' among the job ids provided
         job = mongo.job.find_and_modify(
-            query={
-                '_id': { '$in': [ObjectId(id) for id in args.job_id] },
-                'status': 'CREATED',
-            },
-            update={'$set': { 'status': 'SCHEDULED', 'schedule_time': datetime.datetime.utcnow() }}
+            query={"_id": {"$in": [ObjectId(id) for id in args.job_id]}, "status": "CREATED"},
+            update={"$set": {"status": "SCHEDULED", "schedule_time": datetime.datetime.utcnow()}},
         )
         if job is None:
-            print('No jobs left')
+            print("No jobs left")
             sys.exit(0)
-        job_id = str(job['_id'])
+        job_id = str(job["_id"])
     else:
         job = job_by_id(args.job_id[0])
         job_id = args.job_id[0]
 
     # Create an output directory
-    output_dir = os.path.join(job['project'], job['experiment'], job['job'] + '_' + str(job['_id'])[-6:])
-    output_dir_abs = os.path.join(os.getenv('JOBMONITOR_RESULTS_DIR'), output_dir)
+    output_dir = os.path.join(
+        job["project"], job["experiment"], job["job"] + "_" + str(job["_id"])[-6:]
+    )
+    output_dir_abs = os.path.join(os.getenv("JOBMONITOR_RESULTS_DIR"), output_dir)
     os.makedirs(output_dir_abs, exist_ok=True)
-    code_dir = os.path.join(output_dir_abs, 'code')
+    code_dir = os.path.join(output_dir_abs, "code")
 
     # Set job to 'RUNNING' in MongoDB
-    update_job(job_id, {
-        'host': socket.gethostname(),
-        'status': 'RUNNING',
-        'start_time': datetime.datetime.utcnow(),
-        'output_dir': output_dir,
-    })
+    update_job(
+        job_id,
+        {
+            "host": socket.gethostname(),
+            "status": "RUNNING",
+            "start_time": datetime.datetime.utcnow(),
+            "output_dir": output_dir,
+        },
+    )
 
     # Create a telegraf client
     telegraf = TelegrafClient(
-        host=os.getenv('JOBMONITOR_TELEGRAF_HOST'),
-        port=int(os.getenv('JOBMONITOR_TELEGRAF_PORT')),
-        tags={ # global tags for this experiment
-            'host': socket.gethostname(),
-            'user': job['user'],
-            'job_id': job_id,
-            'project': job['project'],
-            'experiment': job['experiment'],
-            'job': job['job']
-        }
+        host=os.getenv("JOBMONITOR_TELEGRAF_HOST"),
+        port=int(os.getenv("JOBMONITOR_TELEGRAF_PORT")),
+        tags={  # global tags for this experiment
+            "host": socket.gethostname(),
+            "user": job["user"],
+            "job_id": job_id,
+            "project": job["project"],
+            "experiment": job["experiment"],
+            "job": job["job"],
+        },
     )
 
     # Start sending regular heartbeat updates to the db
     heartbeat_stop, heartbeat_thread = IntervalTimer.create(
-        lambda: update_job(job_id, { 'last_heartbeat_time': datetime.datetime.utcnow() }),
-        10
+        lambda: update_job(job_id, {"last_heartbeat_time": datetime.datetime.utcnow()}), 10
     )
     heartbeat_thread.start()
 
     try:
         # Copy the files to run into the output directory
-        clone_info = job['environment']['clone']
-        if 'path' in clone_info:
+        clone_info = job["environment"]["clone"]
+        if "path" in clone_info:
             # fill in any environment variables used in the path
             clone_from = re.sub(
-                r"""\$([\w_]+)""",
-                lambda match: os.getenv(match.group(1)),
-                clone_info['path']
+                r"""\$([\w_]+)""", lambda match: os.getenv(match.group(1)), clone_info["path"]
             )
             clone_directory(clone_from, code_dir)
-        elif 'code_package' in clone_info:
-            download_code_package(clone_info['code_package'], code_dir)
+        elif "code_package" in clone_info:
+            download_code_package(clone_info["code_package"], code_dir)
         else:
             raise ValueError('Current, only the "path" clone approach is supported')
 
@@ -128,8 +140,8 @@ def main():
         sys.path.append(code_dir)
 
         # Rewire stdout and stderr to write to the output file
-        logfile_path = os.path.join(output_dir_abs, 'output.txt')
-        logfile = open(logfile_path, 'a')
+        logfile_path = os.path.join(output_dir_abs, "output.txt")
+        logfile = open(logfile_path, "a")
         print("Starting. Output piped to {}".format(logfile_path))
         sys.stdout = PipeToFile(sys.stdout, logfile)
         sys.stderr = PipeToFile(sys.stderr, logfile)
@@ -137,10 +149,10 @@ def main():
         print("cwd: {}".format(code_dir))
 
         # Import the script specified in the
-        script = import_module(job['environment']['script'].strip('.py'))
+        script = import_module(job["environment"]["script"].strip(".py"))
 
         # Override non-default config parameters
-        for key, value in job.get('config', {}).items():
+        for key, value in job.get("config", {}).items():
             script.config[key] = value
 
         # Give the script access to all logging facilities
@@ -159,36 +171,31 @@ def main():
         script.log_metric = telegraf.metric
 
         # Store the effective config used in the database
-        update_job(job_id, { 'config': dict(script.config) })
+        update_job(job_id, {"config": dict(script.config)})
 
         # and in the output directory, just to be sure
-        with open(os.path.join(output_dir_abs, 'config.yml'), 'w') as fp:
+        with open(os.path.join(output_dir_abs, "config.yml"), "w") as fp:
             yaml.dump(dict(script.config), fp, default_flow_style=False)
 
         # Run the task
         script.main()
 
         # Finished successfully
-        print('Job finished successfully')
-        update_job(job_id, {
-            'status': 'FINISHED',
-            'end_time': datetime.datetime.utcnow()
-        })
+        print("Job finished successfully")
+        update_job(job_id, {"status": "FINISHED", "end_time": datetime.datetime.utcnow()})
 
     except Exception as e:
         error_message = traceback.format_exc()
         print(error_message)
-        print('Job failed. See {}'.format(logfile_path))
+        print("Job failed. See {}".format(logfile_path))
         print(error_message)
         if isinstance(e, KeyboardInterrupt):
-            status = 'CANCELED'
+            status = "CANCELED"
         else:
-            status='FAILED'
-        update_job(job_id, {
-            'status': status,
-            'end_time': datetime.datetime.utcnow(),
-            'exception': repr(e),
-        })
+            status = "FAILED"
+        update_job(
+            job_id, {"status": status, "end_time": datetime.datetime.utcnow(), "exception": repr(e)}
+        )
 
     finally:
         # Stop the heartbeat thread
@@ -208,12 +215,12 @@ def clone_directory(from_directory, to_directory, overwrite=True):
         if overwrite:
             shutil.rmtree(to_directory)
         else:
-            raise RuntimeError('Cannot clone to an existing directory.')
+            raise RuntimeError("Cannot clone to an existing directory.")
 
     # detect .jobignore file to skip certain patterns
-    ignore_file = os.path.join(from_directory, '.jobignore')
+    ignore_file = os.path.join(from_directory, ".jobignore")
     if os.path.isfile(ignore_file):
-        with open(ignore_file, 'r') as fp:
+        with open(ignore_file, "r") as fp:
             ignore_patterns = [p.strip() for p in fp.readlines()]
             ignore_patterns = shutil.ignore_patterns(*ignore_patterns)
     else:
@@ -222,7 +229,7 @@ def clone_directory(from_directory, to_directory, overwrite=True):
     shutil.copytree(from_directory, to_directory, ignore=ignore_patterns)
 
 
-class PipeToFile():
+class PipeToFile:
     """Change sys.stdout or sys.stderr to output to a file in addition to the normal channel"""
 
     def __init__(self, channel, file_pointer):
@@ -245,5 +252,5 @@ class PipeToFile():
         self.logfile = None
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
