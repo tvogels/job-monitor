@@ -10,6 +10,8 @@ metadata:
     name: {{user.name}}-timeseries
     user: {{user.name}}
 spec:
+  nodeSelector:
+      hardware-type: CPUONLY
   securityContext:
     runAsUser: {{user.id}}
     fsGroup: {{user.group_id}}

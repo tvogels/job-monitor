@@ -10,6 +10,8 @@ metadata:
     name: {{user.name}}-frontend
     user: {{user.name}}
 spec:
+  nodeSelector:
+      hardware-type: CPUONLY
   containers:
     - name: frontend
       image: ic-registry.epfl.ch/mlo/{{user.name}}_frontend
