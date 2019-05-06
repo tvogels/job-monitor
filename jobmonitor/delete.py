@@ -2,6 +2,7 @@
 
 import os
 import shutil
+import subprocess
 from argparse import ArgumentParser
 
 import kubernetes
@@ -27,7 +28,10 @@ def delete_job(job_id):
     if job:
         if "output_dir" in job:
             output_dir = job["output_dir"]
-            shutil.rmtree(os.path.join(os.getenv("JOBMONITOR_RESULTS_DIR"), job["output_dir"]))
+            try:
+                shutil.rmtree(os.path.join(os.getenv("JOBMONITOR_RESULTS_DIR"), job["output_dir"]))
+            except FileNotFoundError:
+                pass
             print("- Cleared output directory {}".format(output_dir))
 
         delete_job_by_id(job_id)
@@ -88,6 +92,16 @@ def kill_job_in_kubernetes(job_id):
             if name:
                 print("- Killed pod {} in Kubernetes".format(name))
                 deleted_stuff.append(name)
+
+    # Is the pod running on the iccluster?
+    if "workers" in job:
+        for worker_no, info in job["workers"].items():
+            if info["host"].startswith("iccluster"):
+                try:
+                    subprocess.check_call(["ssh", info["host"], "kill", str(info["pid"])])
+                    print("- Killed iccluster worker", info)
+                except subprocess.CalledProcessError:
+                    pass
 
     # If non of the above approaches killed anything, we return False
     return False
