@@ -50,7 +50,9 @@ It will
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument("job_id", nargs="+")
+    parser.add_argument(
+        "job_id", nargs="+", help="List of job ids. Use 'any' to do any work that is left"
+    )
     parser.add_argument(
         "--queue-mode",
         "-q",
@@ -65,16 +67,23 @@ def main():
         action="store_true",
         help="Keep working until the queue is empty",
     )
+    parser.add_argument(
+        "--infinite",
+        "-i",
+        default=False,
+        action="store_true",
+        help="Keep looking for work, even if there are no jobs left",
+    )
     args = parser.parse_args()
 
     # Retrieve the job description
     if args.queue_mode:
-        # Atomically find a job with status 'CREATED' among the job ids provided
+        query = {"$expr": {"$lt": ["$registered_workers", "$n_workers"]}}
+        if args.job_id != ["any"]:
+            query["_id"] = {"$in": [ObjectId(id) for id in args.job_id]}
+
         job = mongo.job.find_and_modify(
-            query={
-                "_id": {"$in": [ObjectId(id) for id in args.job_id]},
-                "$expr": {"$lt": ["$registered_workers", "$n_workers"]},
-            },
+            query=query,
             update={
                 "$set": {"status": "SCHEDULED", "schedule_time": datetime.datetime.utcnow()},
                 "$inc": {"registered_workers": 1},
@@ -82,7 +91,12 @@ def main():
         )
         if job is None:
             print("No jobs left")
-            sys.exit(0)
+            if not args.infinite:
+                sys.exit(0)
+            else:
+                sleep(10)
+                main()
+
         job_id = str(job["_id"])
     else:
         job = mongo.job.find_and_modify(
@@ -201,7 +215,7 @@ def main():
         # Allows the script to register images
         def log_image(key: str, path: str):
             if path.startswith(output_dir_abs):
-                path = path[len(output_dir_abs) + 1:]
+                path = path[len(output_dir_abs) + 1 :]
             update_job(job_id, {f"images.{key}": path})
 
         script.log_info = log_info
