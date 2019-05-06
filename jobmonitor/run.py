@@ -279,7 +279,7 @@ def barrier(name, job_id, desired_count, poll_interval=2):
     # Wait until all the workers reached the barrier
     while True:
         res = mongo.job.find_one(query, {f"barrier.{name}": 1})
-        count = res["barrier"][name]
+        count = res.get("barrier", {}).get(name, 0)
         if count >= desired_count:
             print("... all workers registered. time to continue.")
             break
