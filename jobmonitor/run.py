@@ -60,20 +60,6 @@ def main():
         action="store_true",
         help='Queue mode: pick a job with status "CREATED" from the job_id list',
     )
-    parser.add_argument(
-        "--queue-repeat",
-        "-r",
-        default=False,
-        action="store_true",
-        help="Keep working until the queue is empty",
-    )
-    parser.add_argument(
-        "--infinite",
-        "-i",
-        default=False,
-        action="store_true",
-        help="Keep looking for work, even if there are no jobs left",
-    )
     args = parser.parse_args()
 
     # Retrieve the job description
@@ -90,12 +76,9 @@ def main():
             },
         )
         if job is None:
-            print("No jobs left")
-            if not args.infinite:
-                sys.exit(0)
-            else:
-                sleep(10)
-                main()
+            print("Queue is empty. Waiting for a task.")
+            sleep(10)
+            return main()
 
         job_id = str(job["_id"])
     else:
@@ -110,7 +93,7 @@ def main():
             },
         )
         if job is None:
-            print("No jobs left")
+            print("Job not found / nothing to do.")
             sys.exit(0)
         job_id = str(job["_id"])
 
@@ -262,9 +245,6 @@ def main():
         sys.stdout = sys.stdout.channel
         sys.stderr.close_logfile()
         sys.stderr = sys.stderr.channel
-
-    if args.queue_repeat:
-        main()
 
 
 def clone_directory(from_directory, to_directory, overwrite=True):
