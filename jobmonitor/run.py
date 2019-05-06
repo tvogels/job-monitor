@@ -154,6 +154,9 @@ def main():
             },
         )
 
+    # Store hostname and pid so we can find things later
+    update_job(job_id, {f"workers.{rank}": {"host": socket.gethostname(), "pid": os.getpid()}})
+
     # Create a telegraf client
     telegraf = TelegrafClient(
         host=os.getenv("JOBMONITOR_TELEGRAF_HOST"),
