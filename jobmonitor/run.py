@@ -124,6 +124,9 @@ def main():
         else:
             raise ValueError('Current, only the "path" clone approach is supported')
 
+    # Store hostname and pid so we can find things later
+    update_job(job_id, {f"workers.{rank}": {"host": socket.gethostname(), "pid": os.getpid()}})
+
     # Wait for all the workers to reach this point
     barrier("jobstart", job_id, n_workers)
 
@@ -138,9 +141,6 @@ def main():
                 "output_dir": output_dir,
             },
         )
-
-    # Store hostname and pid so we can find things later
-    update_job(job_id, {f"workers.{rank}": {"host": socket.gethostname(), "pid": os.getpid()}})
 
     # Create a telegraf client
     telegraf = TelegrafClient(
