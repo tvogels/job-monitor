@@ -74,6 +74,7 @@ def main():
                 "$set": {"status": "SCHEDULED", "schedule_time": datetime.datetime.utcnow()},
                 "$inc": {"registered_workers": 1},
             },
+            sort={"priority": -1},
         )
         if job is None:
             print("Queue is empty. Waiting for a task.")
@@ -91,6 +92,7 @@ def main():
                 "$set": {"status": "SCHEDULED", "schedule_time": datetime.datetime.utcnow()},
                 "$inc": {"registered_workers": 1},
             },
+            sort={"priority": -1},
         )
         if job is None:
             print("Job not found / nothing to do.")
