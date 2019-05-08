@@ -90,7 +90,7 @@ def kill_workers(job_id):
                 deleted_stuff.append(name)
 
     # Is the pod running on the iccluster?
-    if "workers" in job:
+    if "workers" in job and job["workers"]:
         if job["status"] in ["SCHEDULED", "RUNNING"]:
             for worker_no, info in job["workers"].items():
                 if info["host"].startswith("iccluster"):
