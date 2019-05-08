@@ -53,6 +53,7 @@ def register_job(
     annotations=None,
     user=None,
     n_workers=1,
+    priority=1,
 ):
     if user is None:
         user = os.getenv("USER")
@@ -80,6 +81,7 @@ def register_job(
         "environment": runtime_environment,
         "status": "CREATED",
         "creation_time": datetime.datetime.utcnow(),
+        "priority": priority,
     }
     if annotations is not None:
         job_content["annotations"] = annotations
