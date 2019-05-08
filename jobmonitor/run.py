@@ -166,7 +166,7 @@ def main():
             job_id,
             {
                 "last_heartbeat_time": datetime.datetime.utcnow(),
-                f"last_worker_heartbeat_time.{rank}": datetime.datetime.utcnow(),
+                f"workers.{rank}.last_heartbeat_time": datetime.datetime.utcnow(),
             },
         ),
         10,
