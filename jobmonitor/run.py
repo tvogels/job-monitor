@@ -64,7 +64,10 @@ def main():
 
     # Retrieve the job description
     if args.queue_mode:
-        query = {"$expr": {"$lt": ["$registered_workers", "$n_workers"]}}
+        query = {
+            "$expr": {"$lt": ["$registered_workers", "$n_workers"]},
+            "status": {"$in": ["SCHEDULED", "CREATED"]},
+        }
         if args.job_id != ["any"]:
             query["_id"] = {"$in": [ObjectId(id) for id in args.job_id]}
 
@@ -87,6 +90,7 @@ def main():
             query={
                 "_id": ObjectId(args.job_id[0]),
                 "$expr": {"$lt": ["$registered_workers", "$n_workers"]},
+                "status": {"$in": ["SCHEDULED", "CREATED"]},
             },
             update={
                 "$set": {"status": "SCHEDULED", "schedule_time": datetime.datetime.utcnow()},
