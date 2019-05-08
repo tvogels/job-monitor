@@ -4,6 +4,7 @@ import datetime
 import os
 import re
 import shutil
+import signal
 import socket
 import sys
 import traceback
@@ -14,11 +15,11 @@ from time import sleep
 
 import yaml
 from bson.objectid import ObjectId
-from telegraf.client import TelegrafClient
 
+from jobmonitor.api import download_code_package, job_by_id, update_job
 from jobmonitor.connections import mongo
-from jobmonitor.api import job_by_id, update_job, download_code_package
 from jobmonitor.utils import IntervalTimer
+from telegraf.client import TelegrafClient
 
 
 """
@@ -160,18 +161,26 @@ def main():
         },
     )
 
-    # Start sending regular heartbeat updates to the db
-    heartbeat_stop, heartbeat_thread = IntervalTimer.create(
-        lambda: update_job(
+    def side_thread_fn():
+        # Update the worker's heartbeat
+        update_job(
             job_id,
             {
                 "last_heartbeat_time": datetime.datetime.utcnow(),
                 f"workers.{rank}.last_heartbeat_time": datetime.datetime.utcnow(),
             },
-        ),
-        10,
-    )
-    heartbeat_thread.start()
+        )
+        # Check the status of the job and if we need to self-destruct
+        res = mongo.job.find_one({"_id": ObjectId(job_id)}, {"status": 1})
+        if res is None or res["status"] not in ["RUNNING", "FINISHED"]:
+            status = res["status"] if res is not None else "DELETED"
+            print(f"Job status changed to {status}. This worker will self-destruct.")
+            os.kill(os.getpid(), signal.SIGUSR1)
+
+    # Start sending regular heartbeat updates to the db
+    # and check whether the job isn't getting canceled
+    side_thread_stop, side_thread = IntervalTimer.create(side_thread_fn, 10)
+    side_thread.start()
 
     try:
         # Change directory to the right directory
@@ -230,6 +239,8 @@ def main():
         if rank == 0:
             update_job(job_id, {"status": "FINISHED", "end_time": datetime.datetime.utcnow()})
 
+    except ExitCommand:
+        print("Exiting ...")
     except Exception as e:
         error_message = traceback.format_exc()
         print(error_message)
@@ -242,15 +253,25 @@ def main():
         update_job(
             job_id, {"status": status, "end_time": datetime.datetime.utcnow(), "exception": repr(e)}
         )
-
     finally:
         # Stop the heartbeat thread
-        heartbeat_stop.set()
-        heartbeat_thread.join(timeout=1)
+        side_thread_stop.set()
+        side_thread.join(timeout=1)
         sys.stdout.close_logfile()
         sys.stdout = sys.stdout.channel
         sys.stderr.close_logfile()
         sys.stderr = sys.stderr.channel
+
+
+class ExitCommand(Exception):
+    pass
+
+
+def signal_handler(signal, frame):
+    raise ExitCommand()
+
+
+signal.signal(signal.SIGUSR1, signal_handler)
 
 
 def clone_directory(from_directory, to_directory, overwrite=True):
