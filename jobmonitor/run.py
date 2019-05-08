@@ -132,7 +132,7 @@ def main():
     update_job(job_id, {f"workers.{rank}": {"host": socket.gethostname(), "pid": os.getpid()}})
 
     # Wait for all the workers to reach this point
-    barrier("jobstart", job_id, n_workers)
+    barrier("jobstart", job_id, n_workers, desired_status="RUNNING")
 
     # Set job to 'RUNNING' in MongoDB
     if rank == 0:
@@ -272,7 +272,7 @@ def clone_directory(from_directory, to_directory, overwrite=True):
     shutil.copytree(from_directory, to_directory, ignore=ignore_patterns)
 
 
-def barrier(name, job_id, desired_count, poll_interval=2):
+def barrier(name, job_id, desired_count, poll_interval=2, desired_status=None):
     """Wait for all workers to reach this point"""
     if desired_count == 1:
         return
@@ -284,7 +284,12 @@ def barrier(name, job_id, desired_count, poll_interval=2):
 
     # Wait until all the workers reached the barrier
     while True:
-        res = mongo.job.find_one(query, {f"barrier.{name}": 1})
+        res = mongo.job.find_one(query, {f"barrier.{name}": 1, "status": 1})
+
+        if desired_status is not None and res["status"] != desired_status:
+            print(f"Status is not the expected {desired_status}. Exiting")
+            sys.exit(1)
+
         count = res.get("barrier", {}).get(name, 0)
         if count >= desired_count:
             print("... all workers registered. time to continue.")
