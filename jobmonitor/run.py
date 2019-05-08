@@ -255,12 +255,12 @@ def main():
         )
     finally:
         # Stop the heartbeat thread
-        side_thread_stop.set()
-        side_thread.join(timeout=1)
         sys.stdout.close_logfile()
         sys.stdout = sys.stdout.channel
         sys.stderr.close_logfile()
         sys.stderr = sys.stderr.channel
+        side_thread_stop.set()
+        side_thread.join(timeout=1)
 
 
 class ExitCommand(Exception):
