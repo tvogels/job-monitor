@@ -3,6 +3,7 @@
 import os
 import shutil
 import subprocess
+import sys
 from argparse import ArgumentParser
 
 import kubernetes
@@ -19,7 +20,7 @@ Delete all traces of a previously scheduled job (kubernetes, mongodb, influxdb, 
 
 def delete_job(job_id):
     print("# Job", job_id)
-    kill_result = kill_job_in_kubernetes(job_id)
+    kill_workers(job_id)
 
     influx.query("DELETE WHERE job_id='{}'".format(job_id))
     print("- Deleted all traces of this job id in InfluxDB")
@@ -41,12 +42,7 @@ def delete_job(job_id):
         print("- No MongoDB entry found")
 
 
-def kill_job_in_kubernetes(job_id):
-    # Set status to CANCELED in MongoDB if the job is still RUNNING
-    mongo.job.update(
-        {"_id": ObjectId(job_id), "status": "RUNNING"}, {"$set": {"status": "CANCELED"}}
-    )
-
+def kill_workers(job_id):
     deleted_stuff = []
 
     # See if there is a kubernetes job associated to this job
@@ -95,16 +91,19 @@ def kill_job_in_kubernetes(job_id):
 
     # Is the pod running on the iccluster?
     if "workers" in job:
-        for worker_no, info in job["workers"].items():
-            if info["host"].startswith("iccluster"):
-                try:
-                    subprocess.check_call(["ssh", info["host"], "kill", str(info["pid"])])
-                    print("- Killed iccluster worker", info)
-                except subprocess.CalledProcessError:
-                    pass
+        if job["status"] in ["SCHEDULED", "RUNNING"]:
+            for worker_no, info in job["workers"].items():
+                if info["host"].startswith("iccluster"):
+                    try:
+                        subprocess.check_call(["ssh", info["host"], "kill", str(info["pid"])])
+                        print("- Killed iccluster worker", info)
+                    except subprocess.CalledProcessError:
+                        pass
 
-    # If non of the above approaches killed anything, we return False
-    return False
+    # Set status to CANCELED in MongoDB if the job is still RUNNING
+    mongo.job.update(
+        {"_id": ObjectId(job_id), "status": "RUNNING"}, {"$set": {"status": "CANCELED"}}
+    )
 
 
 def main(delete_fn=delete_job, action_name="delete"):
