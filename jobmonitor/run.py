@@ -77,7 +77,7 @@ def main():
                 "$set": {"status": "SCHEDULED", "schedule_time": datetime.datetime.utcnow()},
                 "$inc": {"registered_workers": 1},
             },
-            sort=[("registered_workers", -1), ("priority", -1)],
+            sort=[("registered_workers", -1), ("priority", -1), ("creation_time", 1)],
         )
         if job is None:
             print("Queue is empty. Waiting for a task.")
@@ -96,7 +96,7 @@ def main():
                 "$set": {"status": "SCHEDULED", "schedule_time": datetime.datetime.utcnow()},
                 "$inc": {"registered_workers": 1},
             },
-            sort=[("registered_workers", -1), ("priority", -1)],
+            sort=[("registered_workers", -1), ("priority", -1), ("creation_time", 1)],
         )
         if job is None:
             print("Job not found / nothing to do.")
@@ -132,7 +132,7 @@ def main():
     update_job(job_id, {f"workers.{rank}": {"host": socket.gethostname(), "pid": os.getpid()}})
 
     # Wait for all the workers to reach this point
-    barrier("jobstart", job_id, n_workers, desired_status="RUNNING")
+    barrier("jobstart", job_id, n_workers, desired_status="SCHEDULED")
 
     # Set job to 'RUNNING' in MongoDB
     if rank == 0:
