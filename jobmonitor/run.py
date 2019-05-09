@@ -165,19 +165,23 @@ def main():
 
     def side_thread_fn():
         # Update the worker's heartbeat
-        update_job(
-            job_id,
-            {
-                "last_heartbeat_time": datetime.datetime.utcnow(),
-                f"workers.{rank}.last_heartbeat_time": datetime.datetime.utcnow(),
-            },
-        )
-        # Check the status of the job and if we need to self-destruct
-        res = mongo.job.find_one({"_id": ObjectId(job_id)}, {"status": 1})
-        if res is None or res["status"] not in ["RUNNING", "FINISHED"]:
-            status = res["status"] if res is not None else "DELETED"
-            print(f"Job status changed to {status}. This worker will self-destruct.")
-            os.kill(os.getpid(), signal.SIGUSR1)
+        try:
+            update_job(
+                job_id,
+                {
+                    "last_heartbeat_time": datetime.datetime.utcnow(),
+                    f"workers.{rank}.last_heartbeat_time": datetime.datetime.utcnow(),
+                },
+            )
+            # Check the status of the job and if we need to self-destruct
+            res = mongo.job.find_one({"_id": ObjectId(job_id)}, {"status": 1})
+            if res is None or res["status"] not in ["RUNNING", "FINISHED"]:
+                status = res["status"] if res is not None else "DELETED"
+                print(f"Job status changed to {status}. This worker will self-destruct.")
+                os.kill(os.getpid(), signal.SIGUSR1)
+        except Exception:
+            import traceback
+            print(traceback.format_exc())
 
     # Start sending regular heartbeat updates to the db
     # and check whether the job isn't getting canceled
