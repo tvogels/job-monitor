@@ -130,10 +130,12 @@ def main():
             raise ValueError('Current, only the "path" clone approach is supported')
 
     # Store hostname and pid so we can find things later
-    update_job(job_id, {f"workers.{rank}": {"host": socket.gethostname(), "pid": os.getpid()}})
+    update_job(
+        job_id, {f"workers.{rank}.host": socket.gethostname(), "workers.{rank}.pid": os.getpid()}
+    )
 
     # Wait for all the workers to reach this point
-    barrier("jobstart", job_id, n_workers, desired_status="SCHEDULED")
+    barrier("jobstart", job_id, n_workers, desired_statuses=["SCHEDULED", "RUNNING"])
 
     # Set job to 'RUNNING' in MongoDB
     if rank == 0:
@@ -293,7 +295,7 @@ def clone_directory(from_directory, to_directory, overwrite=True):
     shutil.copytree(from_directory, to_directory, ignore=ignore_patterns)
 
 
-def barrier(name, job_id, desired_count, poll_interval=2, desired_status=None):
+def barrier(name, job_id, desired_count, poll_interval=2, desired_statuses=None):
     """Wait for all workers to reach this point"""
     if desired_count == 1:
         return
@@ -307,8 +309,8 @@ def barrier(name, job_id, desired_count, poll_interval=2, desired_status=None):
     while True:
         res = mongo.job.find_one(query, {f"barrier.{name}": 1, "status": 1})
 
-        if desired_status is not None and res["status"] != desired_status:
-            print(f"Status is not the expected {desired_status}. Exiting")
+        if desired_statuses is not None and res["status"] not in desired_statusese[s, "RUNNING"]:
+            print(f"Status is not in expected statuses {desired_statusese[s}. Exiting", "RUNNING"])
             sys.exit(1)
 
         count = res.get("barrier", {}).get(name, 0)
