@@ -175,7 +175,7 @@ def main():
             )
             # Check the status of the job and if we need to self-destruct
             res = mongo.job.find_one({"_id": ObjectId(job_id)}, {"status": 1})
-            if res is None or res["status"] not in ["RUNNING", "FINISHED"]:
+            if res is None or res["status"] not in ["SCHEDULED", "RUNNING", "FINISHED"]:
                 status = res["status"] if res is not None else "DELETED"
                 print(f"Job status changed to {status}. This worker will self-destruct.")
                 os.kill(os.getpid(), signal.SIGUSR1)
