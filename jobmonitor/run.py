@@ -131,7 +131,7 @@ def main():
 
     # Store hostname and pid so we can find things later
     update_job(
-        job_id, {f"workers.{rank}.host": socket.gethostname(), "workers.{rank}.pid": os.getpid()}
+        job_id, {f"workers.{rank}.host": socket.gethostname(), f"workers.{rank}.pid": os.getpid()}
     )
 
     # Wait for all the workers to reach this point
@@ -181,6 +181,7 @@ def main():
                 os.kill(os.getpid(), signal.SIGUSR1)
         except Exception:
             import traceback
+
             print(traceback.format_exc())
 
     # Start sending regular heartbeat updates to the db
@@ -313,8 +314,8 @@ def barrier(name, job_id, desired_count, poll_interval=2, desired_statuses=None)
     while True:
         res = mongo.job.find_one(query, {f"barrier.{name}": 1, "status": 1})
 
-        if desired_statuses is not None and res["status"] not in desired_statusese[s, "RUNNING"]:
-            print(f"Status is not in expected statuses {desired_statusese[s}. Exiting", "RUNNING"])
+        if desired_statuses is not None and res["status"] not in desired_statuses:
+            print(f"Status is not in expected statuses {desired_statuses}. Exiting")
             sys.exit(1)
 
         count = res.get("barrier", {}).get(name, 0)
