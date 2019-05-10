@@ -19,6 +19,7 @@ def main():
     parser = ArgumentParser()
     parser.add_argument("-g", "--gpus", type=int, default=0)
     parser.add_argument("-d", "--docker-image", default=os.getenv("JOBMONITOR_DOCKER_IMAGE"))
+    parser.add_argument("-n", "--pod-name", default=None, help="default: user name and random id")
     parser.add_argument("-m", "--memory-limit", default=128)
     parser.add_argument("-c", "--cpu-limit", default=20)
     parser.add_argument("-l", "--labels", default=[], nargs="+", help="format: key=label")
@@ -51,8 +52,11 @@ def main():
 
     labels = dict(label_string.split("=") for label_string in args.labels)
 
-    random = np.random.randint(low=1_000_000_000, high=9_999_999_999)
-    pod_name = f"{args.user}-{random}"
+    if args.pod_name:
+        pod_name = args.pod_name
+    else:
+        random = np.random.randint(low=1_000_000_000, high=9_999_999_999)
+        pod_name = f"{args.user}-{random}"
     pod = client.V1Pod(
         metadata=client.V1ObjectMeta(
             name=pod_name, labels=dict(app="jobmonitor", user=args.user, **labels)
