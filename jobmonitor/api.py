@@ -205,6 +205,7 @@ def kubernetes_create_base_pod_spec(
             )
             for volume in volumes.keys()
         ],
+        node_selector={"CPUONLY": True} if gpus == 0 else None,
         containers=[
             V1Container(
                 name="worker",
