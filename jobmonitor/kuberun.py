@@ -57,12 +57,12 @@ def main():
     else:
         random = np.random.randint(low=1_000_000_000, high=9_999_999_999)
         pod_name = f"{args.user}-{random}"
-    pod = client.V1Pod(
-        metadata=client.V1ObjectMeta(
-            name=pod_name, labels=dict(app="jobmonitor", user=args.user, **labels)
-        ),
-        spec=pod_spec,
-    )
+
+    labels = dict(app="jobmonitor", user=args.user, **labels)
+    if args.gpus == 0:
+        labels["hardware-type"] = "CPUONLY"
+
+    pod = client.V1Pod(metadata=client.V1ObjectMeta(name=pod_name, labels=labels), spec=pod_spec)
 
     out = v1.create_namespaced_pod(KUBERNETES_NAMESPACE, pod)
 
