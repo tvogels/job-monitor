@@ -324,14 +324,20 @@ class PipeToFile:
 
     def write(self, message):
         self.channel.write(message)
-        if self.logfile is not None:
-            self.logfile.write(message)
-            self.logfile.flush()
+        try:
+            if self.logfile is not None:
+                self.logfile.write(message)
+                self.logfile.flush()
+        except OSError:
+            pass
 
     def flush(self):
         self.channel.flush()
-        if self.logfile is not None:
-            self.logfile.flush()
+        try:
+            if self.logfile is not None:
+                self.logfile.flush()
+        except OSError:
+            pass
 
     def close_logfile(self):
         self.logfile.close()
