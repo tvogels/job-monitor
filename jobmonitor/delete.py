@@ -43,62 +43,62 @@ def delete_job(job_id):
 
 
 def kill_workers(job_id):
-    deleted_stuff = []
+    # deleted_stuff = []
 
-    # See if there is a kubernetes job associated to this job
-    kubernetes.config.load_kube_config()
-    client = kubernetes.client.BatchV1Api()
-    job_results = client.list_namespaced_job(
-        KUBERNETES_NAMESPACE, label_selector="job_id=" + job_id
-    )
-    if job_results.items:
-        for job in job_results.items:
-            if job.spec.completions == 1:  # Don't kill queue jobs
-                name = job.metadata.name
-                kubernetes_delete_job(name)
-                if name:
-                    print("- Killed job {} in Kubernetes".format(name))
-                    deleted_stuff.append(name)
+    # # See if there is a kubernetes job associated to this job
+    # kubernetes.config.load_kube_config()
+    # client = kubernetes.client.BatchV1Api()
+    # job_results = client.list_namespaced_job(
+    #     KUBERNETES_NAMESPACE, label_selector="job_id=" + job_id
+    # )
+    # if job_results.items:
+    #     for job in job_results.items:
+    #         if job.spec.completions == 1:  # Don't kill queue jobs
+    #             name = job.metadata.name
+    #             kubernetes_delete_job(name)
+    #             if name:
+    #                 print("- Killed job {} in Kubernetes".format(name))
+    #                 deleted_stuff.append(name)
 
-    client = kubernetes.client.CoreV1Api()
+    # client = kubernetes.client.CoreV1Api()
 
-    # Are there pods with the job_id registered?
-    for pod in client.list_namespaced_pod(
-        KUBERNETES_NAMESPACE, label_selector="job_id=" + job_id
-    ).items:
-        body = kubernetes.client.V1DeleteOptions(propagation_policy="Foreground")
-        client.delete_namespaced_pod(pod.metadata.name, namespace=KUBERNETES_NAMESPACE, body=body)
-        deleted_stuff.append(pod.metadata.name)
-        print("- Killed pod {} in Kubernetes".format(pod.metadata.name))
+    # # Are there pods with the job_id registered?
+    # for pod in client.list_namespaced_pod(
+    #     KUBERNETES_NAMESPACE, label_selector="job_id=" + job_id
+    # ).items:
+    #     body = kubernetes.client.V1DeleteOptions(propagation_policy="Foreground")
+    #     client.delete_namespaced_pod(pod.metadata.name, namespace=KUBERNETES_NAMESPACE, body=body)
+    #     deleted_stuff.append(pod.metadata.name)
+    #     print("- Killed pod {} in Kubernetes".format(pod.metadata.name))
 
-    # – Try to find a pod by the job's registered hostname
-    job = job_by_id(job_id)
-    if "host" in job:
-        pod_results = client.list_namespaced_pod(
-            KUBERNETES_NAMESPACE,
-            limit=1,
-            label_selector="user=" + job["user"],
-            field_selector="metadata.name=" + job["host"],
-        )
-        if pod_results.items:
-            pod = pod_results.items[0]
-            name = pod.metadata.name
-            body = kubernetes.client.V1DeleteOptions(propagation_policy="Foreground")
-            client.delete_namespaced_pod(name, namespace=KUBERNETES_NAMESPACE, body=body)
-            if name:
-                print("- Killed pod {} in Kubernetes".format(name))
-                deleted_stuff.append(name)
+    # # – Try to find a pod by the job's registered hostname
+    # job = job_by_id(job_id)
+    # if "host" in job:
+    #     pod_results = client.list_namespaced_pod(
+    #         KUBERNETES_NAMESPACE,
+    #         limit=1,
+    #         label_selector="user=" + job["user"],
+    #         field_selector="metadata.name=" + job["host"],
+    #     )
+    #     if pod_results.items:
+    #         pod = pod_results.items[0]
+    #         name = pod.metadata.name
+    #         body = kubernetes.client.V1DeleteOptions(propagation_policy="Foreground")
+    #         client.delete_namespaced_pod(name, namespace=KUBERNETES_NAMESPACE, body=body)
+    #         if name:
+    #             print("- Killed pod {} in Kubernetes".format(name))
+    #             deleted_stuff.append(name)
 
-    # Is the pod running on the iccluster?
-    if "workers" in job and job["workers"]:
-        if job["status"] in ["SCHEDULED", "RUNNING"]:
-            for worker_no, info in job["workers"].items():
-                if info["host"].startswith("iccluster"):
-                    try:
-                        subprocess.check_call(["ssh", info["host"], "kill", str(info["pid"])])
-                        print("- Killed iccluster worker", info)
-                    except subprocess.CalledProcessError:
-                        pass
+    # # Is the pod running on the iccluster?
+    # if "workers" in job and job["workers"]:
+    #     if job["status"] in ["SCHEDULED", "RUNNING"]:
+    #         for worker_no, info in job["workers"].items():
+    #             if info["host"].startswith("iccluster"):
+    #                 try:
+    #                     subprocess.check_call(["ssh", info["host"], "kill", str(info["pid"])])
+    #                     print("- Killed iccluster worker", info)
+    #                 except subprocess.CalledProcessError:
+    #                     pass
 
     # Set status to CANCELED in MongoDB if the job is still RUNNING
     mongo.job.update(
