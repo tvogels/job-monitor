@@ -137,6 +137,10 @@ def main():
     # Wait for all the workers to reach this point
     barrier("jobstart", job_id, n_workers, desired_statuses=["SCHEDULED", "RUNNING"])
 
+    # Somehow the output directory doesn't seem to exist on all workers.
+    # Maybe it needs a little sleep.
+    sleep(1)
+
     # Set job to 'RUNNING' in MongoDB
     if rank == 0:
         update_job(
@@ -164,15 +168,12 @@ def main():
     )
 
     def side_thread_fn():
-        global GLOBAL_IS_EXITING
-        if GLOBAL_IS_EXITING:
-            return
         # Check the status of the job and if we need to self-destruct
         res = mongo.job.find_one({"_id": ObjectId(job_id)}, {"status": 1})
         if res is None or res["status"] not in ["SCHEDULED", "RUNNING", "FINISHED"]:
             status = res["status"] if res is not None else "DELETED"
             print(f"Job status changed to {status}. This worker will self-destruct.")
-            os.kill(os.getpid(), signal.SIGUSR1)
+            os.kill(os.getpid(), signal.SIGTERM)
             return
 
         # Update the worker's heartbeat
@@ -246,8 +247,6 @@ def main():
         if rank == 0:
             update_job(job_id, {"status": "FINISHED", "end_time": datetime.datetime.utcnow()})
 
-    except ExitCommand:
-        print("Exiting ...")
     except Exception as e:
         error_message = traceback.format_exc()
         print(error_message)
@@ -268,22 +267,6 @@ def main():
         sys.stderr = sys.stderr.channel
         side_thread_stop.set()
         side_thread.join(timeout=1)
-
-
-class ExitCommand(Exception):
-    pass
-
-
-GLOBAL_IS_EXITING = False
-
-
-def signal_handler(signal, frame):
-    global GLOBAL_IS_EXITING
-    GLOBAL_IS_EXITING = True
-    raise ExitCommand()
-
-
-signal.signal(signal.SIGUSR1, signal_handler)
 
 
 def clone_directory(from_directory, to_directory, overwrite=True):
