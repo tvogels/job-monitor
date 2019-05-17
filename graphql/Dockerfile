@@ -6,9 +6,10 @@ LABEL maintainer "Thijs Vogels <thijs.vogels@epfl.ch>"
 ENV DATA=/scratch \
     JOBMONITOR_RESULTS_DIR=/scratch/results
 
-ADD . .
-
+ADD package.json .
 RUN npm install
+
+ADD . .
 
 EXPOSE 4000
 
