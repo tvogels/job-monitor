@@ -26,6 +26,7 @@ const FilterBar = ({ filter, setFilter, limit, setLimit, statusFilter, setStatus
                     <option value="">Any</option>
                     <option value="CREATED">Created</option>
                     <option value="RUNNING">Running</option>
+                    <option value="QUEUE">Queue</option>
                     <option value="SCHEDULED">Scheduled</option>
                     <option value="FINISHED">Finished</option>
                     <option value="FAILED">Failed</option>
