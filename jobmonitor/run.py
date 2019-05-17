@@ -61,6 +61,15 @@ def main():
         action="store_true",
         help='Queue mode: pick a job with status "CREATED" from the job_id list',
     )
+    parser.add_argument(
+        "--min-worker-count",
+        type=int,
+        default=None,
+        help=(
+            "Optimal minimum number of workers for a job to be a candidate for execution by this worker. "
+            "Only appliccable in queue mode."
+        ),
+    )
     args = parser.parse_args()
 
     # Retrieve the job description
@@ -69,6 +78,8 @@ def main():
             "$expr": {"$lt": ["$registered_workers", "$n_workers"]},
             "status": {"$in": ["SCHEDULED", "CREATED"]},
         }
+        if args.min_worker_count is not None:
+            query["n_workers"]: {"$gte": args.min_worker_count}
         if args.job_id != ["any"]:
             query["_id"] = {"$in": [ObjectId(id) for id in args.job_id]}
 
