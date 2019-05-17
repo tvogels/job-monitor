@@ -16,12 +16,14 @@ const metadataPodName = process.env.JOBMONITOR_METADATA_HOST.toUpperCase().repla
 const metadataHost = process.env[metadataPodName + "_PORT_27017_TCP_ADDR"];
 const metadataPort = process.env[metadataPodName + "_PORT_27017_TCP_PORT"];
 const metadataDb = process.env.JOBMONITOR_METADATA_DB;
+const metadataPassword = process.env.JOBMONITOR_METADATA_PASSWORD;
 
 const timeseriesPodName = process.env.JOBMONITOR_TIMESERIES_HOST.toUpperCase().replace("-", "_");
 const influx = new InfluxDB({
     host: process.env[timeseriesPodName + "_PORT_8086_TCP_ADDR"],
     port: process.env[timeseriesPodName + "_PORT_8086_TCP_PORT"],
     database: process.env.JOBMONITOR_TIMESERIES_DB,
+    password: process.env.JOBMONITOR_TIMESERIES_PASSWORD,
 });
 
 let mongo;
@@ -60,6 +62,7 @@ const typeDefs = gql`
     }
     enum Status {
         CREATED
+        QUEUE
         SCHEDULED
         RUNNING
         FINISHED
@@ -141,9 +144,9 @@ const resolvers = {
             const idQuery = { _id: ObjectID(args.jobId) };
             let update;
             if (args.value != null) {
-                update = { $set: { ['annotations.'+args.key]: args.value } };
+                update = { $set: { ['annotations.' + args.key]: args.value } };
             } else {
-                update = { $unset: { ['annotations.'+args.key]: '' } };
+                update = { $unset: { ['annotations.' + args.key]: '' } };
             }
             return mongo.collection('job')
                 .updateOne(idQuery, update)
@@ -336,6 +339,8 @@ function statusQuery(status) {
     } else if (status === 'RUNNING') {
         statusSearch['status'] = 'RUNNING';
         statusSearch['last_heartbeat_time'] = { '$gt': heartbeatThreshold };
+    } else if (status === 'QUEUE') {
+        return { '$or': [statusQuery('RUNNING'), statusQuery('CREATED'), statusQuery('SCHEDULED')] }
     } else if (status) {
         statusSearch['status'] = status;
     }
@@ -519,10 +524,15 @@ app.get('/file/:jobId*', function (req, res, next) {
         .catch((err) => next(err));
 });
 
+let mongoUrl = `mongodb://${metadataHost}:${metadataPort}/${metadataDb}`;
+if (metadataPassword != null) {
+    mongoUrl = `mongodb://root:${encodeURIComponent(metadataPassword)}@${metadataHost}:${metadataPort}/${metadataDb}`;
+}
+
 const tcpPort = 4000;
 MongoClient
-    .connect(`mongodb://${metadataHost}:${metadataPort}/${metadataDb}`, {
-        useNewUrlParser: true
+    .connect(mongoUrl, {
+        useNewUrlParser: true,
     })
     .then((db) => mongo = db.db())
     .then(() => app.listen(tcpPort))
