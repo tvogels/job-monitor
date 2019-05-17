@@ -130,9 +130,19 @@ const resolvers = {
             delete args.ids;
             const search = args.search;
             delete args.search;
+            const status = args.status;
+            delete args.status;
+            const query = {
+                $and: [
+                    args,
+                    statusQuery(status),
+                    searchQuery(search),
+                    idsQuery(ids)]
+            };
+            console.log(JSON.stringify(query));
             return mongo
                 .collection('job')
-                .find({ ...args, ...statusQuery(args.status), ...searchQuery(search), ...idsQuery(ids) })
+                .find(query)
                 .sort({ 'creation_time': -1 })
                 .limit(limit)
                 .toArray()
