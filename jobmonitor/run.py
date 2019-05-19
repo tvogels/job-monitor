@@ -79,7 +79,7 @@ def main():
             "status": {"$in": ["SCHEDULED", "CREATED"]},
         }
         if args.min_worker_count is not None:
-            query["n_workers"]: {"$gte": args.min_worker_count}
+            query["n_workers"] = {"$gte": args.min_worker_count}
         if args.job_id != ["any"]:
             query["_id"] = {"$in": [ObjectId(id) for id in args.job_id]}
 
