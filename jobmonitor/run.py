@@ -85,7 +85,7 @@ def main():
             query["_id"] = {"$in": [ObjectId(id) for id in args.job_id]}
 
         job = mongo.job.find_one_and_update(
-            query=query,
+            query,
             update={
                 "$set": {"status": "SCHEDULED", "schedule_time": datetime.datetime.utcnow()},
                 "$inc": {"registered_workers": 1},
@@ -100,7 +100,7 @@ def main():
         job_id = str(job["_id"])
     else:
         job = mongo.job.find_one_and_update(
-            query={
+            {
                 "_id": ObjectId(args.job_id[0]),
                 "$expr": {"$lt": ["$registered_workers", "$n_workers"]},
                 "status": {"$in": ["SCHEDULED", "CREATED"]},
@@ -308,7 +308,7 @@ def barrier(name, job_id, desired_count, poll_interval=2, desired_statuses=None)
     print(f"Reached barrier {name}")
     # Report that we reached this point
     query = {"_id": ObjectId(job_id)}
-    mongo.job.find_one_and_update(query=query, update={"$inc": {f"barrier.{name}": 1}})
+    mongo.job.find_one_and_update(query, update={"$inc": {f"barrier.{name}": 1}})
 
     # Wait until all the workers reached the barrier
     while True:
