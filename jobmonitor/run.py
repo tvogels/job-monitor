@@ -15,6 +15,7 @@ from time import sleep
 
 import yaml
 from bson.objectid import ObjectId
+from pymongo import ASCENDING, DESCENDING
 
 from jobmonitor.api import download_code_package, job_by_id, update_job
 from jobmonitor.connections import mongo
@@ -83,13 +84,13 @@ def main():
         if args.job_id != ["any"]:
             query["_id"] = {"$in": [ObjectId(id) for id in args.job_id]}
 
-        job = mongo.job.find_and_modify(
+        job = mongo.job.find_one_and_update(
             query=query,
             update={
                 "$set": {"status": "SCHEDULED", "schedule_time": datetime.datetime.utcnow()},
                 "$inc": {"registered_workers": 1},
             },
-            sort=[("priority", -1), ("creation_time", 1)],
+            sort=[("priority", DESCENDING), ("creation_time", ASCENDING)],
         )
         if job is None:
             print("Queue is empty. Waiting for a task.")
@@ -98,7 +99,7 @@ def main():
 
         job_id = str(job["_id"])
     else:
-        job = mongo.job.find_and_modify(
+        job = mongo.job.find_one_and_update(
             query={
                 "_id": ObjectId(args.job_id[0]),
                 "$expr": {"$lt": ["$registered_workers", "$n_workers"]},
@@ -108,7 +109,7 @@ def main():
                 "$set": {"status": "SCHEDULED", "schedule_time": datetime.datetime.utcnow()},
                 "$inc": {"registered_workers": 1},
             },
-            sort=[("priority", -1), ("creation_time", 1)],
+            sort=[("priority", DESCENDING), ("creation_time", ASCENDING)],
         )
         if job is None:
             print("Job not found / nothing to do.")
@@ -307,7 +308,7 @@ def barrier(name, job_id, desired_count, poll_interval=2, desired_statuses=None)
     print(f"Reached barrier {name}")
     # Report that we reached this point
     query = {"_id": ObjectId(job_id)}
-    mongo.job.find_and_modify(query=query, update={"$inc": {f"barrier.{name}": 1}})
+    mongo.job.find_one_and_update(query=query, update={"$inc": {f"barrier.{name}": 1}})
 
     # Wait until all the workers reached the barrier
     while True:
