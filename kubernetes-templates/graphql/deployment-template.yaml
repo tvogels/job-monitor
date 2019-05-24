@@ -1,0 +1,73 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{user.name}}-graphql
+  labels:
+    user: {{user.name}}
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    targetPort: 4000
+    port: 4000
+    nodePort: {{ports.graphql}}
+    protocol: TCP
+  selector:
+    app: graphql
+    user: {{user.name}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{user.name}}-graphql
+  labels:
+    app: graphql
+    user: {{user.name}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: graphql
+      user: {{user.name}}
+  template:
+    metadata:
+      labels:
+        app: graphql
+        user: {{user.name}}
+    spec:
+      nodeSelector:
+        hardware-type: CPUONLY
+      securityContext:
+        runAsUser: {{user.id}}
+        fsGroup: {{user.group_id}}
+      containers:
+        - name: graphql
+          image: ic-registry.epfl.ch/mlo/{{user.name}}_graphql:1.2
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 4000
+          env:
+            - {name: DATA,                        value: /data/{{user.name}}}
+            - {name: JOBMONITOR_RESULTS_DIR,      value: /data/{{user.name}}/results}
+            # Metadata
+            - {name: JOBMONITOR_METADATA_HOST,    value: {{user.name}}-metadata}
+            - {name: JOBMONITOR_METADATA_PORT,    value: "27017"}
+            - {name: JOBMONITOR_METADATA_DB,      value: jobmonitor}
+            # InfluxDB
+            - {name: JOBMONITOR_TIMESERIES_HOST,  value: {{user.name}}-timeseries}
+            - {name: JOBMONITOR_TIMESERIES_PORT,  value: "{{ports.timeseries}}"}
+            - {name: JOBMONITOR_TIMESERIES_DB,    value: jobmonitor}
+          volumeMounts:
+            - mountPath: /scratch
+              name: mlo-scratch
+              subPath: {{user.name}}
+            - mountPath: /data
+              name: mlodata1
+      volumes:
+        - name: mlo-scratch
+          persistentVolumeClaim:
+            claimName: mlo-scratch
+        - name: mlodata1
+          persistentVolumeClaim:
+            claimName: pv-mlodata1
