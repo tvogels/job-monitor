@@ -185,7 +185,7 @@ def main():
         if res is None or res["status"] not in ["SCHEDULED", "RUNNING", "FINISHED"]:
             status = res["status"] if res is not None else "DELETED"
             print(f"Job status changed to {status}. This worker will self-destruct.")
-            os.kill(os.getpid(), signal.SIGTERM)
+            os.system("kill %d" % os.getpid())
             return
 
         # Update the worker's heartbeat
