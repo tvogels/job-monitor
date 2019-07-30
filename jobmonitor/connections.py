@@ -23,4 +23,6 @@ influx = InfluxDBClient(
     host=os.getenv("JOBMONITOR_TIMESERIES_HOST"),
     port=int(os.getenv("JOBMONITOR_TIMESERIES_PORT")),
     database=os.getenv("JOBMONITOR_TIMESERIES_DB"),
+    username=os.getenv("JOBMONITOR_METADATA_USER"),
+    password=os.getenv("JOBMONITOR_METADATA_PASS"),
 )
