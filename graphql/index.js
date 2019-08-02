@@ -12,18 +12,32 @@ const express = require('express');
 
 const HEARTBEAT_INTERVAL = 10; // seconds
 
-const metadataPodName = process.env.JOBMONITOR_METADATA_HOST.toUpperCase().replace("-", "_");
-const metadataHost = process.env[metadataPodName + "_PORT_27017_TCP_ADDR"];
-const metadataPort = process.env[metadataPodName + "_PORT_27017_TCP_PORT"];
-const metadataDb = process.env.JOBMONITOR_METADATA_DB;
-const metadataPassword = process.env.JOBMONITOR_METADATA_PASSWORD;
+// const metadataPodName = process.env.JOBMONITOR_METADATA_HOST.toUpperCase().replace("-", "_");
+// const metadataHost = process.env[metadataPodName + "_PORT_27017_TCP_ADDR"];
+// const metadataPort = process.env[metadataPodName + "_PORT_27017_TCP_PORT"];
+// const metadataDb = process.env.JOBMONITOR_METADATA_DB;
+// const metadataPassword = process.env.JOBMONITOR_METADATA_PASSWORD;
 
-const timeseriesPodName = process.env.JOBMONITOR_TIMESERIES_HOST.toUpperCase().replace("-", "_");
+// const timeseriesPodName = process.env.JOBMONITOR_TIMESERIES_HOST.toUpperCase().replace("-", "_");
+// const influx = new InfluxDB({
+//     host: process.env[timeseriesPodName + "_PORT_8086_TCP_ADDR"],
+//     port: process.env[timeseriesPodName + "_PORT_8086_TCP_PORT"],
+//     database: process.env.JOBMONITOR_TIMESERIES_DB,
+//     password: process.env.JOBMONITOR_TIMESERIES_PASSWORD,
+// });
+
+let metadataHost = process.env.JOBMONITOR_METADATA_HOST;
+const metadataPort = process.env.JOBMONITOR_METADATA_PORT;
+const metadataDb = process.env.JOBMONITOR_METADATA_DB;
+const metadataUser = process.env.JOBMONITOR_METADATA_USER || "root";
+const metadataPassword = process.env.JOBMONITOR_METADATA_PASS;
+
 const influx = new InfluxDB({
-    host: process.env[timeseriesPodName + "_PORT_8086_TCP_ADDR"],
-    port: process.env[timeseriesPodName + "_PORT_8086_TCP_PORT"],
+    host: process.env.JOBMONITOR_TIMESERIES_HOST,
+    port: process.env.JOBMONITOR_TIMESERIES_PORT,
     database: process.env.JOBMONITOR_TIMESERIES_DB,
-    password: process.env.JOBMONITOR_TIMESERIES_PASSWORD,
+    username: process.env.JOBMONITOR_TIMESERIES_USER,
+    password: process.env.JOBMONITOR_TIMESERIES_PASS,
 });
 
 let mongo;
@@ -534,9 +548,17 @@ app.get('/file/:jobId*', function (req, res, next) {
         .catch((err) => next(err));
 });
 
-let mongoUrl = `mongodb://${metadataHost}:${metadataPort}/${metadataDb}`;
+
+// HACKY MESS:
+if (!metadataHost.includes("//")) {
+    metadataHost = `mongodb://${metadataHost}`;
+}
+let mongoUrl = `${metadataHost}:${metadataPort}/${metadataDb}`;
 if (metadataPassword != null) {
-    mongoUrl = `mongodb://root:${encodeURIComponent(metadataPassword)}@${metadataHost}:${metadataPort}/${metadataDb}`;
+    mongoUrl = mongoUrl.replace('://', `://${metadataUser}:${encodeURIComponent(metadataPassword)}@`);
+}
+if (metadataHost.includes("mongodb+srv")) {
+    mongoUrl = mongoUrl.replace(`:${metadataPort}`, '');
 }
 
 const tcpPort = 4000;

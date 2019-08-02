@@ -43,7 +43,7 @@ spec:
         fsGroup: {{user.group_id}}
       containers:
         - name: graphql
-          image: ic-registry.epfl.ch/mlo/{{user.name}}_graphql:1.2
+          image: ic-registry.epfl.ch/mlo/{{user.name}}_graphql:1.3
           imagePullPolicy: Always
           ports:
             - containerPort: 4000
@@ -51,13 +51,17 @@ spec:
             - {name: DATA,                        value: /data/{{user.name}}}
             - {name: JOBMONITOR_RESULTS_DIR,      value: /data/{{user.name}}/results}
             # Metadata
-            - {name: JOBMONITOR_METADATA_HOST,    value: {{user.name}}-metadata}
-            - {name: JOBMONITOR_METADATA_PORT,    value: "27017"}
-            - {name: JOBMONITOR_METADATA_DB,      value: jobmonitor}
+            - {name: JOBMONITOR_METADATA_HOST,    value: "{{metadata.host}}"}
+            - {name: JOBMONITOR_METADATA_PORT,    value: "{{metadata.port}}"}
+            - {name: JOBMONITOR_METADATA_USER,    value: {{metadata.user}}}
+            - {name: JOBMONITOR_METADATA_PASS,    value: {{metadata.password}}}
+            - {name: JOBMONITOR_METADATA_DB,      value: {{metadata.db}}}
             # InfluxDB
-            - {name: JOBMONITOR_TIMESERIES_HOST,  value: {{user.name}}-timeseries}
-            - {name: JOBMONITOR_TIMESERIES_PORT,  value: "{{ports.timeseries}}"}
-            - {name: JOBMONITOR_TIMESERIES_DB,    value: jobmonitor}
+            - {name: JOBMONITOR_TIMESERIES_HOST,  value: "{{timeseries.host}}"}
+            - {name: JOBMONITOR_TIMESERIES_PORT,  value: "{{timeseries.port}}"}
+            - {name: JOBMONITOR_TIMESERIES_USER,  value: {{timeseries.user}}}
+            - {name: JOBMONITOR_TIMESERIES_PASS,  value: {{timeseries.password}}}
+            - {name: JOBMONITOR_TIMESERIES_DB,    value: {{timeseries.db}}}
           volumeMounts:
             - mountPath: /scratch
               name: mlo-scratch

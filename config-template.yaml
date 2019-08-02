@@ -4,7 +4,7 @@ user:
   id: GENERATOR_USERID
   group_id: GENERATOR_GROUPID
 
-# Replace ? by {?=0: Thijs, ?=1: Andreas, ?=2: JB, others available}
+# Replace ? by {?=0: Thijs, ?=1: Andreas, ?=2: JB, ?=3: Ali,   others available}
 ports:
   frontend: 30?05
   graphql: 30?04
