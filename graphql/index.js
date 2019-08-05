@@ -153,7 +153,7 @@ const resolvers = {
                     searchQuery(search),
                     idsQuery(ids)]
             };
-            console.log(JSON.stringify(query));
+            // console.log(JSON.stringify(query));
             return mongo
                 .collection('job')
                 .find(query)
@@ -228,11 +228,13 @@ const resolvers = {
     Timeseries: {
         values: (timeseries, args, context, info) => {
             const { measurement, jobId, tags } = timeseries;
+            console.log(timeseries);
             const whereClause = Object.entries(tags).map(([key, value]) => ` and ${key}='${value}'`).join(' ');
             const query = `SELECT *::field FROM ${measurement} WHERE job_id='${jobId}'${whereClause} GROUP BY *`;
             return influx
                 .query(query)
                 .then((res) => {
+                    console.log("Got a result");
                     if (res.groups().length < 0) {
                         return [];
                     }
@@ -515,7 +517,8 @@ function parseSeries(seriesString, jobId) {
     [measurement, ...tagStrings] = seriesString.split(',');
     const tagList = tagStrings
         .map(s => {
-            const [key, value] = s.split('=');
+            let [key, value] = s.split('=');
+            value = value.replace(/\\ /g, ' ')
             return { key, value };
         }).filter(({ key }) => !tagBlacklist.includes(key))
     let tags = {}
