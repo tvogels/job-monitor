@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION=1.3
+VERSION=1.4
 
 docker build ../../graphql -t {{user.name}}_graphql \
 && docker tag {{user.name}}_graphql ic-registry.epfl.ch/mlo/{{user.name}}_graphql:$VERSION \

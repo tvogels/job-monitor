@@ -43,7 +43,7 @@ spec:
         fsGroup: {{user.group_id}}
       containers:
         - name: graphql
-          image: ic-registry.epfl.ch/mlo/{{user.name}}_graphql:1.3
+          image: ic-registry.epfl.ch/mlo/{{user.name}}_graphql:1.4
           imagePullPolicy: Always
           ports:
             - containerPort: 4000
