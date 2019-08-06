@@ -228,13 +228,11 @@ const resolvers = {
     Timeseries: {
         values: (timeseries, args, context, info) => {
             const { measurement, jobId, tags } = timeseries;
-            console.log(timeseries);
             const whereClause = Object.entries(tags).map(([key, value]) => ` and ${key}='${value}'`).join(' ');
             const query = `SELECT *::field FROM ${measurement} WHERE job_id='${jobId}'${whereClause} GROUP BY *`;
             return influx
                 .query(query)
                 .then((res) => {
-                    console.log("Got a result");
                     if (res.groups().length < 0) {
                         return [];
                     }
