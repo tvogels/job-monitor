@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# This is just because I am lazy.
-# The real publish script is user-specific and thus
-# Located in /kubernetes.
+VERSION=1.4
 
-pushd ../kubernetes/graphql/
-./publish.sh
-popd
+docker build . -t graphql \
+&& docker tag graphql ic-registry.epfl.ch/mlo/vogels_graphql:$VERSION \
+&& docker tag graphql tvogels/mlo-graphql:$VERSION \
+&& docker push ic-registry.epfl.ch/mlo/vogels_graphql:$VERSION \
+&& docker push tvogels/mlo-graphql:$VERSION

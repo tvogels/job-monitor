@@ -2,47 +2,41 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{user.name}}-frontend
-  labels:
-    user: {{user.name}}
+  name: frontend
 spec:
   type: NodePort
   ports:
   - name: http
     targetPort: 80
     port: 80
-    nodePort: {{ports.frontend}}
+    nodePort: 30005
     protocol: TCP
   selector:
     app: frontend
-    user: {{user.name}}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{user.name}}-frontend
+  name: frontend
   labels:
     app: frontend
-    user: {{user.name}}
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: frontend
-      user: {{user.name}}
   template:
     metadata:
       labels:
         app: frontend
-        user: {{user.name}}
     spec:
       nodeSelector:
         hardware-type: CPUONLY
       containers:
       - name: frontend
-        image: ic-registry.epfl.ch/mlo/{{user.name}}_frontend
+        image: frontend-pod
         ports:
         - containerPort: 80
-        env:
-        - {name: GRAPHQL_HOST,    value: {{user.name}}-graphql.mlo.k8s.iccluster.epfl.ch}
-        - {name: GRAPHQL_PORT,    value: "{{ports.graphql}}"}
+        envFrom:
+          - configMapRef:
+              name: jobmonitor-env

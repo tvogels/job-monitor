@@ -1,0 +1,40 @@
+# Update the nodePorts in the following services from
+# 300?? -> 30#?? where # is your unique number {0: Thijs, 1: Andreas, 2: JB, 3: Ali,   others available}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+spec:
+  ports:
+    - port: 80
+      nodePort: 30005
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: graphql
+spec:
+  ports:
+    - port: 4000
+      nodePort: 30004
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: metadata
+spec:
+  ports:
+    - port: 27017
+      nodePort: 30017
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: timeseries
+spec:
+  ports:
+    - port: 8086
+      nodePort: 30086
+    - port: 8088
+      nodePort: 30088

@@ -1,0 +1,22 @@
+# Change the claim names below
+# You should request these claims with IC-IT Support (support-icit@epfl.ch)
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: metadata
+spec:
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: pv-mlodata1-vogels-databases-job-metadata-mongodb
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: timeseries
+spec:
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: pv-mlodata1-vogels-databases-timeseries-influxdb

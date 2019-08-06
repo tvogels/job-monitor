@@ -5,5 +5,4 @@ dist/
 build/
 node_modules/
 .vscode/
-kubernetes/
 config.yaml

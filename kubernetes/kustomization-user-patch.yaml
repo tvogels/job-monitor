@@ -1,0 +1,30 @@
+# Update `runAsUser` to match your user id (log into iccluster and run `id` to find it)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: graphql
+spec:
+  template:
+    spec:
+      securityContext:
+        runAsUser: 145554
+        fsGroup: 11169
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: metadata
+spec:
+  securityContext:
+    runAsUser: 145554
+    fsGroup: 11169
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: timeseries
+spec:
+  securityContext:
+    runAsUser: 145554
+    fsGroup: 11169

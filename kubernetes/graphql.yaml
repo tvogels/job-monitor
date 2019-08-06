@@ -1,0 +1,63 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: graphql
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    targetPort: 4000
+    port: 4000
+    nodePort: 30004
+    protocol: TCP
+  selector:
+    app: graphql
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: graphql
+  labels:
+    app: graphql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: graphql
+  template:
+    metadata:
+      labels:
+        app: graphql
+    spec:
+      nodeSelector:
+        hardware-type: CPUONLY
+      securityContext:
+        runAsUser: 145554
+        fsGroup: 11169
+      containers:
+        - name: graphql
+          image: graphql-pod:1.4
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 4000
+          envFrom:
+            - configMapRef:
+                name: jobmonitor-env
+          volumeMounts:
+            - mountPath: /scratch
+              name: mlo-scratch
+            - mountPath: /data
+              name: mlodata1
+            - mountPath: /raw
+              name: mloraw1
+      volumes:
+        - name: mlo-scratch
+          persistentVolumeClaim:
+            claimName: mlo-scratch
+        - name: mlodata1
+          persistentVolumeClaim:
+            claimName: pv-mlodata1
+        - name: mloraw1
+          persistentVolumeClaim:
+            claimName: pv-mloraw1

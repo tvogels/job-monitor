@@ -32,12 +32,6 @@ The documentation is not so mature yet, so it will still take a few days to adop
 - Viewing results
 
 
-## Web frontend
-
-![Denoising experiment manager](docs/img/screenshot.png)
-
-
-
 ## Timeseries data
 
 Much of the log information that is interesting in ML training forms a timeseries. Consider training loss over time, learning rate, norm(activations) in layer 5, ... There are amazing software stacks to track timeseries like webserver throughput and hardware utilizaiton over a large cluster, and we can use the same stack to track training timeseries. We can use:
