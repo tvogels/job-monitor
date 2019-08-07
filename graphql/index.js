@@ -233,7 +233,7 @@ const resolvers = {
             return influx
                 .query(query)
                 .then((res) => {
-                    if (res.groups().length < 0) {
+                    if (res.groups().length < 0 || res.groups()[0] == null) {
                         return [];
                     }
                     const { tags, rows } = res.groups()[0];
