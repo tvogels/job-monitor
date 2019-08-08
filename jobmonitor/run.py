@@ -336,6 +336,7 @@ class PipeToFile:
 
     def write(self, message):
         self.channel.write(message)
+        self.channel.flush()
         try:
             if self.logfile is not None:
                 self.logfile.write(message)
