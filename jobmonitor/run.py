@@ -50,6 +50,10 @@ It will
 """
 
 
+# Raise SystemExit when SIGTERM is received
+signal.signal(signal.SIGTERM, lambda signo, stack_frame: sys.exit(0))
+
+
 def main():
     parser = ArgumentParser()
     parser.add_argument(
@@ -264,7 +268,7 @@ def main():
         print(error_message)
         print("Job failed. See {}".format(logfile_path))
         print(error_message)
-        if isinstance(e, KeyboardInterrupt):
+        if isinstance(e, KeyboardInterrupt) or isinstance(e, SystemExit):
             status = "CANCELED"
         else:
             status = "FAILED"
