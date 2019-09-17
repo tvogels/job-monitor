@@ -360,6 +360,8 @@ class PipeToFile:
         self.logfile.close()
         self.logfile = None
 
+    def isatty(self):
+        return False
 
 if __name__ == "__main__":
     main()
