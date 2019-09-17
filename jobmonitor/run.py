@@ -224,7 +224,7 @@ def main():
         print("cwd: {}".format(code_dir))
 
         # Import the script specified in the
-        script = import_module(job["environment"]["script"].strip(".py"))
+        script = import_module("." + job["environment"]["script"].strip(".py"))
 
         # Override non-default config parameters
         for key, value in job.get("config", {}).items():
