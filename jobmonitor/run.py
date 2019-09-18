@@ -209,7 +209,7 @@ def main():
     try:
         # Change directory to the right directory
         os.chdir(code_dir)
-        sys.path.append(code_dir)
+        sys.path.insert(0, code_dir)
 
         # Rewire stdout and stderr to write to the output file
         if rank == 0:
@@ -224,7 +224,7 @@ def main():
         print("cwd: {}".format(code_dir))
 
         # Import the script specified in the
-        script = import_module("." + job["environment"]["script"].strip(".py"))
+        script = import_module(job["environment"]["script"].strip(".py"))
 
         # Override non-default config parameters
         for key, value in job.get("config", {}).items():
@@ -362,6 +362,7 @@ class PipeToFile:
 
     def isatty(self):
         return False
+
 
 if __name__ == "__main__":
     main()
