@@ -218,8 +218,18 @@ def main():
             logfile_path = os.path.join(output_dir_abs, f"output.worker{rank}.txt")
         logfile = open(logfile_path, "a")
         print("Starting. Output piped to {}".format(logfile_path))
-        sys.stdout = PipeToFile(sys.stdout, logfile)
-        sys.stderr = PipeToFile(sys.stderr, logfile)
+        orig_stdout = sys.stdout
+        orig_stderr = sys.stderr
+        sys.stdout = MultiLogChannel(
+            sys.stdout,
+            FileLogChannel(logfile),
+            MongoLogChannel(mongo.job, job_id, tags={"worker": rank, "type": "info"}),
+        )
+        sys.stderr = MultiLogChannel(
+            sys.stderr,
+            FileLogChannel(logfile),
+            MongoLogChannel(mongo.job, job_id, tags={"worker": rank, "type": "error"}),
+        )
 
         print("cwd: {}".format(code_dir))
 
@@ -235,13 +245,13 @@ def main():
 
         # Give the script access to all logging facilities
         def log_info(info_dict):
-            update_job(job_id, info_dict)
+            update_job(job_id, info_dict, w=0)
 
         # Allows the script to register images
         def log_image(key: str, path: str):
             if path.startswith(output_dir_abs):
                 path = path[len(output_dir_abs) + 1 :]
-            update_job(job_id, {f"images.{key}": path})
+            update_job(job_id, {f"images.{key}": path}, w=0)
 
         script.log_info = log_info
         script.log_image = log_image
@@ -250,7 +260,7 @@ def main():
 
         if rank == 0:
             # Store the effective config used in the database
-            update_job(job_id, {"config": dict(script.config)})
+            update_job(job_id, {"config": dict(script.config)}, w=0)
             # and in the output directory, just to be sure
             with open(os.path.join(output_dir_abs, "config.yml"), "w") as fp:
                 yaml.dump(dict(script.config), fp, default_flow_style=False)
@@ -277,10 +287,9 @@ def main():
         )
     finally:
         # Stop the heartbeat thread
-        sys.stdout.close_logfile()
-        sys.stdout = sys.stdout.channel
-        sys.stderr.close_logfile()
-        sys.stderr = sys.stderr.channel
+        logfile.close()
+        sys.stdout = orig_stdout
+        sys.stderr = orig_stderr
         side_thread_stop.set()
         side_thread.join(timeout=1)
 
@@ -331,16 +340,31 @@ def barrier(name, job_id, desired_count, poll_interval=2, desired_statuses=None)
             sleep(poll_interval)
 
 
-class PipeToFile:
-    """Change sys.stdout or sys.stderr to output to a file in addition to the normal channel"""
+class MultiLogChannel:
+    def __init__(self, *channels):
+        self.channels = channels
 
-    def __init__(self, channel, file_pointer):
-        self.channel = channel
+    def write(self, message, flush=True):
+        for channel in self.channels:
+            channel.write(message)
+        if flush:
+            self.flush()
+
+    def flush(self):
+        for channel in self.channels:
+            channel.flush()
+
+    def isatty(self):
+        return all(c.isatty() for c in self.channels)
+
+
+class FileLogChannel:
+    """Replacement for channels sys.stdout and sys.stderr to write logs in MongoDB"""
+
+    def __init__(self, file_pointer):
         self.logfile = file_pointer
 
     def write(self, message):
-        self.channel.write(message)
-        self.channel.flush()
         try:
             if self.logfile is not None:
                 self.logfile.write(message)
@@ -349,16 +373,38 @@ class PipeToFile:
             pass
 
     def flush(self):
-        self.channel.flush()
-        try:
-            if self.logfile is not None:
-                self.logfile.flush()
-        except OSError:
-            pass
+        pass
 
-    def close_logfile(self):
-        self.logfile.close()
-        self.logfile = None
+    def isatty(self):
+        return False
+
+
+class MongoLogChannel:
+    """Replacement for channels sys.stdout and sys.stderr to write logs in MongoDB"""
+
+    def __init__(self, db, job_id, field="logs", tags={}):
+        self.db = db
+        self.job_id = job_id
+        self.field = field
+        self.tags = tags
+
+    def write(self, message):
+        self.db.update(
+            {"_id": ObjectId(self.job_id)},
+            {
+                "$push": {
+                    self.field: {
+                        **self.tags,
+                        "message": message,
+                        "time": datetime.datetime.utcnow(),
+                    }
+                }
+            },
+            w=0,
+        )
+
+    def flush(self):
+        pass
 
     def isatty(self):
         return False

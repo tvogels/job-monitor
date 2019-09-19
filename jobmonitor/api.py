@@ -40,8 +40,9 @@ def delete_job_by_id(job_id):
     return mongo.job.delete_one({"_id": ObjectId(job_id)})
 
 
-def update_job(job_id, update_dict):
-    return mongo.job.update({"_id": ObjectId(job_id)}, {"$set": update_dict})
+def update_job(job_id, update_dict, w=None):
+    """w: mongodb writeConcern, use w=0 to continue without acknowledgement"""
+    return mongo.job.update({"_id": ObjectId(job_id)}, {"$set": update_dict}, w=w)
 
 
 def register_job(
