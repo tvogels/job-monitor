@@ -327,6 +327,9 @@ def barrier(name, job_id, desired_count, poll_interval=2, desired_statuses=None)
     while True:
         res = mongo.job.find_one(query, {f"barrier.{name}": 1, "status": 1})
 
+        if res is None:
+            sys.exit(1)
+
         if desired_statuses is not None and res["status"] not in desired_statuses:
             print(f"Status is not in expected statuses {desired_statuses}. Exiting")
             sys.exit(1)
