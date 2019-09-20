@@ -263,6 +263,20 @@ def main():
                 path = path[len(output_dir_abs) + 1 :]
             update_job(job_id, {f"images.{key}": path}, w=0)
 
+        def log_runtime(event, mean_time, std, instances):
+            event = event.replace(".", "_")
+            update_job(
+                job_id,
+                {
+                    f"timings.{event}.{rank}": {
+                        "mean": mean_time,
+                        "std": std,
+                        "instances": instances,
+                    }
+                },
+                w=0,
+            )
+
         # keep track of which metrics already got an entry in MongoDB
         metrics_created_so_far = set()
 
@@ -297,6 +311,7 @@ def main():
         script.log_image = log_image
         script.output_dir = output_dir_abs
         script.log_metric = log_metric
+        script.log_runtime = log_runtime
 
         if rank == 0:
             # Store the effective config used in the database
