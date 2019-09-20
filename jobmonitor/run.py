@@ -51,6 +51,9 @@ It will
 """
 
 
+is_stopping = False
+
+
 # Raise SystemExit when SIGTERM is received
 signal.signal(signal.SIGTERM, lambda signo, stack_frame: sys.exit(0))
 
@@ -185,13 +188,18 @@ def main():
     )
 
     def side_thread_fn():
+        global is_stopping
+        if is_stopping:
+            return
         # Check the status of the job and if we need to self-destruct
         res = mongo.job.find_one({"_id": ObjectId(job_id)}, {"status": 1})
         if res is None or res["status"] not in ["SCHEDULED", "RUNNING", "FINISHED"]:
             status = res["status"] if res is not None else "DELETED"
-            print(f"Job status changed to {status}. This worker will self-destruct.")
+            print(
+                f"Job status changed to {status}. This worker will self-destruct.", file=sys.stderr
+            )
             os.system("kill %d" % os.getpid())
-            return
+            is_stopping = True
 
         # Update the worker's heartbeat
         update_job(
@@ -200,6 +208,7 @@ def main():
                 "last_heartbeat_time": datetime.datetime.utcnow(),
                 f"workers.{rank}.last_heartbeat_time": datetime.datetime.utcnow(),
             },
+            w=0,
         )
 
     # Start sending regular heartbeat updates to the db
@@ -291,7 +300,7 @@ def main():
 
         if rank == 0:
             # Store the effective config used in the database
-            update_job(job_id, {"config": dict(script.config)}, w=0)
+            update_job(job_id, {"config": dict(script.config)})
             # and in the output directory, just to be sure
             with open(os.path.join(output_dir_abs, "config.yml"), "w") as fp:
                 yaml.dump(dict(script.config), fp, default_flow_style=False)
@@ -307,16 +316,23 @@ def main():
     except Exception as e:
         error_message = traceback.format_exc()
         print(error_message, file=sys.stderr)
-        print("Job failed. See {}".format(logfile_path), file=sys.stderr)
-        print(error_message, file=sys.stderr)
         if isinstance(e, KeyboardInterrupt) or isinstance(e, SystemExit):
             status = "CANCELED"
         else:
             status = "FAILED"
         update_job(
-            job_id, {"status": status, "end_time": datetime.datetime.utcnow(), "exception": repr(e)}
+            job_id,
+            {
+                "status": status,
+                "end_time": datetime.datetime.utcnow(),
+                "exception": repr(e),
+                "traceback": error_message,
+                "exception_worker": rank,
+            },
         )
     finally:
+        global is_stopping
+        is_stopping = True
         # Stop the heartbeat thread
         logfile.close()
         sys.stdout = orig_stdout
