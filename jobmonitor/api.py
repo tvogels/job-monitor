@@ -329,8 +329,11 @@ def influx_query(query, merge=False):
             for key, value in tags.items():
                 dataframe[key] = value
         series.append(InfluxSeries(measurement=measurement, tags=tags, data=dataframe))
-        dataframe.time = pd.to_datetime(dataframe.time)
+        if "time" in dataframe:
+            dataframe.time = pd.to_datetime(dataframe.time)
     if not merge:
         return series
+    elif len(series) == 0:
+        return None
     else:
         return pd.concat([s.data for s in series])
