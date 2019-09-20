@@ -29,6 +29,12 @@ def main():
     if not args.config:
         del job["config"]
 
+    if "logs" in job:
+        del job["logs"]
+
+    if "metric_data" in job:
+        del job["metric_data"]
+
     job["id"] = str(job.pop("_id"))
 
     del job["environment"]  # too lazy to fix a bug
