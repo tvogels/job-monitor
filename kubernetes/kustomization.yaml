@@ -2,15 +2,15 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-- timeseries.yaml
-- metadata.yaml
-- graphql.yaml
-- frontend.yaml
+  - timeseries.yaml
+  - metadata.yaml
+  - graphql.yaml
+  - frontend.yaml
 
 patchesStrategicMerge:
-- kustomization-port-patch.yaml
-- kustomization-storage-patch.yaml
-- kustomization-user-patch.yaml
+  - kustomization-port-patch.yaml
+  - kustomization-storage-patch.yaml
+  - kustomization-user-patch.yaml
 
 commonLabels:
   user: vogels
@@ -18,27 +18,27 @@ commonLabels:
 namePrefix: vogels-
 
 configMapGenerator:
-- name: jobmonitor-env
-  literals:
-    - DATA=/data/vogels
-    - JOBMONITOR_RESULTS_DIR=/data/vogels/results
-    - JOBMONITOR_METADATA_HOST="mongodb+srv://jobmonitor-sls1t.mongodb.net"
-    - JOBMONITOR_METADATA_PORT="27017"
-    - JOBMONITOR_METADATA_USER=jobmonitor
-    - JOBMONITOR_METADATA_PASS=aq35lRfPANAirD5l
-    - JOBMONITOR_METADATA_DB=jobmonitor
-    - JOBMONITOR_TIMESERIES_HOST="35.187.13.41"
-    - JOBMONITOR_TIMESERIES_PORT="8086"
-    - JOBMONITOR_TIMESERIES_USER=admin
-    - JOBMONITOR_TIMESERIES_PASS=ZHUXX5IrOd
-    - JOBMONITOR_TIMESERIES_DB=jobmonitor
-    # For the frontend:
-    - GRAPHQL_HOST=vogels-graphql.mlo.k8s.iccluster.epfl.ch
-    - GRAPHQL_PORT="30004"
+  - name: jobmonitor-env
+    literals:
+      - DATA=/data/vogels
+      - JOBMONITOR_RESULTS_DIR=/data/vogels/results
+      - JOBMONITOR_METADATA_HOST="34.77.25.246"
+      - JOBMONITOR_METADATA_PORT="27017"
+      - JOBMONITOR_METADATA_USER=jobmonitor
+      - JOBMONITOR_METADATA_PASS=golden-marine-turtle
+      - JOBMONITOR_METADATA_DB=jobmonitor
+      - JOBMONITOR_TIMESERIES_HOST="35.187.13.41"
+      - JOBMONITOR_TIMESERIES_PORT="8086"
+      - JOBMONITOR_TIMESERIES_USER=admin
+      - JOBMONITOR_TIMESERIES_PASS=ZHUXX5IrOd
+      - JOBMONITOR_TIMESERIES_DB=jobmonitor
+      # For the frontend:
+      - GRAPHQL_HOST=vogels-graphql.mlo.k8s.iccluster.epfl.ch
+      - GRAPHQL_PORT="30004"
 
 images:
   - name: frontend-pod
     newName: ic-registry.epfl.ch/mlo/vogels_frontend
   - name: graphql-pod
     newName: ic-registry.epfl.ch/mlo/vogels_graphql
-    newTag: "1.5"
+    newTag: "1.6"
