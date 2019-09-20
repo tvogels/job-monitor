@@ -222,14 +222,14 @@ def main():
         orig_stdout = sys.stdout
         orig_stderr = sys.stderr
         sys.stdout = MultiLogChannel(
+            MongoLogChannel(mongo.job, job_id, tags={"worker": rank, "type": "info"}),
             sys.stdout,
             FileLogChannel(logfile),
-            MongoLogChannel(mongo.job, job_id, tags={"worker": rank, "type": "info"}),
         )
         sys.stderr = MultiLogChannel(
+            MongoLogChannel(mongo.job, job_id, tags={"worker": rank, "type": "error"}),
             sys.stderr,
             FileLogChannel(logfile),
-            MongoLogChannel(mongo.job, job_id, tags={"worker": rank, "type": "error"}),
         )
 
         print("cwd: {}".format(code_dir))
@@ -306,9 +306,9 @@ def main():
 
     except Exception as e:
         error_message = traceback.format_exc()
-        print(error_message)
-        print("Job failed. See {}".format(logfile_path))
-        print(error_message)
+        print(error_message, file=sys.stderr)
+        print("Job failed. See {}".format(logfile_path), file=sys.stderr)
+        print(error_message, file=sys.stderr)
         if isinstance(e, KeyboardInterrupt) or isinstance(e, SystemExit):
             status = "CANCELED"
         else:
@@ -423,19 +423,20 @@ class MongoLogChannel:
         self.tags = tags
 
     def write(self, message):
-        self.db.update(
-            {"_id": ObjectId(self.job_id)},
-            {
-                "$push": {
-                    self.field: {
-                        **self.tags,
-                        "message": message,
-                        "time": datetime.datetime.utcnow(),
+        if message.strip() != "":
+            self.db.update(
+                {"_id": ObjectId(self.job_id)},
+                {
+                    "$push": {
+                        self.field: {
+                            **self.tags,
+                            "message": message.strip(),
+                            "time": datetime.datetime.utcnow(),
+                        }
                     }
-                }
-            },
-            w=0,
-        )
+                },
+                w=0,
+            )
 
     def flush(self):
         pass
