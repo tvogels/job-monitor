@@ -33,7 +33,9 @@ from jobmonitor.connections import KUBERNETES_NAMESPACE, gridfs, influx, mongo
 
 
 def job_by_id(job_id):
-    return mongo.job.find_one({"_id": ObjectId(job_id)}, {"logs": 0, "metric_data": 0})
+    return mongo.job.find_one(
+        {"_id": ObjectId(job_id)}, {"logs": 0, "metric_data": 0, "workers": 0, "metrics": 0}
+    )
 
 
 def delete_job_by_id(job_id):
