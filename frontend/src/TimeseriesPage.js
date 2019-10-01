@@ -391,7 +391,7 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
   const clipPathId = `clippath-${Math.floor(Math.random()*1000000)}`
 
   return (
-    <Query query={DATA_QUERY} variables={{ ids: jobIds, measurement: measurementQuery.join('|'), tags: tagQuery.join(',') }}>
+    <Query query={DATA_QUERY} pollInterval={10000} variables={{ ids: jobIds, measurement: measurementQuery.join('|'), tags: tagQuery.join(',') }}>
       {({ loading, error, data }) => {
         if (error) return <p>Error :( {JSON.stringify(error)}</p>;
         const curves = flattenCurveData(data);
