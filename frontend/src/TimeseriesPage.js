@@ -2,7 +2,7 @@ import { Button, ControlGroup, FormGroup, InputGroup, MenuItem, NumericInput } f
 import { MultiSelect, Select } from '@blueprintjs/select';
 import { AxisBottom, AxisLeft } from '@vx/axis';
 import { RectClipPath } from '@vx/clip-path';
-import { curveBasis } from '@vx/curve';
+import { curveLinear } from '@vx/curve';
 import { Grid } from '@vx/grid';
 import { Group } from '@vx/group';
 import { LegendOrdinal } from '@vx/legend';
@@ -530,7 +530,7 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
                                 strokeDasharray={pattern ? patternScale(entry.properties[pattern]) : null}
                                 opacity={lineOpacity}
                                 strokeWidth={2}
-                                curve={curveBasis}
+                                curve={curveLinear}
                               />
                             ))}
                             <rect fill="rgba(0, 0, 0, 0)" width={cellWidth} height={cellHeight} onClick={handleClickOnChart} />
