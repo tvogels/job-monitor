@@ -9,42 +9,33 @@ from fnmatch import fnmatch
 from tempfile import NamedTemporaryFile
 from typing import List
 
-import kubernetes
-import pandas as pd
 from bson.objectid import ObjectId
 from git import InvalidGitRepositoryError, Repo
-from kubernetes.client import (
-    V1Container,
-    V1EnvVar,
-    V1Job,
-    V1JobSpec,
-    V1ObjectMeta,
-    V1PersistentVolumeClaimVolumeSource,
-    V1Pod,
-    V1PodSpec,
-    V1PodTemplateSpec,
-    V1ResourceRequirements,
-    V1Volume,
-    V1VolumeMount,
-)
 from schema import Or, Schema
 
-from jobmonitor.connections import KUBERNETES_NAMESPACE, gridfs, influx, mongo
+from jobmonitor.lazy_loader import LazyLoader
+
+kubernetes = LazyLoader("kubernetes", globals(), "kubernetes")
+kubernetes = LazyLoader("k", globals(), "kubernetes.client")
+KUBERNETES_NAMESPACE = LazyLoader(
+    "KUBERNETES_NAMESPACE", globals(), "jobmonitor.connections.KUBERNETES_NAMESPACE"
+)
+c = LazyLoader("c", globals(), "jobmonitor.connections")
 
 
 def job_by_id(job_id):
-    return mongo.job.find_one(
+    return c.mongo.job.find_one(
         {"_id": ObjectId(job_id)}, {"logs": 0, "metric_data": 0, "workers": 0, "metrics": 0}
     )
 
 
 def delete_job_by_id(job_id):
-    return mongo.job.delete_one({"_id": ObjectId(job_id)})
+    return c.mongo.job.delete_one({"_id": ObjectId(job_id)})
 
 
 def update_job(job_id, update_dict, w=None):
     """w: mongodb writeConcern, use w=0 to continue without acknowledgement"""
-    return mongo.job.update({"_id": ObjectId(job_id)}, {"$set": update_dict}, w=w)
+    return c.mongo.job.update({"_id": ObjectId(job_id)}, {"$set": update_dict}, w=w)
 
 
 def register_job(
@@ -89,15 +80,15 @@ def register_job(
     if annotations is not None:
         job_content["annotations"] = annotations
 
-    insert_result = mongo.job.insert_one(job_content)
+    insert_result = c.mongo.job.insert_one(job_content)
     job_id = str(insert_result.inserted_id)
     return job_id
 
 
 def kubernetes_delete_job(kubernetes_job_name):
     kubernetes.config.load_kube_config()
-    client = kubernetes.client.BatchV1Api()
-    body = kubernetes.client.V1DeleteOptions(propagation_policy="Foreground")
+    client = kubernetes.client.Batchk.V1Api()
+    body = kubernetes.client.k.V1DeleteOptions(propagation_policy="Foreground")
     return client.delete_namespaced_job(
         kubernetes_job_name, namespace=KUBERNETES_NAMESPACE, body=body
     )
@@ -125,9 +116,9 @@ def kubernetes_schedule_job(
 
     job = job_by_id(job_id)
     kubernetes.config.load_kube_config()
-    client = kubernetes.client.CoreV1Api()
+    client = kubernetes.client.Corek.V1Api()
     pod_name = "{}-{}".format(job["user"], job_id[-6:])
-    metadata = V1ObjectMeta(
+    metadata = k.V1ObjectMeta(
         name=pod_name,
         labels=dict(
             app="jobmonitor",
@@ -145,7 +136,7 @@ def kubernetes_schedule_job(
         environment_variables={"JOBMONITOR_RESULTS_DIR": results_dir, **environment_variables},
         volumes=volumes,
     )
-    pod = V1Pod(metadata=metadata, spec=pod_spec)
+    pod = k.V1Pod(metadata=metadata, spec=pod_spec)
     client.create_namespaced_pod(KUBERNETES_NAMESPACE, pod)
     update_job(job_id, {"status": "SCHEDULED", "schedule_time": datetime.datetime.utcnow()})
 
@@ -172,10 +163,10 @@ def kubernetes_schedule_job_queue(
         volumes = {volume: "/" + volume for volume in volumes}  # use volume-name as mount-path
 
     kubernetes.config.load_kube_config()
-    client = kubernetes.client.BatchV1Api()
+    client = kubernetes.client.Batchk.V1Api()
     random_id = "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(6))
     job_name = "{}-queue-{}".format(os.getenv("USER"), random_id)
-    metadata = V1ObjectMeta(name=job_name, labels=dict(app="jobmonitor", user=os.getenv("USER")))
+    metadata = k.V1ObjectMeta(name=job_name, labels=dict(app="jobmonitor", user=os.getenv("USER")))
     pod_spec = kubernetes_create_base_pod_spec(
         cmd=["jobrun", "--queue-mode", *job_ids],
         docker_image_path=docker_image_path,
@@ -183,13 +174,13 @@ def kubernetes_schedule_job_queue(
         environment_variables={"JOBMONITOR_RESULTS_DIR": results_dir, **environment_variables},
         volumes=volumes,
     )
-    job = V1Job(
+    job = k.V1Job(
         metadata=metadata,
-        spec=V1JobSpec(
+        spec=k.V1JobSpec(
             backoff_limit=0,
             completions=len(job_ids),
             parallelism=parallelism,
-            template=V1PodTemplateSpec(metadata=metadata, spec=pod_spec),
+            template=k.V1PodTemplateSpec(metadata=metadata, spec=pod_spec),
         ),
     )
     client.create_namespaced_job(KUBERNETES_NAMESPACE, job)
@@ -198,31 +189,31 @@ def kubernetes_schedule_job_queue(
 def kubernetes_create_base_pod_spec(
     cmd: List[str], docker_image_path, gpus=0, mem=128, cpu=20, environment_variables={}, volumes={}
 ):
-    return V1PodSpec(
+    return k.V1PodSpec(
         host_ipc=True,  # Against shared memory limit
         restart_policy="Never",
         volumes=[
-            V1Volume(
+            k.V1Volume(
                 name=volume,
-                persistent_volume_claim=V1PersistentVolumeClaimVolumeSource(claim_name=volume),
+                persistent_volume_claim=k.V1PersistentVolumeClaimVolumeSource(claim_name=volume),
             )
             for volume in volumes.keys()
         ],
         node_selector={"hardware-type": "CPUONLY"} if gpus == 0 else None,
         containers=[
-            V1Container(
+            k.V1Container(
                 name="worker",
                 image=docker_image_path,
                 env=[
-                    V1EnvVar(name=name, value=value)
+                    k.V1EnvVar(name=name, value=value)
                     for name, value in environment_variables.items()
                 ],
                 volume_mounts=[
-                    V1VolumeMount(mount_path=mount_path, name=volume)
+                    k.V1VolumeMount(mount_path=mount_path, name=volume)
                     for volume, mount_path in volumes.items()
                 ],
                 resources=(
-                    V1ResourceRequirements(
+                    k.V1ResourceRequirements(
                         limits={"nvidia.com/gpu": gpus, "memory": f"{mem}Gi", "cpu": cpu},
                         requests={"memory": f"{mem * 2 // 3}Gi", "cpu": cpu * 2 // 3},
                     )
@@ -297,7 +288,7 @@ def upload_code_package(directory=".", excludes=None):
         with tarfile.open(tmp.name, "w:gz") as fp:
             fp.add(directory, recursive=True, filter=filter_fn)
         # Upload it to MongoDB
-        gridfs_id = gridfs.put(tmp, filename=directory_basename + ".tgz", metadata=metadata)
+        gridfs_id = c.gridfs.put(tmp, filename=directory_basename + ".tgz", metadata=metadata)
         return gridfs_id, included_files
     finally:
         tmp.close()
@@ -308,7 +299,7 @@ def download_code_package(package_id, destination):
         package_id = ObjectId(package_id)
     try:
         tmp = NamedTemporaryFile("wb+")
-        with gridfs.get(package_id) as fp:
+        with c.gridfs.get(package_id) as fp:
             tmp.write(fp.read())
         tmp.seek(0)
         with tarfile.open(tmp.name, "r") as fp:
@@ -322,7 +313,9 @@ InfluxSeries = namedtuple("InfluxEntry", ["measurement", "tags", "data"])
 
 def influx_query(query, merge=False):
     """Get a list of timeseries as {measurement, tags, data} from InfluxDB"""
-    raw_data = influx.query(query)
+    import pandas as pd
+
+    raw_data = c.influx.query(query)
     series = []
     for (measurement, tags), values in raw_data.items():
         dataframe = pd.DataFrame(values)
