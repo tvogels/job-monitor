@@ -187,15 +187,33 @@ const resolvers = {
     },
     Job: {
         logs: (job, args, context, info) => {
-            if (job.outputDirectory == null) return null;
-            const logFile = path.join(process.env.JOBMONITOR_RESULTS_DIR, job.outputDirectory, "output.txt");
-            if (!fs.existsSync(logFile)) return null;
-            return new Promise((resolve, reject) =>
-                fs.readFile(logFile, "utf8", (err, value) => {
-                    if (err) reject(err);
-                    resolve(value);
-                })
-            );
+            return mongo
+                .collection("job")
+                .findOne({ _id: ObjectID(job.id) }, { projection: { logs: true } })
+                .then(jobdata => {
+                    if (jobdata["logs"] != null) {
+                        // Read from the database
+                        return jobdata["logs"]
+                            .filter(j => j.worker === 0)
+                            .map(j => j.message)
+                            .join("\n");
+                    } else {
+                        // Read from a logfile
+                        if (job.outputDirectory == null) return null;
+                        const logFile = path.join(
+                            process.env.JOBMONITOR_RESULTS_DIR,
+                            job.outputDirectory,
+                            "output.txt"
+                        );
+                        if (!fs.existsSync(logFile)) return null;
+                        return new Promise((resolve, reject) =>
+                            fs.readFile(logFile, "utf8", (err, value) => {
+                                if (err) reject(err);
+                                resolve(value);
+                            })
+                        );
+                    }
+                });
         },
         textFile: (job, args, context, info) => {
             const filename = args["filename"];
