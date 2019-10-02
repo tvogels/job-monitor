@@ -7,7 +7,6 @@ const { MongoClient, ObjectID } = require("mongodb");
 const { GraphQLScalarType } = require("graphql");
 const { Kind } = require("graphql/language");
 const process = require("process");
-const { InfluxDB } = require("influx");
 const express = require("express");
 
 const HEARTBEAT_INTERVAL = 10; // seconds
@@ -18,27 +17,11 @@ const HEARTBEAT_INTERVAL = 10; // seconds
 // const metadataDb = process.env.JOBMONITOR_METADATA_DB;
 // const metadataPassword = process.env.JOBMONITOR_METADATA_PASSWORD;
 
-// const timeseriesPodName = process.env.JOBMONITOR_TIMESERIES_HOST.toUpperCase().replace("-", "_");
-// const influx = new InfluxDB({
-//     host: process.env[timeseriesPodName + "_PORT_8086_TCP_ADDR"],
-//     port: process.env[timeseriesPodName + "_PORT_8086_TCP_PORT"],
-//     database: process.env.JOBMONITOR_TIMESERIES_DB,
-//     password: process.env.JOBMONITOR_TIMESERIES_PASSWORD,
-// });
-
 let metadataHost = process.env.JOBMONITOR_METADATA_HOST;
 const metadataPort = process.env.JOBMONITOR_METADATA_PORT;
 const metadataDb = process.env.JOBMONITOR_METADATA_DB;
 const metadataUser = process.env.JOBMONITOR_METADATA_USER || "root";
 const metadataPassword = process.env.JOBMONITOR_METADATA_PASS;
-
-const influx = new InfluxDB({
-    host: process.env.JOBMONITOR_TIMESERIES_HOST,
-    port: process.env.JOBMONITOR_TIMESERIES_PORT,
-    database: process.env.JOBMONITOR_TIMESERIES_DB,
-    username: process.env.JOBMONITOR_TIMESERIES_USER,
-    password: process.env.JOBMONITOR_TIMESERIES_PASS
-});
 
 let mongo;
 
@@ -241,46 +224,42 @@ const resolvers = {
             let conditions = (args.tags || "")
                 .split(",")
                 .filter(x => x != "")
-                .map(condition => condition.split("="))
-                .map(([key, value]) => `AND ${key} = '${value}'`)
-                .join(" ");
-            return influx.query(`SHOW SERIES ${fromQuery} WHERE job_id='${job.id}' ${conditions}`).then(res => {
-                if (res.groups().length == 0) {
-                    return [];
-                } else {
-                    return res.groups()[0].rows.map(x => parseSeries(x.key, job.id));
-                }
-            });
+                .map(condition => condition.split("="));
+
+            return mongo
+                .collection("job")
+                .findOne({ _id: ObjectID(job.id) }, { projection: { metrics: true } })
+                .then(jobdata => {
+                    let metrics = jobdata["metrics"] || [];
+                    return metrics
+                        .filter(t => {
+                            if (args.measurement) {
+                                const regex = new RegExp("^" + args.measurement + "$");
+                                if (!t.measurement.match(regex)) {
+                                    return false;
+                                }
+                            }
+                            for (let [key, val] of conditions) {
+                                if (`${t[key]}` !== `${val}`) {
+                                    return false;
+                                }
+                            }
+                            return true;
+                        })
+                        .map(t => {
+                            const tags = {};
+                            for (let key of Object.keys(t)) {
+                                if (!["id", "measurement"].includes(key)) {
+                                    tags[key] = t[key];
+                                }
+                            }
+                            return { measurement: t.measurement, tags, jobId: job.id, id: t.id };
+                        });
+                });
         }
     },
     Timeseries: {
-        values: (timeseries, args, context, info) => {
-            const { measurement, jobId, tags } = timeseries;
-            const whereClause = Object.entries(tags)
-                .map(([key, value]) => ` and ${key}='${value}'`)
-                .join(" ");
-            const query = `SELECT *::field FROM ${measurement} WHERE job_id='${jobId}'${whereClause} GROUP BY *`;
-            return influx.query(query).then(res => {
-                if (res.groups().length < 0 || res.groups()[0] == null) {
-                    return [];
-                }
-                const { tags, rows } = res.groups()[0];
-                const tagNames = new Set(Object.keys(tags));
-                return rows.map(row => {
-                    let fields = {};
-                    Object.entries(row).forEach(([key, value]) => {
-                        if (!tagNames.has(key)) {
-                            if (key === "time") {
-                                fields[key] = Math.floor(value.getNanoTime() / 1000000); // convert to milliseconds
-                            } else {
-                                fields[key] = value;
-                            }
-                        }
-                    });
-                    return fields;
-                });
-            });
-        },
+        values: getValueFromTimeseries("ALL"),
         currentValue: getValueFromTimeseries("LAST"),
         maxValue: getValueFromTimeseries("MAX"),
         minValue: getValueFromTimeseries("MIN")
@@ -507,52 +486,45 @@ function jobStatus(entry) {
 
 /**
  * Create a resolver that finds an aggregate value (max, min, last, ...) from a timeseries in InfluxDB
- * @param {'MAX' | 'MIN' | 'LAST'} operator
+ * @param {'MAX' | 'MIN' | 'LAST' | 'ALL'} operator
  */
 function getValueFromTimeseries(operator) {
-    const name_prefix = { MAX: "max", MIN: "min", LAST: "last" }[operator];
     return (timeseries, args, context, info) => {
-        const { measurement, jobId, tags } = timeseries;
-        const whereClause = Object.entries(tags)
-            .map(([key, value]) => ` and ${key}='${value}'`)
-            .join(" ");
-        const query = `SELECT ${operator}(*::field) FROM ${measurement} WHERE job_id='${jobId}'${whereClause} GROUP BY *`;
-        return influx.query(query).then(res => {
-            const { _, rows } = res.groups()[0];
-            return rows.map(row => {
-                let fields = {};
-                Object.entries(row).forEach(([key, value]) => {
-                    if (key.indexOf(name_prefix + "") === 0) {
-                        fields[key.substr(name_prefix.length + 1)] = value;
-                    }
-                });
-                return fields;
+        const { measurement, jobId, id, tags } = timeseries;
+        const key = `metric_data.${id}`;
+        const projection = {};
+        projection[key] = true;
+        return mongo
+            .collection("job")
+            .findOne({ _id: ObjectID(jobId) }, { projection })
+            .then(jobdata => {
+                const data = jobdata["metric_data"][id].map(e => ({
+                    ...e,
+                    time: e.time.getTime()
+                }));
+                if (operator === "ALL") {
+                    return data;
+                } else if (operator === "LAST") {
+                    return data[data.length - 1];
+                } else if (operator === "MIN") {
+                    let min = { value: Number.POSITIVE_INFINITY };
+                    data.forEach(d => {
+                        if (d.value < min.value) {
+                            min = d;
+                        }
+                    });
+                    return min;
+                } else if (operator === "MAX") {
+                    let max = { value: Number.NEGATIVE_INFINITY };
+                    data.forEach(d => {
+                        if (d.value > max.value) {
+                            max = d;
+                        }
+                    });
+                    return max;
+                }
             });
-        });
     };
-}
-
-/**
- * Parse a timeseries string as returned by InfluxDB into a series
- * of measurements and a tag dictionary.
- * @param {string} seriesString
- * @param {string} jobId
- */
-function parseSeries(seriesString, jobId) {
-    const tagBlacklist = ["experiment", "host", "influxdb_database", "job", "job_id", "project", "user"];
-    [measurement, ...tagStrings] = seriesString.split(",");
-    const tagList = tagStrings
-        .map(s => {
-            let [key, value] = s.split("=");
-            value = value.replace(/\\ /g, " ");
-            return { key, value };
-        })
-        .filter(({ key }) => !tagBlacklist.includes(key));
-    let tags = {};
-    for (let { key, value } of tagList) {
-        tags[key] = value;
-    }
-    return { measurement, tags, jobId };
 }
 
 const app = express();
