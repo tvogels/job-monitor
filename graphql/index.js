@@ -162,7 +162,24 @@ const resolvers = {
             return mongo
                 .collection("job")
                 .find(query)
-                .project({ metric_data: 0, logs: 0, workers: 0, metrics: 0 })
+                .project({
+                    annotations: 1,
+                    config: 1,
+                    creation_time: 1,
+                    end_time: 1,
+                    environment: 1,
+                    exception: 1,
+                    experiment: 1,
+                    host: 1,
+                    images: 1,
+                    initialization: 1,
+                    job: 1,
+                    output_dir: 1,
+                    project: 1,
+                    start_time: 1,
+                    state: 1,
+                    user: 1
+                })
                 .sort({ creation_time: -1 })
                 .limit(limit)
                 .toArray()
