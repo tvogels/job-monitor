@@ -26,7 +26,7 @@ def main():
         print("Job not found.")
         sys.exit(1)
 
-    if not args.config:
+    if "config" in job and not args.config:
         del job["config"]
 
     if "logs" in job:
@@ -34,6 +34,9 @@ def main():
 
     if "metric_data" in job:
         del job["metric_data"]
+
+    if "timings" in job:
+        del job["timings"]
 
     job["id"] = str(job.pop("_id"))
 
