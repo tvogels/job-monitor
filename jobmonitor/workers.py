@@ -35,15 +35,22 @@ def main():
         )
     )
 
-    worker_tuples = [(int(rank), data) for rank, data in job.get("workers", {}).items()]
+    if "workers" in job and job["workers"] is not None:
+        worker_tuples = [(int(rank), data) for rank, data in job.get("workers", {}).items()]
+    else:
+        worker_tuples = []
+
     for rank, data in sorted(worker_tuples):
         host = data["host"]
         pid = data["pid"]
-        heartbeat = data["last_heartbeat_time"].strftime("%Y-%m-%d %H:%M:%S")
-        heartbeat_diff = datetime.datetime.utcnow() - data["last_heartbeat_time"]
-        dead = heartbeat_diff > datetime.timedelta(seconds=10)
-        if dead:
-            heartbeat = fg(heartbeat, 1)
+        if "last_heartbeat_time" in data:
+            heartbeat = data["last_heartbeat_time"].strftime("%Y-%m-%d %H:%M:%S")
+            heartbeat_diff = datetime.datetime.utcnow() - data["last_heartbeat_time"]
+            dead = heartbeat_diff > datetime.timedelta(seconds=20)
+            if dead:
+                heartbeat = fg(heartbeat, 1)
+        else:
+            heartbeat = None
         print(f"{rank:2d} - {host} @ {pid} - heartbeat {heartbeat}")
 
 
