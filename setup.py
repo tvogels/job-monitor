@@ -30,6 +30,7 @@ setup(
             "jobbug=jobmonitor.bug:main",
             "joblogs=jobmonitor.logs:main",
             "jobworkers=jobmonitor.workers:main",
+            "jobtimings=jobmonitor.timings:main",
             "kuberun=jobmonitor.kuberun:main",
         ]
     },

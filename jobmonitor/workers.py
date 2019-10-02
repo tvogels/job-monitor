@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
 
 import datetime
-import os
 import sys
 from argparse import ArgumentParser
 
-import yaml
 from bson.objectid import ObjectId
-
-from jobmonitor.connections import mongo
 
 
 """
@@ -20,6 +16,8 @@ def main():
     parser = ArgumentParser()
     parser.add_argument("job_id", help="ID of the job")
     args = parser.parse_args()
+
+    from jobmonitor.connections import mongo
 
     job = mongo.job.find_one(
         {"_id": ObjectId(args.job_id)}, {"workers": 1, "registered_workers": 1, "n_workers": 1}
