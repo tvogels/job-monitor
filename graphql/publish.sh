@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION=1.6
+VERSION=1.7
 
 docker build . -t graphql \
 && docker tag graphql ic-registry.epfl.ch/mlo/vogels_graphql:$VERSION \

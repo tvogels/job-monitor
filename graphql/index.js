@@ -157,10 +157,12 @@ const resolvers = {
                     images: 1,
                     initialization: 1,
                     job: 1,
+                    last_heartbeat_time: 1,
                     output_dir: 1,
                     project: 1,
                     start_time: 1,
                     state: 1,
+                    status: 1,
                     user: 1
                 })
                 .sort({ creation_time: -1 })
@@ -516,10 +518,16 @@ function getValueFromTimeseries(operator) {
             .collection("job")
             .findOne({ _id: ObjectID(jobId) }, { projection })
             .then(jobdata => {
-                const data = jobdata["metric_data"][id].map(e => ({
-                    ...e,
-                    time: e.time.getTime()
-                }));
+                const data = jobdata["metric_data"][id].map(e => {
+                    if (Object.keys(e).includes("time") && typeof e.time !== "number") {
+                        return {
+                            ...e,
+                            time: e.time.getTime()
+                        };
+                    } else {
+                        return e;
+                    }
+                });
                 if (operator === "ALL") {
                     return data;
                 } else if (operator === "LAST") {
