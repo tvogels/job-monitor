@@ -210,7 +210,7 @@ const FacetChartController = ({ jobIds, state }) => {
         const tagDomain = getTagDomain(curvesIndex);
         const interestingProperties = ['', ...getInterestingProperties(curvesIndex)];
         return (
-          <div style={{ display: 'flex', flexGrow: 1, flexDirection: 'column', minHeight: 0 }}>
+          <div style={{ display: 'flex', flexGrow: 1, flexDirection: 'column', minHeight: 0, minWidth: 0 }}>
             <div style={{ display: 'flex' }} tabIndex={0} onKeyDown={handleKeyEvent}>
               <FormGroup label="Measurement" style={{ marginRight: '1em' }}>
                 <MultiSelect
@@ -340,7 +340,7 @@ const FacetChartController = ({ jobIds, state }) => {
                 />
               </FormGroup>
             </div>
-            <div style={{ display: 'flex', flexGrow: 1, flexDirection: 'column', flexShrink: 1, minHeight: 0 }}>
+            <div style={{ display: 'flex', flexGrow: 1, flexDirection: 'column', flexShrink: 1, minHeight: 0, minWidth: 0 }}>
               {measurementQuery.length > 0 ?
                 <FacetChart
                   jobIds={jobIds}
@@ -425,7 +425,7 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
         const margin = { left: 60, right: 40, top: col != null ? 40 : 15, bottom: 60, row: 30, col: 30 };
 
         return (
-          <div style={{ flexGrow: 1, flexShrink: 1, display: 'flex', flexDirection: 'column', minHeight: 0, ...style }} tabIndex={1} onKeyDown={handleKeys}>
+          <div style={{ flexGrow: 1, flexShrink: 1, display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0, ...style }} tabIndex={1} onKeyDown={handleKeys}>
             {(hue && hueShowLegend) ?
               <div style={{ display: 'flex', flexDirection: 'row', backgroundColor: 'rgb(62, 78, 91)', marginLeft: margin.left, marginRight: margin.right, padding: '.3em .8em' }}>
                 <div style={{ marginRight: '1em' }}>{hueLegendName || hue.replace(/[-_]/g, ' ')}:</div>
@@ -450,7 +450,7 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
               </div>
               : null
             }
-            <ParentSize style={{ flexGrow: 1, flexShrink: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            <ParentSize style={{ flexGrow: 1, flexShrink: 1, display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0 }}>
               {parent => {
                 const cellHeight = Math.max(0, Math.round((parent.height - margin.top - margin.bottom + margin.row) / nrows - margin.row));
                 const cellWidth = Math.max(0, Math.round((parent.width - margin.left - margin.right + margin.col) / ncols - margin.col));
@@ -594,7 +594,7 @@ function createDomain(values) {
 }
 
 const TimeseriesPage = ({ jobIds, facetChartState }) => (
-  <div style={{ flexGrow: 1, flexShrink: 1, display: 'flex', minHeight: 0 }}>
+  <div style={{ flexGrow: 1, flexShrink: 1, display: 'flex', minHeight: 0, minWidth: 0 }}>
     <FacetChartController jobIds={jobIds} state={facetChartState} />
   </div>
 )
