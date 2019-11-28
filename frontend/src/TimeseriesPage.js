@@ -473,72 +473,137 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
                 };
 
                 return (
-                  <svg height={height} width={width}>
-                    <RectClipPath id={clipPathId} x={0} y={0} width={cellWidth} height={cellHeight} />
-                    {/* <rect x={0} y={0} width={width} height={height} fill="#fff" rx={2} /> */}
-                    {colDomain.map((colValue, colIdx) => (
-                      <AxisBottom
-                        key={colIdx}
-                        scale={xScale}
-                        numTicks={numTicksColumns}
-                        top={height - margin.bottom + 5}
-                        left={margin.left + colIdx * (cellWidth + margin.col)}
-                        label={xLabel}
-                        hideZero
-                      />
-                    ))}
-                    {rowDomain.map((rowValue, rowIdx) => (
-                      <AxisLeft
-                        key={rowIdx}
-                        scale={yScale}
-                        numTicks={numTicksRows}
-                        top={margin.top + rowIdx * (margin.row + cellHeight)}
-                        left={margin.left - 5}
-                        label={yLabel}
-                      />
-                    ))}
-                    {col != null ? colDomain.map((colValue, colIdx) => (
-                      <Text fill="rgb(221, 226, 229)" key={colIdx} textAnchor="middle" y={margin.top - 15} x={margin.left + cellWidth / 2 + colIdx * (cellWidth + margin.col)}>{`${colLabelPrefix}${colValue}`.replace(/[-_]/g, ' ')}</Text>
-                    )) : null}
-                    {row != null ? rowDomain.map((rowValue, rowIdx) => (
-                      <Text fill="rgb(221, 226, 229)" key={rowIdx} textAnchor="middle" angle={90} x={width - margin.right + 15} y={margin.top + cellHeight / 2 + rowIdx * (cellHeight + margin.row)}>{`${rowLabelPrefix}${rowValue}`.replace(/[-_]/g, ' ')}</Text>
-                    )) : null}
-                    {rowDomain.map((rowValue, rowIdx) => (
-                      <Group key={rowIdx} top={margin.top + rowIdx * (margin.row + cellHeight)}>
+                    <svg height={height} width={width}>
+                        <RectClipPath id={clipPathId} x={0} y={0} width={cellWidth} height={cellHeight} />
+                        {/* <rect x={0} y={0} width={width} height={height} fill="#fff" rx={2} /> */}
                         {colDomain.map((colValue, colIdx) => (
-                          <Group key={colIdx} left={margin.left + colIdx * (margin.col + cellWidth)}>
-                            <rect fill="rgb(62, 78, 91)" width={cellWidth} height={cellHeight} />
-                            <Grid
-                              xScale={xScale}
-                              yScale={yScale}
-                              stroke="rgb(50, 63, 76)"
-                              numTicksRows={numTicksRows}
-                              numTicksColumns={numTicksColumns}
-                              width={cellWidth}
-                              height={cellHeight}
+                            <AxisBottom
+                                key={colIdx}
+                                scale={xScale}
+                                numTicks={numTicksColumns}
+                                top={height - margin.bottom + 5}
+                                left={margin.left + colIdx * (cellWidth + margin.col)}
+                                label={xLabel}
+                                hideZero
                             />
-                            {crossHair ? <Line clipPath="url(#cell-clip-path)" stroke="rgba(221, 226, 229, 0.5)" strokeDasharray={[3, 3]} from={new Point({ x: 0, y: yScale(crossHair.y) })} to={new Point({ x: cellWidth, y: yScale(crossHair.y) })} /> : null}
-                            {crossHair ? <Line clipPath="url(#cell-clip-path)" stroke="rgba(221, 226, 229, 0.5)" strokeDasharray={[3, 3]} from={new Point({ x: xScale(crossHair.x), y: 0 })} to={new Point({ x: xScale(crossHair.x), y: cellHeight })} /> : null}
-                            {curves.filter(e => e.properties[row] === rowValue && e.properties[col] === colValue).map(entry => (
-                              <LinePath
-                                key={entry.entryId}
-                                data={aggregateBy(entry.values, d => x(d))}
-                                clipPath={`url(#${clipPathId})`}
-                                // defined={(d) => (y(d) >= yDomain[0] && y(d) <= yDomain[1] && x(d) >= xDomain[0] && x(d) <= xDomain[1])}
-                                x={d => xScale(x(d))} y={d => yScale(y(d))}
-                                stroke={hue ? hueScale(entry.properties[hue]) : 'rgb(221, 226, 229)'}
-                                strokeDasharray={pattern ? patternScale(entry.properties[pattern]) : null}
-                                opacity={lineOpacity}
-                                strokeWidth={2}
-                                curve={curveLinear}
-                              />
-                            ))}
-                            <rect fill="rgba(0, 0, 0, 0)" width={cellWidth} height={cellHeight} onClick={handleClickOnChart} />
-                          </Group>
                         ))}
-                      </Group>
-                    ))}
-                  </svg>
+                        {rowDomain.map((rowValue, rowIdx) => (
+                            <AxisLeft
+                                key={rowIdx}
+                                scale={yScale}
+                                numTicks={numTicksRows}
+                                top={margin.top + rowIdx * (margin.row + cellHeight)}
+                                left={margin.left - 5}
+                                label={yLabel}
+                            />
+                        ))}
+                        {col != null
+                            ? colDomain.map((colValue, colIdx) => (
+                                  <Text
+                                      fill="rgb(221, 226, 229)"
+                                      key={colIdx}
+                                      textAnchor="middle"
+                                      y={margin.top - 15}
+                                      x={margin.left + cellWidth / 2 + colIdx * (cellWidth + margin.col)}
+                                  >
+                                      {`${colLabelPrefix}${colValue}`.replace(/[-_]/g, " ")}
+                                  </Text>
+                              ))
+                            : null}
+                        {row != null
+                            ? rowDomain.map((rowValue, rowIdx) => (
+                                  <Text
+                                      fill="rgb(221, 226, 229)"
+                                      key={rowIdx}
+                                      textAnchor="middle"
+                                      angle={90}
+                                      x={width - margin.right + 15}
+                                      y={margin.top + cellHeight / 2 + rowIdx * (cellHeight + margin.row)}
+                                  >
+                                      {`${rowLabelPrefix}${rowValue}`.replace(/[-_]/g, " ")}
+                                  </Text>
+                              ))
+                            : null}
+                        {rowDomain.map((rowValue, rowIdx) => (
+                            <Group key={rowIdx} top={margin.top + rowIdx * (margin.row + cellHeight)}>
+                                {colDomain.map((colValue, colIdx) => (
+                                    <Group key={colIdx} left={margin.left + colIdx * (margin.col + cellWidth)}>
+                                        <rect fill="rgb(62, 78, 91)" width={cellWidth} height={cellHeight} />
+                                        <Grid
+                                            xScale={xScale}
+                                            yScale={yScale}
+                                            stroke="rgb(50, 63, 76)"
+                                            numTicksRows={numTicksRows}
+                                            numTicksColumns={numTicksColumns}
+                                            width={cellWidth}
+                                            height={cellHeight}
+                                        />
+                                        {crossHair ? (
+                                            <Line
+                                                clipPath="url(#cell-clip-path)"
+                                                stroke="rgba(221, 226, 229, 0.5)"
+                                                strokeDasharray={[3, 3]}
+                                                from={new Point({ x: 0, y: yScale(crossHair.y) })}
+                                                to={new Point({ x: cellWidth, y: yScale(crossHair.y) })}
+                                            />
+                                        ) : null}
+                                        {crossHair ? (
+                                            <Line
+                                                clipPath="url(#cell-clip-path)"
+                                                stroke="rgba(221, 226, 229, 0.5)"
+                                                strokeDasharray={[3, 3]}
+                                                from={new Point({ x: xScale(crossHair.x), y: 0 })}
+                                                to={new Point({ x: xScale(crossHair.x), y: cellHeight })}
+                                            />
+                                        ) : null}
+                                        {curves
+                                            .filter(
+                                                e => e.properties[row] === rowValue && e.properties[col] === colValue
+                                            )
+                                            .map(entry => (
+                                                <Group key={entry.entryId}>
+                                                    <LinePath
+                                                        data={aggregateBy(entry.values, d => x(d)).filter(
+                                                            d => y(d) != null
+                                                        )}
+                                                        clipPath={`url(#${clipPathId})`}
+                                                        // defined={(d) => (y(d) >= yDomain[0] && y(d) <= yDomain[1] && x(d) >= xDomain[0] && x(d) <= xDomain[1])}
+                                                        x={d => xScale(x(d))}
+                                                        y={d => yScale(y(d))}
+                                                        stroke={
+                                                            hue ? hueScale(entry.properties[hue]) : "rgb(221, 226, 229)"
+                                                        }
+                                                        strokeDasharray={
+                                                            pattern ? patternScale(entry.properties[pattern]) : null
+                                                        }
+                                                        opacity={lineOpacity}
+                                                        strokeWidth={2}
+                                                        curve={curveLinear}
+                                                    />
+                                                    <NaNIndicator
+                                                        data={aggregateBy(entry.values, d => x(d)).filter(
+                                                            d => y(d) == null
+                                                        )}
+                                                        x={d => xScale(x(d))}
+                                                        y={d => yScale(y(d))}
+                                                        opacity={lineOpacity}
+                                                        color={
+                                                            hue ? hueScale(entry.properties[hue]) : "rgb(221, 226, 229)"
+                                                        }
+                                                    />
+                                                </Group>
+                                            ))}
+                                        <rect
+                                            fill="rgba(0, 0, 0, 0)"
+                                            width={cellWidth}
+                                            height={cellHeight}
+                                            onClick={handleClickOnChart}
+                                        />
+                                    </Group>
+                                ))}
+                            </Group>
+                        ))}
+                    </svg>
                 );
               }}
             </ParentSize>
@@ -547,6 +612,15 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
       }}
     </Query>
   );
+};
+
+const NaNIndicator = ({ data, x, y, color, opacity }) => {
+  return (
+    <Group fill={color} opacity={opacity}>
+      {data.map((d, i) => <polygon key={i} points="0 -5 5 5 -5 5" transform={`translate(${x(d) + 5 * (Math.random() - 0.5)}, ${y(d)-5 + 5 * (Math.random() - 0.5)})`}></polygon>)}
+    </Group>
+  );
+  return 
 };
 
 /**
