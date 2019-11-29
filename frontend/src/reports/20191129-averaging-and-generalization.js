@@ -305,16 +305,55 @@ export default {
                 Interplay between optimization and generalisation of stochastic gradient descent with covariance noise
             </h2>
             <p>
-                <strong>TODO</strong> See how averaging changes Figure 3 of this paper.
+                We replicate Figure 3 in the paper to see if averaging changes the story. While small batch still
+                performs slower on train (in terms of number of updates), it is faster than it would be without
+                averaging.
             </p>
-            <p>Note to self: Keep in mind:</p>
-            <ul>
-                <li>ResNet18</li>
-                <li>Batch sizes 128/512/2k</li>
-                <li>update steps on the x-axis of convergence curve</li>
-                <li>Ghost batch norm by multiple forward/backward steps and division.</li>
-            </ul>
-            <p>Why don't we see the drop of the small batch?</p>
+            <p>Note that batch size 128 is far away from the rest. You need more than 4x more steps.</p>
+            <p>
+                <center>
+                    <strong>Train (sample batch)</strong>
+                </center>
+            </p>
+            <FacetChart
+                jobIds={["5de1507ca77c0e7677436d14", "5de1507ca77c0e7677436d15", "5de1507ca77c0e7677436d13"]}
+                measurementQuery={["last_cross_entropy", "10epoch_avg_cross_entropy", "100epoch_avg_cross_entropy"]}
+                tagQuery={["split=track_batch_00"]}
+                lineOpacity={0.8}
+                xValue={"steps"}
+                xLabel={"Number of updates"}
+                ymax={".3"}
+                xmax={40000}
+                pattern={""}
+                hue={"optimizer_batch_size"}
+                row={"split"}
+                col={"measurement"}
+                hueLegendName="Batch size"
+                rowLabelPrefix={"Cross entropy / "}
+                style={{ height: "30em", width: "80em", marginLeft: "-15em", marginTop: "1.5em" }}
+            />
+            <p>
+                <center>
+                    <strong>Test</strong>
+                </center>
+            </p>
+            <FacetChart
+                jobIds={["5de1507ca77c0e7677436d14", "5de1507ca77c0e7677436d15", "5de1507ca77c0e7677436d13"]}
+                measurementQuery={["last_cross_entropy", "10epoch_avg_cross_entropy", "100epoch_avg_cross_entropy"]}
+                tagQuery={["split=test"]}
+                lineOpacity={0.8}
+                xValue={"steps"}
+                xLabel={"Number of updates"}
+                ymax={".5"}
+                xmax={40000}
+                pattern={""}
+                hue={"optimizer_batch_size"}
+                row={"split"}
+                col={"measurement"}
+                hueLegendName="Batch size"
+                rowLabelPrefix={"Cross entropy / "}
+                style={{ height: "30em", width: "80em", marginLeft: "-15em", marginTop: "1.5em" }}
+            />
         </div>
     )
 };
