@@ -620,7 +620,6 @@ const NaNIndicator = ({ data, x, y, color, opacity }) => {
       {data.map((d, i) => <polygon key={i} points="0 -5 5 5 -5 5" transform={`translate(${x(d) + 5 * (Math.random() - 0.5)}, ${y(d)-5 + 5 * (Math.random() - 0.5)})`}></polygon>)}
     </Group>
   );
-  return 
 };
 
 /**
