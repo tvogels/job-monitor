@@ -7,6 +7,7 @@ import signsgd from "./20190125-understanding-signsgd";
 import tensordecompositions from "./20190218-tensor-decompositions";
 import rank1 from "./20190415-rank1";
 import avggen from "./20191129-averaging-and-generalization";
+import avgstat from "./20191204-averaging-stationarity";
 
 export const reports = [];
 reports.push(gradientPrediction1);
@@ -18,5 +19,6 @@ reports.push(signsgd);
 reports.push(tensordecompositions);
 reports.push(rank1);
 reports.push(avggen);
+reports.push(avgstat);
 
 export default reports;
