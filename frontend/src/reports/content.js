@@ -8,6 +8,7 @@ import tensordecompositions from "./20190218-tensor-decompositions";
 import rank1 from "./20190415-rank1";
 import avggen from "./20191129-averaging-and-generalization";
 import avgstat from "./20191204-averaging-stationarity";
+import largelr from "./20200120-large-initial-learning-rate";
 
 export const reports = [];
 reports.push(gradientPrediction1);
@@ -20,5 +21,6 @@ reports.push(tensordecompositions);
 reports.push(rank1);
 reports.push(avggen);
 reports.push(avgstat);
+reports.push(largelr);
 
 export default reports;
