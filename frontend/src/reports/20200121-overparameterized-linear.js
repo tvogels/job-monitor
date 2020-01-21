@@ -46,7 +46,7 @@ export default {
                 ]}
                 measurementQuery={["accuracy"]}
                 tagQuery={["model=last", "split=test_full"]}
-                lineOpacity={0.8}
+                lineOpacity={1.0}
                 pattern={""}
                 hue={"learning_rate"}
                 row={"measurement"}
@@ -75,7 +75,7 @@ export default {
                 ]}
                 measurementQuery={["cross_entropy"]}
                 tagQuery={["model=last", "split=train"]}
-                lineOpacity={0.8}
+                lineOpacity={1.0}
                 pattern={""}
                 hue={"learning_rate"}
                 ylog={true}
@@ -108,7 +108,7 @@ export default {
                 ]}
                 measurementQuery={["accuracy"]}
                 tagQuery={["model=last", "split=test_full"]}
-                lineOpacity={0.8}
+                lineOpacity={1.0}
                 pattern={""}
                 hue={"learning_rate"}
                 row={"measurement"}
@@ -140,7 +140,7 @@ export default {
                 ]}
                 measurementQuery={["cross_entropy"]}
                 tagQuery={["model=last", "split=train"]}
-                lineOpacity={0.8}
+                lineOpacity={1.0}
                 pattern={""}
                 hue={"learning_rate"}
                 ylog={true}
@@ -152,6 +152,38 @@ export default {
                 hueLegendName="Learning rate"
                 colLabelPrefix="Train set "
                 style={{ height: "25em", width: "80em", marginLeft: "-15em", marginTop: "1.5em" }}
+            />
+            <h2>Simpler dataset</h2>
+            <p>This uses two half Gaussians separated by a margin that scales as 1/sqrt(dimensionality).</p>
+            <FacetChart
+                jobIds={[
+                    "5e271c12884eb62c76fe10e3",
+                    "5e271c12884eb62c76fe10e2",
+                    "5e271c12884eb62c76fe10e1",
+                    "5e271c12884eb62c76fe10e0",
+                    "5e271c12884eb62c76fe10df",
+                    "5e271c12884eb62c76fe10de",
+                    "5e271c12884eb62c76fe10dd",
+                    "5e271c12884eb62c76fe10dc",
+                    "5e271c12884eb62c76fe10db",
+                    "5e271c12884eb62c76fe10da",
+                    "5e271c12884eb62c76fe10d9",
+                    "5e271c12884eb62c76fe10d8",
+                    "5e271c12884eb62c76fe10d7",
+                    "5e271c12884eb62c76fe10d6",
+                    "5e271c12884eb62c76fe10d5"
+                ]}
+                measurementQuery={["accuracy"]}
+                tagQuery={["model=last"]}
+                lineOpacity={1.0}
+                pattern={"model"}
+                hue={"learning_rate"}
+                row={"split"}
+                hueLegendName="Learning rate"
+                colLabelPrefix="Train set "
+                rowlLabelPrefix="Accuracy on "
+                col={"train_set_size"}
+                style={{ height: "50em", width: "80em", marginLeft: "-15em", marginTop: "1.5em" }}
             />
         </div>
     )
