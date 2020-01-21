@@ -11,7 +11,7 @@ import { ParentSize } from '@vx/responsive';
 import { Line, LinePath } from '@vx/shape';
 import { Text } from '@vx/text';
 import { extent } from 'd3-array';
-import { scaleLinear, scaleOrdinal } from 'd3-scale';
+import { scaleLinear, scaleLog, scaleOrdinal } from 'd3-scale';
 import { schemeCategory10 } from 'd3-scale-chromatic';
 import { nest } from 'd3-collection';
 import gql from 'graphql-tag';
@@ -373,7 +373,7 @@ function relativeMousePosition(event) {
 }
 
 export const FacetChart = (props) => {
-  const { colLabelPrefix = '', rowLabelPrefix = '', hueLegendName, hueShowLegend = true, patternLegendName, jobIds, measurementQuery, tagQuery, row, col, pattern, hue, xValue = 'epoch', yValue = 'value', xLabel = 'Epochs', yLabel = '', xmin, xmax, ymin, ymax, lineOpacity = 0.6, style } = props;
+  const { colLabelPrefix = '', rowLabelPrefix = '', hueLegendName, hueShowLegend = true, patternLegendName, jobIds, measurementQuery, tagQuery, row, col, pattern, hue, xValue = 'epoch', yValue = 'value', xLabel = 'Epochs', yLabel = '', xmin, xmax, ymin, ymax, ylog = false, lineOpacity = 0.6, style } = props;
   const [crossHair, setCrossHair] = useState(null);
 
   const handleKeys = (event) => {
@@ -458,7 +458,13 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
                 let width = Math.max(parent.width, margin.top + margin.bottom);
 
                 const xScale = scaleLinear().domain(xDomain).rangeRound([0, cellWidth]);
-                const yScale = scaleLinear().domain(yDomain).rangeRound([cellHeight, 0]).nice();
+
+                let yScale = ylog ? scaleLog() : scaleLinear();
+                yScale = yScale
+                    .domain(yDomain)
+                    .rangeRound([cellHeight, 0]);
+
+                const yclamp = ylog ? (v) => (v < yDomain[0] ? yDomain[0]: v) : (v) => v;
 
                 const numTicksRows = Math.max(2, cellHeight / 50);
                 const numTicksColumns = Math.max(2, cellWidth / 50);
@@ -568,8 +574,8 @@ ${Object.entries(props).filter(([k, v]) => v != null).map(([k, v]) => `  ${k}={$
                                                         )}
                                                         clipPath={`url(#${clipPathId})`}
                                                         // defined={(d) => (y(d) >= yDomain[0] && y(d) <= yDomain[1] && x(d) >= xDomain[0] && x(d) <= xDomain[1])}
-                                                        x={d => xScale(x(d))}
-                                                        y={d => yScale(y(d))}
+                                                        x={d => xScale(yclamp(x(d)))}
+                                                        y={d => yScale(yclamp(y(d)))}
                                                         stroke={
                                                             hue ? hueScale(entry.properties[hue]) : "rgb(221, 226, 229)"
                                                         }
