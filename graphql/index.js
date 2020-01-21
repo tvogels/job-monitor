@@ -588,7 +588,7 @@ if (metadataHost.includes("mongodb+srv")) {
     mongoUrl = mongoUrl.replace(`:${metadataPort}`, "");
 }
 
-const tcpPort = 4000;
+const tcpPort = parseInt(process.env.PORT, 10) || 4000;
 MongoClient.connect(mongoUrl, {
     useNewUrlParser: true
 })
