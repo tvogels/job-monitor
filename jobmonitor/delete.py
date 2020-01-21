@@ -22,8 +22,8 @@ def delete_job(job_id):
     print("# Job", job_id)
     kill_workers(job_id)
 
-    influx.query("DELETE WHERE job_id='{}'".format(job_id))
-    print("- Deleted all traces of this job id in InfluxDB")
+    # influx.query("DELETE WHERE job_id='{}'".format(job_id))
+    # print("- Deleted all traces of this job id in InfluxDB")
 
     job = job_by_id(job_id)
     if job:

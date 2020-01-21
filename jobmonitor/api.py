@@ -15,8 +15,8 @@ from schema import Or, Schema
 
 from jobmonitor.lazy_loader import LazyLoader
 
+kubernetes_client = LazyLoader("k", globals(), "kubernetes.client")
 kubernetes = LazyLoader("kubernetes", globals(), "kubernetes")
-kubernetes = LazyLoader("k", globals(), "kubernetes.client")
 KUBERNETES_NAMESPACE = LazyLoader(
     "KUBERNETES_NAMESPACE", globals(), "jobmonitor.connections.KUBERNETES_NAMESPACE"
 )
@@ -87,10 +87,10 @@ def register_job(
 
 def kubernetes_delete_job(kubernetes_job_name):
     kubernetes.config.load_kube_config()
-    client = kubernetes.client.Batchk.V1Api()
-    body = kubernetes.client.k.V1DeleteOptions(propagation_policy="Foreground")
+    client = kubernetes_client.BatchV1Api()
+    body = kubernetes_client.V1DeleteOptions(propagation_policy="Foreground")
     return client.delete_namespaced_job(
-        kubernetes_job_name, namespace=KUBERNETES_NAMESPACE, body=body
+        kubernetes_job_name, namespace=c.KUBERNETES_NAMESPACE, body=body
     )
 
 
@@ -116,7 +116,7 @@ def kubernetes_schedule_job(
 
     job = job_by_id(job_id)
     kubernetes.config.load_kube_config()
-    client = kubernetes.client.Corek.V1Api()
+    client = kubernetes_client.Corek.V1Api()
     pod_name = "{}-{}".format(job["user"], job_id[-6:])
     metadata = k.V1ObjectMeta(
         name=pod_name,
@@ -137,7 +137,7 @@ def kubernetes_schedule_job(
         volumes=volumes,
     )
     pod = k.V1Pod(metadata=metadata, spec=pod_spec)
-    client.create_namespaced_pod(KUBERNETES_NAMESPACE, pod)
+    client.create_namespaced_pod(c.KUBERNETES_NAMESPACE, pod)
     update_job(job_id, {"status": "SCHEDULED", "schedule_time": datetime.datetime.utcnow()})
 
 
@@ -163,7 +163,7 @@ def kubernetes_schedule_job_queue(
         volumes = {volume: "/" + volume for volume in volumes}  # use volume-name as mount-path
 
     kubernetes.config.load_kube_config()
-    client = kubernetes.client.Batchk.V1Api()
+    client = kubernetes_client.BatchV1Api()
     random_id = "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(6))
     job_name = "{}-queue-{}".format(os.getenv("USER"), random_id)
     metadata = k.V1ObjectMeta(name=job_name, labels=dict(app="jobmonitor", user=os.getenv("USER")))
@@ -183,7 +183,7 @@ def kubernetes_schedule_job_queue(
             template=k.V1PodTemplateSpec(metadata=metadata, spec=pod_spec),
         ),
     )
-    client.create_namespaced_job(KUBERNETES_NAMESPACE, job)
+    client.create_namespaced_job(c.KUBERNETES_NAMESPACE, job)
 
 
 def kubernetes_create_base_pod_spec(

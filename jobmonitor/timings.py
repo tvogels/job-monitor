@@ -47,9 +47,5 @@ def main():
         print(df[df.worker == args.worker].drop(["worker"], axis=1))
 
 
-fg = lambda text, color: "\33[38;5;" + str(color) + "m" + str(text) + "\33[0m"
-bg = lambda text, color: "\33[48;5;" + str(color) + "m" + str(text) + "\33[0m"
-
-
 if __name__ == "__main__":
     main()
