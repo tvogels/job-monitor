@@ -86,6 +86,73 @@ export default {
                 colLabelPrefix="Train set "
                 style={{ height: "25em", width: "80em", marginLeft: "-15em", marginTop: "1.5em" }}
             />
+            <h3>Different seed and x-axis has # steps instead of epochs</h3>
+            <p style={{ marginTop: "1em", textAlign: "center", fontWeight: "bold" }}>Test accuracy</p>
+            <FacetChart
+                jobIds={[
+                    "5e26d9e2884eb60b9b825a24",
+                    "5e26dc0a884eb60c563104ae",
+                    "5e26dc0a884eb60c563104af",
+                    "5e26dc0a884eb60c563104b0",
+                    "5e26dc0a884eb60c563104b1",
+                    "5e26dc0a884eb60c563104b2",
+                    "5e26dc0a884eb60c563104b4",
+                    "5e26dc0a884eb60c563104b3",
+                    "5e26dc0a884eb60c563104b5",
+                    "5e26dc0a884eb60c563104b6",
+                    "5e26dc0a884eb60c563104b7",
+                    "5e26dc0a884eb60c563104b8",
+                    "5e26dc0a884eb60c563104b9",
+                    "5e26dc0a884eb60c563104bb",
+                    "5e26dc0a884eb60c563104ba"
+                ]}
+                measurementQuery={["accuracy"]}
+                tagQuery={["model=last", "split=test_full"]}
+                lineOpacity={0.8}
+                pattern={""}
+                hue={"learning_rate"}
+                row={"measurement"}
+                col={"train_set_size"}
+                xValue="steps"
+                xLabel="# parameter updates"
+                hueLegendName="Learning rate"
+                colLabelPrefix="Train set "
+                style={{ height: "25em", width: "80em", marginLeft: "-15em", marginTop: "1.5em" }}
+            />
+            <p style={{ marginTop: "1em", textAlign: "center", fontWeight: "bold" }}>Training loss</p>
+            <FacetChart
+                jobIds={[
+                    "5e26d9e2884eb60b9b825a24",
+                    "5e26dc0a884eb60c563104ae",
+                    "5e26dc0a884eb60c563104af",
+                    "5e26dc0a884eb60c563104b0",
+                    "5e26dc0a884eb60c563104b1",
+                    "5e26dc0a884eb60c563104b2",
+                    "5e26dc0a884eb60c563104b4",
+                    "5e26dc0a884eb60c563104b3",
+                    "5e26dc0a884eb60c563104b5",
+                    "5e26dc0a884eb60c563104b6",
+                    "5e26dc0a884eb60c563104b7",
+                    "5e26dc0a884eb60c563104b8",
+                    "5e26dc0a884eb60c563104b9",
+                    "5e26dc0a884eb60c563104bb",
+                    "5e26dc0a884eb60c563104ba"
+                ]}
+                measurementQuery={["cross_entropy"]}
+                tagQuery={["model=last", "split=train"]}
+                lineOpacity={0.8}
+                pattern={""}
+                hue={"learning_rate"}
+                ylog={true}
+                ymin={1e-4}
+                xValue="steps"
+                xLabel="# parameter updates"
+                row={"measurement"}
+                col={"train_set_size"}
+                hueLegendName="Learning rate"
+                colLabelPrefix="Train set "
+                style={{ height: "25em", width: "80em", marginLeft: "-15em", marginTop: "1.5em" }}
+            />
         </div>
     )
 };
