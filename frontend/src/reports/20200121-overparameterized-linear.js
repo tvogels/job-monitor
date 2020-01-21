@@ -86,5 +86,6 @@ export default {
                 colLabelPrefix="Train set "
                 style={{ height: "25em", width: "80em", marginLeft: "-15em", marginTop: "1.5em" }}
             />
+        </div>
     )
 };
