@@ -247,6 +247,8 @@ def describe_git_state(directory):
         )
     except InvalidGitRepositoryError:
         return None, None, None, None, None, None
+    except AttributeError:
+        return None, None, None, None, None, None
 
 
 def upload_code_package(directory=".", excludes=None):
