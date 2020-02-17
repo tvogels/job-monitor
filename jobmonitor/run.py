@@ -22,7 +22,6 @@ from pymongo import ASCENDING, DESCENDING
 from jobmonitor.api import download_code_package, job_by_id, update_job
 from jobmonitor.connections import mongo
 from jobmonitor.utils import IntervalTimer
-from telegraf.client import TelegrafClient
 
 """
 This script takes a job_id and it looks in MongoDB for a job with that ID.
@@ -173,20 +172,6 @@ def main():
             },
         )
 
-    # Create a telegraf client
-    telegraf = TelegrafClient(
-        host=os.getenv("JOBMONITOR_TELEGRAF_HOST"),
-        port=int(os.getenv("JOBMONITOR_TELEGRAF_PORT")),
-        tags={  # global tags for this experiment
-            "host": socket.gethostname(),
-            "user": job["user"],
-            "job_id": job_id,
-            "project": job["project"],
-            "experiment": job["experiment"],
-            "job": job["job"],
-        },
-    )
-
     def side_thread_fn():
         global is_stopping
         if is_stopping:
@@ -281,9 +266,6 @@ def main():
         metrics_created_so_far = set()
 
         def log_metric(measurement, value, tags={}):
-            # Log to telegraf -- to be phased out
-            telegraf.metric(measurement, value, tags=tags)
-
             # Log the metric to MongoDB
             if not isinstance(value, dict):
                 value = {"value": value}
