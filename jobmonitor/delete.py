@@ -10,11 +10,11 @@ import kubernetes
 from bson.objectid import ObjectId
 
 from jobmonitor.api import delete_job_by_id, job_by_id, kubernetes_delete_job
-from jobmonitor.connections import KUBERNETES_NAMESPACE, influx, mongo
+from jobmonitor.connections import KUBERNETES_NAMESPACE, mongo
 
 
 """
-Delete all traces of a previously scheduled job (kubernetes, mongodb, influxdb, filesystem)
+Delete all traces of a previously scheduled job (kubernetes, mongodb, filesystem)
 """
 
 
