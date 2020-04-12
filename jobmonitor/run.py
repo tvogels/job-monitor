@@ -79,10 +79,7 @@ def main():
         ),
     )
     parser.add_argument(
-        "--mpi",
-        default=False,
-        action="store_true",
-        help="Derive rank and world_size from MPI"
+        "--mpi", default=False, action="store_true", help="Derive rank and world_size from MPI"
     )
     args = parser.parse_args()
 
@@ -133,8 +130,8 @@ def main():
         rank = job["registered_workers"]
         n_workers = job["n_workers"]
     else:
-        rank = int(os.getenv("OMPI_COMM_WORLD_RANK"))
-        n_workers = int(os.getenv("OMPI_COMM_WORLD_SIZE"))
+        rank = int(os.getenv("OMPI_COMM_WORLD_RANK", os.getenv("PMIX_RANK")))
+        n_workers = int(os.getenv("OMPI_COMM_WORLD_SIZE", os.getenv("SLURM_NTASKS")))
 
     # Create an output directory
     output_dir = os.path.join(
