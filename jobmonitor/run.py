@@ -78,6 +78,12 @@ def main():
             "Only appliccable in queue mode."
         ),
     )
+    parser.add_argument(
+        "--mpi",
+        default=False,
+        action="store_true",
+        help="Derive rank and world_size from MPI"
+    )
     args = parser.parse_args()
 
     # Retrieve the job description
@@ -123,8 +129,12 @@ def main():
             sys.exit(0)
         job_id = str(job["_id"])
 
-    rank = job["registered_workers"]
-    n_workers = job["n_workers"]
+    if not args.mpi:
+        rank = job["registered_workers"]
+        n_workers = job["n_workers"]
+    else:
+        rank = int(os.getenv("OMPI_COMM_WORLD_RANK"))
+        n_workers = int(os.getenv("OMPI_COMM_WORLD_SIZE"))
 
     # Create an output directory
     output_dir = os.path.join(
