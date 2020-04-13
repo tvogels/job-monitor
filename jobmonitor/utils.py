@@ -1,5 +1,6 @@
 import threading
 
+
 class IntervalTimer(threading.Thread):
     @classmethod
     def create(cls, func, interval=10):
@@ -7,8 +8,8 @@ class IntervalTimer(threading.Thread):
         timer_thread = cls(stop_event, func, interval)
         return stop_event, timer_thread
 
-    def __init__(self, event, func, interval=10.):
-        threading.Thread.__init__(self)
+    def __init__(self, event, func, interval=10.0):
+        threading.Thread.__init__(self, daemon=True)
         self.stopped = event
         self.func = func
         self.interval = interval

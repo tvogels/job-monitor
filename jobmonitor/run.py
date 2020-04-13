@@ -190,7 +190,8 @@ def main():
             print(
                 f"Job status changed to {status}. This worker will self-destruct.", file=sys.stderr
             )
-            os.system("kill %d" % os.getpid())
+            os._exit(1)
+            # os.system("kill %d" % os.getpid())
             is_stopping = True
 
         # Update the worker's heartbeat
