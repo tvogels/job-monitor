@@ -335,6 +335,7 @@ def main():
                 "exception_worker": rank,
             },
         )
+        sys.exit(1)
     finally:
         global is_stopping
         is_stopping = True
