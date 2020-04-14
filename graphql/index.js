@@ -56,6 +56,7 @@ const typeDefs = gql`
         textFile(filename: String!): String
         jsonFile(filename: String!): Dictionary
         images: [Image]
+        timings: [Timing]
     }
     enum Status {
         CREATED
@@ -114,6 +115,13 @@ const typeDefs = gql`
             limit: Int
         ): [Job]
     }
+    type Timing {
+        event: String!
+        worker: Int!
+        mean: Float!
+        std: Float!
+        instances: Int!
+    }
     type Mutation {
         "Change a specific annotation on a job"
         setAnnotation(jobId: ID!, key: String!, value: Object): Job
@@ -139,7 +147,7 @@ const resolvers = {
             const status = args.status;
             delete args.status;
             const query = {
-                $and: [args, statusQuery(status), searchQuery(search), idsQuery(ids)]
+                $and: [args, statusQuery(status), searchQuery(search), idsQuery(ids)],
             };
             // console.log(JSON.stringify(query));
             return mongo
@@ -163,13 +171,14 @@ const resolvers = {
                     start_time: 1,
                     state: 1,
                     status: 1,
-                    user: 1
+                    user: 1,
+                    timings: 1,
                 })
                 .sort({ creation_time: -1 })
                 .limit(limit)
                 .toArray()
-                .then(entries => entries.filter(postHocSearchFilter(search)).map(parseJobFromDatabase));
-        }
+                .then((entries) => entries.filter(postHocSearchFilter(search)).map(parseJobFromDatabase));
+        },
     },
     Mutation: {
         setAnnotation: (root, args, context, info) => {
@@ -185,19 +194,19 @@ const resolvers = {
                 .updateOne(idQuery, update)
                 .then(() => mongo.collection("job").findOne(idQuery))
                 .then(parseJobFromDatabase);
-        }
+        },
     },
     Job: {
         logs: (job, args, context, info) => {
             return mongo
                 .collection("job")
                 .findOne({ _id: ObjectID(job.id) }, { projection: { logs: true } })
-                .then(jobdata => {
+                .then((jobdata) => {
                     if (jobdata["logs"] != null) {
                         // Read from the database
                         return jobdata["logs"]
-                            .filter(j => j.worker === 0)
-                            .map(j => j.message)
+                            .filter((j) => j.worker === 0)
+                            .map((j) => j.message)
                             .join("\n");
                     } else {
                         // Read from a logfile
@@ -243,16 +252,16 @@ const resolvers = {
             const fromQuery = args.measurement != null ? `FROM /${args.measurement}/` : "";
             let conditions = (args.tags || "")
                 .split(",")
-                .filter(x => x != "")
-                .map(condition => condition.split("="));
+                .filter((x) => x != "")
+                .map((condition) => condition.split("="));
 
             return mongo
                 .collection("job")
                 .findOne({ _id: ObjectID(job.id) }, { projection: { metrics: true } })
-                .then(jobdata => {
+                .then((jobdata) => {
                     let metrics = jobdata["metrics"] || [];
                     return metrics
-                        .filter(t => {
+                        .filter((t) => {
                             if (args.measurement) {
                                 const regex = new RegExp("^" + args.measurement + "$");
                                 if (!t.measurement.match(regex)) {
@@ -266,7 +275,7 @@ const resolvers = {
                             }
                             return true;
                         })
-                        .map(t => {
+                        .map((t) => {
                             const tags = {};
                             for (let key of Object.keys(t)) {
                                 if (!["id", "measurement"].includes(key)) {
@@ -276,13 +285,13 @@ const resolvers = {
                             return { measurement: t.measurement, tags, jobId: job.id, id: t.id };
                         });
                 });
-        }
+        },
     },
     Timeseries: {
         values: getValueFromTimeseries("ALL"),
         currentValue: getValueFromTimeseries("LAST"),
         maxValue: getValueFromTimeseries("MAX"),
-        minValue: getValueFromTimeseries("MIN")
+        minValue: getValueFromTimeseries("MIN"),
     },
     Date: new GraphQLScalarType({
         name: "Date",
@@ -299,12 +308,12 @@ const resolvers = {
             } else {
                 return null;
             }
-        }
+        },
     }),
     Object: new GraphQLScalarType({
         name: "Object",
         description: "Arbitrary object",
-        parseValue: value => {
+        parseValue: (value) => {
             try {
                 return JSON.parse(value);
             } catch (error) {
@@ -312,14 +321,14 @@ const resolvers = {
                 return value;
             }
         },
-        serialize: value => {
+        serialize: (value) => {
             if (typeof value === "object") {
                 return JSON.stringify(value);
             } else {
                 return value;
             }
         },
-        parseLiteral: ast => {
+        parseLiteral: (ast) => {
             if (ast.kind === Kind.STRING) {
                 try {
                     return JSON.parse(ast.value);
@@ -329,25 +338,25 @@ const resolvers = {
             } else {
                 return ast.value;
             }
-        }
+        },
     }),
     Dictionary: new GraphQLScalarType({
         name: "Dictionary",
         description: "Object with string keys and numeric values",
-        parseValue: value => {
+        parseValue: (value) => {
             return value;
         },
-        serialize: value => {
+        serialize: (value) => {
             return value;
         },
-        parseLiteral: ast => {
+        parseLiteral: (ast) => {
             if (ast.kind === Kind.OBJECT) {
                 return ast.value;
             } else {
                 return null;
             }
-        }
-    })
+        },
+    }),
 };
 
 /**
@@ -371,8 +380,26 @@ function parseJobFromDatabase(entry) {
         annotations: Object.entries(entry.annotations || {}).map(([k, v]) => ({ key: k, value: v })),
         environment: entry.environment || entry.initialization,
         progress: (entry.state || {}).progress,
-        images: entry.images ? Object.entries(entry.images).map(([key, path]) => ({ key, path })) : []
+        images: entry.images ? Object.entries(entry.images).map(([key, path]) => ({ key, path })) : [],
+        timings: formatTimings(entry.timings),
     };
+}
+
+function formatTimings(timingDictionary) {
+    if (timingDictionary == null) {
+        return [];
+    }
+    const array = [];
+    for (let [event, entries] of Object.entries(timingDictionary)) {
+        for (let [worker, data] of Object.entries(entries)) {
+            array.push({
+                event,
+                worker: parseInt(worker),
+                ...data,
+            });
+        }
+    }
+    return array;
 }
 
 /**
@@ -406,7 +433,7 @@ function idsQuery(ids) {
     if (ids == null) {
         return {};
     } else {
-        return { _id: { $in: ids.map(id => ObjectID(id)) } };
+        return { _id: { $in: ids.map((id) => ObjectID(id)) } };
     }
 }
 
@@ -415,7 +442,7 @@ function idsQuery(ids) {
  * or 'fuzzy' (by MongoDB)
  * @param {string} query
  */
-const isSpecificSearch = query => query.indexOf("js:") == 0;
+const isSpecificSearch = (query) => query.indexOf("js:") == 0;
 
 /**
  * Generate a fuzzy MongoDB query for a given search string
@@ -435,8 +462,8 @@ function searchQuery(query) {
             $or: [
                 { job: { $regex: query } },
                 { experiment: { $regex: query } },
-                { "annotations.description": { $regex: query } }
-            ]
+                { "annotations.description": { $regex: query } },
+            ],
         };
     }
 }
@@ -517,12 +544,12 @@ function getValueFromTimeseries(operator) {
         return mongo
             .collection("job")
             .findOne({ _id: ObjectID(jobId) }, { projection })
-            .then(jobdata => {
-                const data = jobdata["metric_data"][id].map(e => {
+            .then((jobdata) => {
+                const data = jobdata["metric_data"][id].map((e) => {
                     if (Object.keys(e).includes("time") && typeof e.time !== "number") {
                         return {
                             ...e,
-                            time: e.time.getTime()
+                            time: e.time.getTime(),
                         };
                     } else {
                         return e;
@@ -534,7 +561,7 @@ function getValueFromTimeseries(operator) {
                     return data[data.length - 1];
                 } else if (operator === "MIN") {
                     let min = { value: Number.POSITIVE_INFINITY };
-                    data.forEach(d => {
+                    data.forEach((d) => {
                         if (d.value < min.value) {
                             min = d;
                         }
@@ -542,7 +569,7 @@ function getValueFromTimeseries(operator) {
                     return min;
                 } else if (operator === "MAX") {
                     let max = { value: Number.NEGATIVE_INFINITY };
-                    data.forEach(d => {
+                    data.forEach((d) => {
                         if (d.value > max.value) {
                             max = d;
                         }
@@ -559,21 +586,21 @@ const server = new ApolloServer({ typeDefs, resolvers, cors: { origin: true } })
 server.applyMiddleware({ app, path: "/graphql" });
 
 /** Handler for serving the files stored in the job's result directories */
-app.get("/file/:jobId*", function(req, res, next) {
+app.get("/file/:jobId*", function (req, res, next) {
     const jobId = req.params.jobId;
     const subpath = req.params["0"];
 
     mongo
         .collection("job")
         .findOne({ _id: ObjectID(jobId) }, { projection: { output_dir: true } })
-        .then(job => {
+        .then((job) => {
             if (job == null) return next("Job not found");
             const { output_dir } = job;
             const fullPath = path.join(process.env.JOBMONITOR_RESULTS_DIR, output_dir, subpath);
             if (!fs.existsSync(fullPath)) return next("File not found");
             res.sendFile(fullPath);
         })
-        .catch(err => next(err));
+        .catch((err) => next(err));
 });
 
 // HACKY MESS:
@@ -590,9 +617,9 @@ if (metadataHost.includes("mongodb+srv")) {
 
 const tcpPort = parseInt(process.env.PORT, 10) || 4000;
 MongoClient.connect(mongoUrl, {
-    useNewUrlParser: true
+    useNewUrlParser: true,
 })
-    .then(db => (mongo = db.db()))
+    .then((db) => (mongo = db.db()))
     .then(() => app.listen(tcpPort))
     .then(({ url }) => {
         console.log(`🚀 Server ready at port ${tcpPort}`);
