@@ -29,6 +29,7 @@ setup(
             "jobstar=jobmonitor.star:main",
             "jobbug=jobmonitor.bug:main",
             "joblogs=jobmonitor.logs:main",
+            "jobmeld=jobmonitor.meld:main",
             "jobworkers=jobmonitor.workers:main",
             "jobtimings=jobmonitor.timings:main",
             "kuberun=jobmonitor.kuberun:main",
