@@ -1,7 +1,7 @@
 import gql from "graphql-tag";
 import React, { Component, useState } from "react";
 import { Query } from "react-apollo";
-import { BrowserRouter as Router, Redirect, Route } from "react-router-dom";
+import { BrowserRouter as Router, Redirect, Route, Switch } from "react-router-dom";
 import styled from "styled-components";
 import { groupBy } from "underscore";
 import ConfigPage from "./ConfigPage";
@@ -13,8 +13,8 @@ import ImagesPage from "./ImagesPage";
 import { ReportIndex, ReportPage } from "./reports";
 
 const GET_JOBS = gql`
-    query Job($searchFilter: String!, $limit: Int!, $status: Status) {
-        jobs(search: $searchFilter, limit: $limit, status: $status) {
+    query Job($searchFilter: String!, $limit: Int!, $status: Status, $project: String) {
+        jobs(search: $searchFilter, limit: $limit, status: $status, project: $project) {
             id
             experiment
             job
@@ -104,142 +104,154 @@ const NavBar = ({ handleNavbarKeys, jobs, selectedJobs, toggleHandler }) => (
     </div>
 );
 
-const App = ({ selectedJobs, setSelectedJobs, toggleHandler }) => {
+const App = (args) => {
+    return (
+        <Router>
+            <Switch>
+                <Route exact path="/" render={() => <Redirect to="/all" />} />
+                <Route path="/:project" render={({ match }) => <ProjectApp project={match.params.project} {...args} />} />
+            </Switch>
+        </Router>
+    );
+};
+
+const ProjectApp = ({ selectedJobs, setSelectedJobs, toggleHandler, project }) => {
+    const projectFilter = (project === "all") ? undefined : project;
+    console.log("project", projectFilter);
     const [filter, setFilter] = useState("");
     const [limit, setLimit] = useState(100);
     const [statusFilter, setStatusFilter] = useState("");
     const facetChartState = useFacetChartControllerState();
     return (
-        <Router>
-            <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-                <FilterBar
-                    filter={filter}
-                    setFilter={setFilter}
-                    limit={limit}
-                    setLimit={setLimit}
-                    statusFilter={statusFilter}
-                    setStatusFilter={setStatusFilter}
-                    style={{
-                        padding: "1em",
-                        paddingBottom: "0em",
-                        flexShrink: 0,
-                        flexGrow: 0,
-                        backgroundColor: "rgba(0,0,0,0.2)"
-                    }}
-                />
-                <Query
-                    query={GET_JOBS}
-                    variables={{
-                        searchFilter: filter,
-                        limit: limit,
-                        status: statusFilter === "" ? undefined : statusFilter
-                    }}
-                    pollInterval={10000}
-                >
-                    {({ loading, error, data }) => {
-                        if (error)
-                            return (
-                                <Main>
-                                    <p>Error :( {JSON.stringify(error)}</p>
-                                </Main>
-                            );
-                        const handleNavbarKeys = event => {
-                            if (event.key === "a" && (event.ctrlKey || event.metaKey)) {
-                                event.preventDefault();
-                                if (event.shiftKey) {
-                                    setSelectedJobs([]);
-                                } else {
-                                    setSelectedJobs(data.jobs.map(j => j.id));
-                                }
-                            }
-                        };
+        <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+            <FilterBar
+                filter={filter}
+                setFilter={setFilter}
+                limit={limit}
+                setLimit={setLimit}
+                statusFilter={statusFilter}
+                setStatusFilter={setStatusFilter}
+                style={{
+                    padding: "1em",
+                    paddingBottom: "0em",
+                    flexShrink: 0,
+                    flexGrow: 0,
+                    backgroundColor: "rgba(0,0,0,0.2)"
+                }}
+            />
+            <Query
+                query={GET_JOBS}
+                variables={{
+                    searchFilter: filter,
+                    limit: limit,
+                    status: statusFilter === "" ? undefined : statusFilter,
+                    project: projectFilter,
+                }}
+                pollInterval={10000}
+            >
+                {({ loading, error, data }) => {
+                    if (error)
                         return (
-                            <div style={{ flexGrow: 1, flexShrink: 1, display: "flex", height: "10em" }}>
-                                <Route exact path="/" render={() => <Redirect to="/config" />} />
-                                <Route
-                                    exact
-                                    path="/logs"
-                                    render={props => (
-                                        <>
-                                            <NavBar
-                                                handleNavbarKeys={handleNavbarKeys}
-                                                jobs={data.jobs}
-                                                selectedJobs={selectedJobs}
-                                                toggleHandler={toggleHandler}
-                                            />
-                                            <Main>
-                                                <LogsPage
-                                                    {...props}
-                                                    jobs={(data.jobs || []).filter(j => selectedJobs.includes(j.id))}
-                                                />
-                                            </Main>
-                                        </>
-                                    )}
-                                />
-                                <Route
-                                    exact
-                                    path="/config"
-                                    render={props => (
-                                        <>
-                                            <NavBar
-                                                handleNavbarKeys={handleNavbarKeys}
-                                                jobs={data.jobs}
-                                                selectedJobs={selectedJobs}
-                                                toggleHandler={toggleHandler}
-                                            />
-                                            <Main>
-                                                <ConfigPage {...props} jobIds={selectedJobs} />
-                                            </Main>
-                                        </>
-                                    )}
-                                />
-                                <Route
-                                    exact
-                                    path="/timeseries"
-                                    render={props => (
-                                        <>
-                                            <NavBar
-                                                handleNavbarKeys={handleNavbarKeys}
-                                                jobs={data.jobs}
-                                                selectedJobs={selectedJobs}
-                                                toggleHandler={toggleHandler}
-                                            />
-                                            <Main>
-                                                <TimeseriesPage
-                                                    {...props}
-                                                    jobIds={selectedJobs}
-                                                    facetChartState={facetChartState}
-                                                />
-                                            </Main>
-                                        </>
-                                    )}
-                                />
-                                <Route
-                                    exact
-                                    path="/images"
-                                    render={props => (
-                                        <>
-                                            <NavBar
-                                                handleNavbarKeys={handleNavbarKeys}
-                                                jobs={data.jobs}
-                                                selectedJobs={selectedJobs}
-                                                toggleHandler={toggleHandler}
-                                            />
-                                            <Main>
-                                                <ImagesPage {...props} jobIds={selectedJobs} />
-                                            </Main>
-                                        </>
-                                    )}
-                                />
-                                <Route exact path="/reports" component={ReportIndex} />
-                                <Route exact path="/reports/:slug" component={ReportPage} />
-                            </div>
+                            <Main>
+                                <p>Error :( {JSON.stringify(error)}</p>
+                            </Main>
                         );
-                    }}
-                </Query>
-            </div>
-        </Router>
-    );
+                    const handleNavbarKeys = event => {
+                        if (event.key === "a" && (event.ctrlKey || event.metaKey)) {
+                            event.preventDefault();
+                            if (event.shiftKey) {
+                                setSelectedJobs([]);
+                            } else {
+                                setSelectedJobs(data.jobs.map(j => j.id));
+                            }
+                        }
+                    };
+                    return (
+                        <div style={{ flexGrow: 1, flexShrink: 1, display: "flex", height: "10em" }}>
+                            <Route exact path="/:project/" render={() => <Redirect to={`/${project}/config`} />} />
+                            <Route
+                                exact
+                                path="/logs"
+                                render={props => (
+                                    <>
+                                        <NavBar
+                                            handleNavbarKeys={handleNavbarKeys}
+                                            jobs={data.jobs}
+                                            selectedJobs={selectedJobs}
+                                            toggleHandler={toggleHandler}
+                                        />
+                                        <Main>
+                                            <LogsPage
+                                                {...props}
+                                                jobs={(data.jobs || []).filter(j => selectedJobs.includes(j.id))}
+                                            />
+                                        </Main>
+                                    </>
+                                )}
+                            />
+                            <Route
+                                exact
+                                path="/:project/config"
+                                render={props => (
+                                    <>
+                                        <NavBar
+                                            handleNavbarKeys={handleNavbarKeys}
+                                            jobs={data.jobs}
+                                            selectedJobs={selectedJobs}
+                                            toggleHandler={toggleHandler}
+                                        />
+                                        <Main>
+                                            <ConfigPage {...props} jobIds={selectedJobs} />
+                                        </Main>
+                                    </>
+                                )}
+                            />
+                            <Route
+                                exact
+                                path="/:project/timeseries"
+                                render={props => (
+                                    <>
+                                        <NavBar
+                                            handleNavbarKeys={handleNavbarKeys}
+                                            jobs={data.jobs}
+                                            selectedJobs={selectedJobs}
+                                            toggleHandler={toggleHandler}
+                                        />
+                                        <Main>
+                                            <TimeseriesPage
+                                                {...props}
+                                                jobIds={selectedJobs}
+                                                facetChartState={facetChartState}
+                                            />
+                                        </Main>
+                                    </>
+                                )}
+                            />
+                            <Route
+                                exact
+                                path="/:project/images"
+                                render={props => (
+                                    <>
+                                        <NavBar
+                                            handleNavbarKeys={handleNavbarKeys}
+                                            jobs={data.jobs}
+                                            selectedJobs={selectedJobs}
+                                            toggleHandler={toggleHandler}
+                                        />
+                                        <Main>
+                                            <ImagesPage {...props} jobIds={selectedJobs} />
+                                        </Main>
+                                    </>
+                                )}
+                            />
+                            <Route exact path="/:project/reports" component={ReportIndex} />
+                            <Route exact path="/:project/reports/:slug" component={ReportPage} />
+                        </div>
+                    );
+                }}
+            </Query>
+        </div>
+    )
 };
 
 function jobDescription(job) {
