@@ -39,6 +39,7 @@ configMapGenerator:
 images:
   - name: frontend-pod
     newName: ic-registry.epfl.ch/mlo/vogels_frontend
+    newTag: "1.1"
   - name: graphql-pod
     newName: ic-registry.epfl.ch/mlo/vogels_graphql
-    newTag: "1.6"
+    newTag: "1.7"
