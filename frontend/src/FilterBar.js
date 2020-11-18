@@ -1,19 +1,13 @@
-import { ButtonGroup, FormGroup, NumericInput } from "@blueprintjs/core";
+import { ButtonGroup, FormGroup, NumericInput, InputGroup } from "@blueprintjs/core";
 import React from "react";
 import { NavLink } from "react-router-dom";
 
 const FilterBar = ({ filter, setFilter, limit, setLimit, statusFilter, setStatusFilter, style }) => (
     <div style={{ display: "flex", flexDirection: "row", ...style }}>
-        <FormGroup style={{ marginRight: ".6em" }} label="Filter" labelFor="filter-input">
-            <input
-                id="filter-input"
-                className="bp3-input"
-                placeholder="Filter"
-                value={filter}
-                onChange={e => setFilter(e.target.value)}
-            />
+        <FormGroup style={{ marginRight: ".6em" }} labelFor="filter-input">
+            <InputGroup leftIcon="search" round placeholder="Filter" dir="auto" id="filter-input" value={filter} onChange={e => setFilter(e.target.value)} />
         </FormGroup>
-        <FormGroup style={{ marginRight: ".6em" }} label="Limit" labelFor="limit-input">
+        <FormGroup style={{ marginRight: ".6em" }} labelFor="limit-input">
             <NumericInput
                 id="limit-input"
                 value={limit}
@@ -22,7 +16,7 @@ const FilterBar = ({ filter, setFilter, limit, setLimit, statusFilter, setStatus
                 onValueChange={val => setLimit(isNaN(val) ? 0 : val)}
             />
         </FormGroup>
-        <FormGroup label="Status" labelFor="status-input">
+        <FormGroup labelFor="status-input">
             <div className="bp3-select">
                 <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
                     <option value="">Any</option>
@@ -37,7 +31,7 @@ const FilterBar = ({ filter, setFilter, limit, setLimit, statusFilter, setStatus
                 </select>
             </div>
         </FormGroup>
-        <FormGroup style={{ marginLeft: "1em" }} label="&nbsp;">
+        <FormGroup style={{ marginLeft: "1em" }}>
             <ButtonGroup>
                 <NavLink className="bp3-button bp3-icon-list" to="/config" activeClassName="bp3-active">
                     Config
