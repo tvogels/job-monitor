@@ -170,7 +170,7 @@ const ProjectApp = ({ selectedJobs, setSelectedJobs, toggleHandler, project }) =
                             <Route exact path="/:project/" render={() => <Redirect to={`/${project}/config`} />} />
                             <Route
                                 exact
-                                path="/logs"
+                                path="/:project/logs"
                                 render={props => (
                                     <>
                                         <NavBar
