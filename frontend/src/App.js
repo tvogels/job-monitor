@@ -117,7 +117,6 @@ const App = (args) => {
 
 const ProjectApp = ({ selectedJobs, setSelectedJobs, toggleHandler, project }) => {
     const projectFilter = (project === "all") ? undefined : project;
-    console.log("project", projectFilter);
     const [filter, setFilter] = useState("");
     const [limit, setLimit] = useState(100);
     const [statusFilter, setStatusFilter] = useState("");
