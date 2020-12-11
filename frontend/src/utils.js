@@ -23,13 +23,16 @@ export function copyToClipboard(str) {
 };
 
 export const HideUnderscores = ({ string }) => {
-    const parts = string.split(/[_-]/g);
     const result = [];
-    for (let [i, part] of parts.entries()) {
-        result.push(part);
+    for (let [i, part] of string.split(/[_]/g).entries()) {
+        for (let [j, subpart] of part.split(/[-]/g).entries()) {
+            result.push(subpart);
+            result.push(<span key={`${i}-${j}`} style={{ opacity: 0.1 }}>-</span>);
+        }
+        result.pop();  // remove last -
         result.push(<span key={i} style={{ opacity: 0.1 }}>_</span>);
     }
-    result.pop()
+    result.pop(); // remove last _
     return result;
 };
 
