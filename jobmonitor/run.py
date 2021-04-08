@@ -340,7 +340,6 @@ def main():
         global is_stopping
         is_stopping = True
         # Stop the heartbeat thread
-        logfile.close()
         sys.stdout = orig_stdout
         sys.stderr = orig_stderr
         side_thread_stop.set()
@@ -412,6 +411,11 @@ class MultiLogChannel:
 
     def isatty(self):
         return all(c.isatty() for c in self.channels)
+    
+    def close(self):
+        for channel in self.channels:
+            if hasattr(channel, "close"):
+                channel.close()
 
 
 class FileLogChannel:
