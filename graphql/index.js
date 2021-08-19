@@ -532,7 +532,7 @@ function jobStatus(entry) {
 }
 
 /**
- * Create a resolver that finds an aggregate value (max, min, last, ...) from a timeseries in InfluxDB
+ * Create a resolver that finds an aggregate value (max, min, last, ...) from a timeseries
  * @param {'MAX' | 'MIN' | 'LAST' | 'ALL'} operator
  */
 function getValueFromTimeseries(operator) {

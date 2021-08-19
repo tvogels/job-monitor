@@ -17,20 +17,20 @@ def __getattr__(name):
     global _mongo_client
     global _gridfs_client
 
-    if name == "influx":
-        if _influx_client is None:
-            from influxdb import InfluxDBClient
+    # if name == "influx":
+    #     if _influx_client is None:
+    #         from influxdb import InfluxDBClient
 
-            _influx_client = InfluxDBClient(
-                host=os.getenv("JOBMONITOR_TIMESERIES_HOST"),
-                port=int(os.getenv("JOBMONITOR_TIMESERIES_PORT")),
-                database=os.getenv("JOBMONITOR_TIMESERIES_DB"),
-                username=os.getenv("JOBMONITOR_METADATA_USER"),
-                password=os.getenv("JOBMONITOR_METADATA_PASS"),
-            )
-        return _influx_client
+    #         _influx_client = InfluxDBClient(
+    #             host=os.getenv("JOBMONITOR_TIMESERIES_HOST"),
+    #             port=int(os.getenv("JOBMONITOR_TIMESERIES_PORT")),
+    #             database=os.getenv("JOBMONITOR_TIMESERIES_DB"),
+    #             username=os.getenv("JOBMONITOR_METADATA_USER"),
+    #             password=os.getenv("JOBMONITOR_METADATA_PASS"),
+    #         )
+    #     return _influx_client
 
-    elif name == "mongo" or name == "gridfs":
+    if name == "mongo" or name == "gridfs":
         if _mongo_client is None:
             from gridfs import GridFS
             from pymongo import MongoClient

@@ -40,11 +40,12 @@ def main():
 
     del df["std"]
 
-    if not args.worker:
-        print(df.groupby("event").agg("mean"))
-    else:
-        print(f"Worker {args.worker}")
-        print(df[df.worker == args.worker].drop(["worker"], axis=1))
+    with pd.option_context("display.max_rows", None):
+        if not args.worker:
+            print(df.groupby("event").agg("mean"))
+        else:
+            print(f"Worker {args.worker}")
+            print(df[df.worker == args.worker].drop(["worker"], axis=1))
 
 
 if __name__ == "__main__":

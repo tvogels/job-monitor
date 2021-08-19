@@ -313,24 +313,24 @@ def download_code_package(package_id, destination):
 InfluxSeries = namedtuple("InfluxEntry", ["measurement", "tags", "data"])
 
 
-def influx_query(query, merge=False):
-    """Get a list of timeseries as {measurement, tags, data} from InfluxDB"""
-    import pandas as pd
+# def influx_query(query, merge=False):
+#     """Get a list of timeseries as {measurement, tags, data} from InfluxDB"""
+#     import pandas as pd
 
-    raw_data = c.influx.query(query)
-    series = []
-    for (measurement, tags), values in raw_data.items():
-        dataframe = pd.DataFrame(values)
-        dataframe["measurement"] = measurement
-        if tags is not None:
-            for key, value in tags.items():
-                dataframe[key] = value
-        series.append(InfluxSeries(measurement=measurement, tags=tags, data=dataframe))
-        if "time" in dataframe:
-            dataframe.time = pd.to_datetime(dataframe.time)
-    if not merge:
-        return series
-    elif len(series) == 0:
-        return None
-    else:
-        return pd.concat([s.data for s in series])
+#     raw_data = c.influx.query(query)
+#     series = []
+#     for (measurement, tags), values in raw_data.items():
+#         dataframe = pd.DataFrame(values)
+#         dataframe["measurement"] = measurement
+#         if tags is not None:
+#             for key, value in tags.items():
+#                 dataframe[key] = value
+#         series.append(InfluxSeries(measurement=measurement, tags=tags, data=dataframe))
+#         if "time" in dataframe:
+#             dataframe.time = pd.to_datetime(dataframe.time)
+#     if not merge:
+#         return series
+#     elif len(series) == 0:
+#         return None
+#     else:
+#         return pd.concat([s.data for s in series])

@@ -54,7 +54,7 @@ is_stopping = False
 
 
 # Raise SystemExit when SIGTERM is received
-signal.signal(signal.SIGTERM, lambda signo, stack_frame: sys.exit(0))
+signal.signal(signal.SIGTERM, lambda signo, stack_frame: sys.exit(1))
 
 
 def main():
@@ -314,8 +314,8 @@ def main():
         script.main()
 
         # Finished successfully
-        print("Job finished successfully")
         if rank == 0:
+            print("Job finished successfully")
             update_job(job_id, {"status": "FINISHED", "end_time": datetime.datetime.utcnow()})
 
     except Exception as e:
@@ -335,6 +335,12 @@ def main():
                 "exception_worker": rank,
             },
         )
+        global is_stopping
+        is_stopping = True
+        sys.stdout = orig_stdout
+        sys.stderr = orig_stderr
+        side_thread_stop.set()
+        side_thread.join(timeout=1)
         sys.exit(1)
     finally:
         global is_stopping

@@ -12,10 +12,8 @@ setup(
     install_requires=[
         "pyyaml",
         "pymongo",
-        "pytelegraf",
         "jinja2",
         "gitpython",
-        "influxdb",
         "kubernetes",
         "schema",
     ],
